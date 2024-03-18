@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Green men, grey tanks</title>
+<style>
+    svg {
+        width: 1224px;
+        height: 800px;
+    }
+
+	.hex {
+		fill: #ebf2fa;
+	}
+</style>
+</head>
+<body>
+
+<svg id="hexGrid" cursor="pointer"></svg>
+
+<script>
+	/*	
+		TODO:
+		- Move and attacks animations
+	*/
+	const TerrainType = {
+		EMPTY: 'empty',
+		MOUNTAIN: 'mountain',
+		FOREST: 'forest',
+		HILL: 'hill',
+		CITY: 'city'
+	};
+
+	const UnitType = {
+		INFANTRY: 'infantry',
+		TANK: 'tank',
+		ARTILLERY: 'artillery',
+	};
+
+	const PlayerType = {
+		GREY: "grey",
+		GREEN: "green"
+	}
+
+	const TurnPhase = {
+		MOVE: "move",
+		ATTACK: "attack"
+	}
+
+	const UnitInfo = {
+		[UnitType.INFANTRY]: {
+			moveRange: 1,
+			attackRange: 1,
+			attackPowerByTarget:{
+				[UnitType.INFANTRY] : 1,
+				[UnitType.TANK] : 1,
+			},
+			maxHealth: 3,
+			attackStrength: 3,
+			defendStrength: 3,
+			reducedAttackStrength: 2,
+			reducedDefendStrength: 2
+			
+		},
+		[UnitType.TANK]: {
+			moveRange: 2,
+			attackRange: 1,
+			attackPowerByTarget:{
+				[UnitType.INFANTRY] : 2,
+				[UnitType.TANK] : 2,
+			},
+			maxHealth: 4,
+			attackStrength: 5,
+			defendStrength: 4,
+			reducedAttackStrength: 2,
+			reducedDefendStrength: 2
+		},
+		[UnitType.ARTILLERY]: {
+			moveRange: 1,
+			attackRange: 2,
+			attackPowerByTarget:{
+				[UnitType.INFANTRY] : 1,
+				[UnitType.TANK] : 1,
+			},
+			maxHealth: 2,
+			attackStrength: 4,
+			defendStrength: 3,
+			reducedAttackStrength: 2,
+			reducedDefendStrength: 1
+		}
+	}
+
+	const ColorByPlayer = {
+		[PlayerType.GREY]: "#d8d8d8",
+		[PlayerType.GREEN]: "#b5c599"
+	}
+
+	const CombatResultsTable = [
+		{
+			'ratio': 1/2,
+			'1': 'A1',
+			'2': 'A1',
+			'3': 'A1',
+			'4': 'NE',
+			'5': 'EX',
+			'6': 'D1',
+		},
+		{
+			'ratio': 1/1,
+			'1': 'A1',
+			'2': 'A1',
+			'3': 'NE',
+			'4': 'EX',
+			'5': 'D1',
+			'6': 'D1',
+		},
+		{
+			'ratio': 2/1,
+			'1': 'A1',
+			'2': 'NE',
+			'3': 'EX',
+			'4': 'D1',
+			'5': 'D1',
+			'6': 'D1',
+		},
+		{
+			'ratio': 3/1,
+			'1': 'NE',
+			'2': 'EX',
+			'3': 'D1',
+			'4': 'D1',
+			'5': 'D1',
+			'6': 'D2',
+		}
+	];
+
+	class GameState {
+		constructor() {
+			this.activePlayer = PlayerType.GREY;
+			this.currentTurnPhase = TurnPhase.MOVE;
+		}
+	}
+
+	class HexGrid {
+		constructor(rows, cols, scenarioMap, hexRadius, lineWidth, gameState) {
+			this.hexes = [];
+			this.units = [];
+			this.svg = null;
+			this.rows = rows;
+			this.cols = cols;
+			this.scenarioMap = scenarioMap;
+			this.hexRadius = hexRadius;
+			this.lineWidth = lineWidth;
+			this.selectedHex = null;
+			this.selectedUnits = [];
+			this.gameState = gameState;
+		}
+
+		async drawHexGrid() {
+			const hexGrid = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
+			const terrainMapHexes = this.scenarioMap.mapHexes.filter(mh => mh.terrain != TerrainType.EMPTY);
+
+			for (let row = 0; row < this.rows; row++) {
+				for (let col = 0; col < this.cols; col++) {
+					if ((row == this.rows - 1) && (col % 2 == 1)) {
+						continue;
+					}
+					const hexWidth = getHexWidth(this.hexRadius);
+					const xOffset = hexWidth * 0.75;
+					const x = col * xOffset;
+					const hexHeight = getHexHeight(this.hexRadius);
+					const yOffset = hexHeight * 0.5;
+					const y = row * hexHeight + ((col % 2) * yOffset);
+
+					var hex = new Hex(col, row, this.hexRadius, this.lineWidth, this);
+					var terrainType = terrainMapHexes.find(tmh => tmh.x === col && tmh.y === row)?.terrain;
+
+					if (terrainType != null) {
+						hex.setTerrain(TerrainType.MOUNTAIN);
+					}
+
+					hex.svg.setAttribute('x', x);
+					hex.svg.setAttribute('y', y);
+
+					hex.svg.addEventListener('click', (function(hex) {
+						return function() {
+							hex.clickHandler();
+						};
+					})(hex));
+
+					this.hexes.push(hex);
+					hexGrid.appendChild(hex.svg);
+				}
+			}
+
+			this.svg = hexGrid
+		}
+
+		addUnit(unit) {
+			this.units.push(unit);
+			this.svg.appendChild(unit.svg);
+		}
+
+		isEmpty(x, y) {
+			return !this.units.some(unit => unit.x === x && unit.y === y) && this.hexes.some(hex => hex.x === x && hex.y === y && hex.isEmpty);
+		}
+
+		clearHighlightAdjacentHexes() {
+			for(const highlightedHex of this.hexes.filter(hex => hex.highlighted)) {
+				highlightedHex.toggleInnerHex(false);
+			}
+		}
+
+		highlightAdjacentEnemyHexes(selectedUnits) {
+			this.clearHighlightAdjacentHexes();
+
+			var adjacentEnemyHexes = [];
+
+			selectedUnits.forEach((su, index) => {
+				const hexes = this.getAdjacentHexes(su.x, su.y)
+					.filter(ah => this.units.some(unit => unit.x === ah.x && unit.y === ah.y && unit.player != this.gameState.activePlayer))
+					.map(ah => this.hexes.find(h => h.x === ah.x && h.y === ah.y))
+
+					index == 0 ? 
+						adjacentEnemyHexes.push(...hexes) : 
+						adjacentEnemyHexes = adjacentEnemyHexes.filter(value => hexes.includes(value));
+			})
+
+			for(const adjacentHex of adjacentEnemyHexes) {
+				for(const hex of this.hexes) {
+					if (adjacentHex.x == hex.x && adjacentHex.y == hex.y) {
+						hex.toggleInnerHex(true);
+					}
+				}
+			}
+		}
+
+		highlightAdjacentEmptyHexes(x, y, range) {
+			var adjacentHexes = this.getAdjacentEmptyHexesRecursion(x, y, 1, range);
+
+			for(const adjacentHex of adjacentHexes) {
+				for(const hex of this.hexes) {
+					if (adjacentHex.x == hex.x && adjacentHex.y == hex.y) {
+						hex.toggleInnerHex();
+					}
+				}
+			}
+		}
+
+		getAdjacentEmptyHexesRecursion(x, y, currentDepth, maxDepth) {
+			var adjacentHexes = this.getAdjacentHexes(x, y).filter(ah => this.isEmpty(ah.x, ah.y));
+			var allAdjacentHexes = [...adjacentHexes];
+
+			if (currentDepth < maxDepth) {
+				for(const adjacentHex of adjacentHexes) {
+					var adjacentHexesRecursion =
+						this.getAdjacentEmptyHexesRecursion(adjacentHex.x, adjacentHex.y, currentDepth + 1, maxDepth)
+						.filter(ah => !(ah.x == x && ah.y == y));
+
+					allAdjacentHexes.push(...adjacentHexesRecursion);
+				}
+			}
+
+			if (currentDepth === 1 && maxDepth > 1)
+			{
+				allAdjacentHexes = Array.from(new Set(allAdjacentHexes.map(JSON.stringify)), JSON.parse);
+			}
+
+			return allAdjacentHexes;
+		}
+
+		getAdjacentHexes(x, y) {
+			const adjacentHexes = [];
+
+			const isWithinGridBounds = (x, y) => x >= 0 && x < this.cols && y >= 0 && y < this.rows;
+			const isEvenRow = x % 2 === 0;
+
+			const offsetsOddRow = [
+				[0, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]
+			];
+
+			const offsetsEvenRow = [
+				[0, -1], [1, -1], [1, 0], [0, 1], [-1, 0], [-1, -1]
+			];
+
+			const offsets = isEvenRow ? offsetsEvenRow : offsetsOddRow;
+
+			for (const [dx, dy] of offsets) {
+				const newX = x + dx;
+				const newY = y + dy;
+				if (isWithinGridBounds(newX, newY)) {
+					adjacentHexes.push({ x: newX, y: newY });
+				}
+			}
+
+			return adjacentHexes;
+		}
+
+		getHex(x, y) {
+			return this.hexes.find(h => h.x === x && h.y === y);
+		}
+
+		clearSelections() {
+			this.selectedHex = null;
+			this.selectedUnits = [];
+
+			this.units.filter(u => u.selected).forEach(u => {
+				u.selected = false;
+				var selectRect = u.svg.querySelector('.selectRect');
+				selectRect.setAttribute('display', 'none');
+			});
+
+			this.hexes.filter(h => h.highlighted).forEach(h => h.toggleInnerHex());
+		}
+
+		clearActionDone() {
+			this.units.forEach(u => u.updateActionDone(false));
+		}
+	}
+
+	class Hex {
+		constructor(x, y, hexRadius, lineWidth, hexGrid) {
+			this.x = x;
+			this.y = y;
+			this.hexRadius = hexRadius;
+			this.lineWidth = lineWidth;
+			this.hexGrid = hexGrid;
+			this.highlighted = false;
+			this.terrainType = null;
+			this.isEmpty = true;
+			this.svg = this.draxHexSvg();
+		}
+
+		// TODO: Siirretään tämä erilliseen SvgServiceen
+		draxHexSvg() {
+			const hexWidth = getHexWidth(this.hexRadius);
+			const hexHeight = getHexHeight(this.hexRadius);
+			const margin = getMargin(this.lineWidth);
+			var hexCenterX = (hexWidth * 0.5) + margin;
+			var hexCenterY = (hexHeight * 0.5) + margin;
+
+			const calculateHexPoints = (x, y, radius) => {
+				// Define a function to calculate the vertices of the hexagon
+				const points = [];
+				for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 3) {
+					points.push((x + radius * Math.cos(angle)) + "," + (y + radius * Math.sin(angle)));
+				}
+				return points.join(" ");
+			};
+
+			const baseHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+			baseHex.setAttribute('class', 'hex');
+			baseHex.setAttribute('points', calculateHexPoints(hexCenterX, hexCenterY, this.hexRadius));
+			baseHex.setAttribute('fill', 'white');
+			baseHex.setAttribute('stroke', 'black');
+			baseHex.setAttribute('stroke-width', this.lineWidth);
+
+			const innerHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+			innerHex.setAttribute('class', 'hex innerHex');
+			innerHex.setAttribute('points', calculateHexPoints(hexCenterX, hexCenterY, this.hexRadius - 5));
+			innerHex.setAttribute('fill', 'none');
+			innerHex.setAttribute('stroke', 'black');
+			innerHex.setAttribute('stroke-width', this.lineWidth);
+			innerHex.setAttribute('stroke-dasharray', '12 5');
+			innerHex.setAttribute('display', 'none');
+
+			const hexSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+			hexSvg.appendChild(baseHex);
+			hexSvg.appendChild(innerHex);
+
+			return hexSvg;
+		}
+
+		clickHandler() {
+			if (this.hexGrid.gameState.currentTurnPhase == TurnPhase.MOVE && 
+				this.hexGrid.selectedUnits.length > 0 && 
+				this.hexGrid.selectedUnits[0].isValidMove(this.x, this.y)) {
+				var selectedUnit = this.hexGrid.selectedUnits[0];
+				selectedUnit.select();
+				selectedUnit.move(this.x, this.y);
+			}
+		}
+
+		toggleInnerHex(value) {
+			var innerHex = this.svg.querySelector('.innerHex');
+			if (value === undefined || value === null) {
+				this.highlighted = !this.highlighted;
+			}
+			else {
+				this.highlighted = value;
+			}
+
+			innerHex.setAttribute('display', this.highlighted ? 'block' : 'none');
+		}
+
+		setTerrain(terrainType) {
+			this.terrainType = terrainType;
+
+			if (terrainType == TerrainType.MOUNTAIN) {
+				this.isEmpty = false;
+
+				const svgService = new SvgService();
+				const mountainSvgElement = svgService.svgElements['mountain.svg'].cloneNode(true);
+
+				const hexWidth = getHexWidth(this.hexRadius);
+				const hexHeight = getHexHeight(this.hexRadius);
+				const margin = getMargin(this.lineWidth);
+
+				const x = (hexWidth / 2) - 37 + margin;
+				const y = (hexHeight / 2) - 35 + margin;
+
+				mountainSvgElement.setAttribute('x', x);
+				mountainSvgElement.setAttribute('y', y);
+
+				this.svg.appendChild(mountainSvgElement);
+			}
+		}
+	}
+
+	class Unit {
+		constructor(x, y, unitType, baseRect, player, hexRadius, lineWidth, hexGrid, gameState) {
+			this.j = null;
+			this.x = x;
+			this.y = y;
+			this.unitType = unitType
+			this.hexRadius = hexRadius;
+			this.lineWidth = lineWidth;
+			this.hexGrid = hexGrid;
+			this.gameState = gameState;
+			this.selected = false;
+			this.baseRect = baseRect;
+			this.player = player;
+			this.currentHealth = UnitInfo[this.unitType].maxHealth;
+			this.maxHealth = UnitInfo[this.unitType].maxHealth;
+			this.updateHealthText();
+			this.setBackgroundColor();
+			this.actionDone = false;
+			this.svg = null;
+		}
+
+		setBackgroundColor() {
+			var color = ColorByPlayer[this.player];
+			const backgroundElement = this.baseRect.querySelector('.background');
+
+			backgroundElement.setAttribute('fill', color);
+		}
+
+		createUnit() {
+			const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
+			const margin = getMargin(this.lineWidth);
+			const hexWidth = getHexWidth(this.hexRadius);
+			const hexHeight = getHexHeight(this.hexRadius);
+
+			const dimmerRect = document.createElementNS('http://www.w3.org/2000/svg', "rect");
+			dimmerRect.setAttribute("x", 2);
+			dimmerRect.setAttribute("y", 2);
+			dimmerRect.setAttribute("width", 56);
+			dimmerRect.setAttribute("height", 56);
+			dimmerRect.setAttribute("fill", "#ebf2fa");
+			dimmerRect.setAttribute("opacity", "60%");
+			dimmerRect.setAttribute("class", "dimmer");
+			dimmerRect.setAttribute("rx", 6);
+			dimmerRect.setAttribute('stroke-width', 2);
+			dimmerRect.setAttribute('display', 'none');
+
+			const selectRect = document.createElementNS('http://www.w3.org/2000/svg', "rect");	
+			selectRect.setAttribute("alignment-baseline", "middle");
+			selectRect.setAttribute("x", 4);
+			selectRect.setAttribute("y", 4);
+			selectRect.setAttribute("width", 52);
+			selectRect.setAttribute("height", 52);
+			selectRect.setAttribute("fill", "none");
+			selectRect.setAttribute("rx", 6);
+			selectRect.setAttribute('stroke-width', 4);
+			selectRect.setAttribute('stroke', 'black');
+			selectRect.setAttribute("class", "selectRect");
+			selectRect.setAttribute('display', 'none');
+
+			svg.appendChild(this.baseRect);
+			svg.appendChild(dimmerRect);
+			svg.appendChild(selectRect);
+			
+			this.svg = svg;
+
+			this.updatePosition(this.x, this.y);
+
+			const handleClick = () => {
+				this.select();
+			};
+
+			this.svg.addEventListener('click', handleClick);
+		}
+
+		select() {
+			if (this.gameState.currentTurnPhase === TurnPhase.ATTACK) {
+				if (this.player === this.gameState.activePlayer && !this.actionDone) {
+					if (!this.hexGrid.selectedUnits.includes(this)) {
+						this.hexGrid.selectedUnits.push(this);
+					}
+					else {
+						this.hexGrid.selectedUnits = this.hexGrid.selectedUnits.filter(u => u !== this);
+					}
+
+					this.selected = !this.selected;
+					this.updateSelectRect();
+
+					this.hexGrid.highlightAdjacentEnemyHexes(this.hexGrid.selectedUnits);
+				}
+				else if (this.hexGrid.getHex(this.x, this.y).highlighted){
+					var attackStrengthSum = this.hexGrid.selectedUnits.reduce((total, su) => total + UnitInfo[su.unitType].attackStrength, 0);
+					console.log('attackStrengthSum', attackStrengthSum);
+					console.log('defendStrength', UnitInfo[this.unitType].defendStrength);
+
+					this.hexGrid.selectedUnits.forEach(su => {
+						this.attack(su);
+					
+						su.updateActionDone(true);
+						su.selected = false;
+						su.updateSelectRect();
+					})
+
+					this.hexGrid.selectedUnits = [];
+					this.hexGrid.clearHighlightAdjacentHexes();
+
+					if (this.isDead()) {
+						this.remove();
+					}
+				}
+			}
+	
+			else if (this.gameState.currentTurnPhase === TurnPhase.MOVE &&
+				(this.hexGrid.selectedUnits.length === 0 || this.hexGrid.selectedUnits[0] === this) && 
+				this.player == this.gameState.activePlayer && !this.actionDone) {
+				this.selected = !this.selected;
+				this.hexGrid.selectedUnits = this.selected ? [this] : [];
+				this.updateSelectRect();
+
+				this.hexGrid.highlightAdjacentEmptyHexes(this.x, this.y, UnitInfo[this.unitType].moveRange);
+			}
+		}
+
+		updateSelectRect() {
+			var selectRect = this.svg.querySelector('.selectRect');
+			selectRect.setAttribute('display', this.selected ? 'block' : 'none');
+		}
+
+		updateActionDone(value) {
+			this.actionDone = value;
+
+			var dimmerRect = this.svg.querySelector('.dimmer');
+			dimmerRect.setAttribute('display', value ? 'block' : 'none');
+		}
+
+		updatePosition(gridX, gridY) {
+			this.x = gridX;
+			this.y = gridY;
+
+			const hexWidth = getHexWidth(this.hexRadius);
+			const hexHeight = getHexHeight(this.hexRadius);
+			const margin = getMargin(this.lineWidth);
+
+			const xOffset = hexWidth * 0.75;
+			const yOffset = hexHeight * 0.5;
+			const x = this.x * xOffset + (hexWidth / 2) - 30 + margin;
+			const y = this.y * hexHeight + ((this.x % 2) * yOffset) + (hexHeight / 2) - 30 + margin;
+
+			this.svg.setAttribute('x', x);
+			this.svg.setAttribute('y', y);
+		}
+
+		move(gridX, gridY) {
+			this.updatePosition(gridX, gridY)
+			this.updateActionDone(true);
+		}
+
+		attack(attacker) {
+			var hasAttackerHalfHealth = attacker.currentHealth <= (attacker.maxHealth / 2);
+			var attackPower = UnitInfo[attacker.unitType].attackPowerByTarget[this.unitType]
+			var finalAttackPower = hasAttackerHalfHealth ? Math.ceil(attackPower / 2) : attackPower;
+
+			this.setCurrentHealth(Math.max(0, this.currentHealth - finalAttackPower));
+		}
+
+		getCrtRatio() {
+
+		}
+
+		isDead() {
+			return this.currentHealth <= 0;
+		}
+
+		setCurrentHealth(value) {
+			this.currentHealth = value;
+			this.updateHealthText();
+		}
+
+		updateHealthText() {
+			console.log('this.baseRect', this.baseRect);
+			//this.baseRect.querySelector('.health').textContent = this.currentHealth + "/" + this.maxHealth;
+			this.baseRect.querySelector('.health').textContent = 
+				UnitInfo[this.unitType].attackStrength + "-" + 
+				UnitInfo[this.unitType].defendStrength + "-" + 
+				UnitInfo[this.unitType].moveRange;
+		}
+
+		isValidMove(gridX, gridY) {
+			return this.hexGrid.getHex(gridX, gridY).highlighted;
+		}
+
+		remove() {
+			this.hexGrid.svg.removeChild(this.svg);
+			this.hexGrid.units = this.hexGrid.units.filter(u => u !== this);
+		}
+	}
+
+	class ScenarioMap {
+		constructor() {
+			this.mapHexes = [];
+		}
+
+		async load(mapFile){
+			try {
+				const response = await fetch(mapFile);
+
+				if (!response.ok) {
+					throw new Error('Tiedoston lataaminen epäonnistui');
+				}
+
+				const jsonData = await response.json();
+
+				this.mapHexes = jsonData.map((hexData) => {
+					const mapHex = new MapHex();
+					mapHex.x = hexData.x;
+					mapHex.y = hexData.y;
+					mapHex.terrain = hexData.terrain;
+					mapHex.unit = hexData.unit;
+					mapHex.unitSide = hexData.unitSide;
+					return mapHex;
+				});
+
+			} catch (error) {
+				console.error('Virhe karttatiedoston lataamisessa:', error.message);
+				return null;
+			}
+		}
+	}
+
+	class MapHex {
+		constructor() {
+			this.x = null;
+			this.y = null;
+			this.terrain = null;
+			this.unit = null;
+			this.unitSide = null;
+		}
+	}
+
+	class SvgService {
+		constructor() {
+			if (!SvgService.instance) {
+				SvgService.instance = this;
+				this.svgElements = {};
+				this.parser = new DOMParser();
+			}
+			return SvgService.instance;
+		}
+
+		async load() {
+			if (this.loaded) 
+				return;
+
+			await this.loadSvgFromFile('infantry.svg');
+			await this.loadSvgFromFile('tank.svg');
+			await this.loadSvgFromFile('mountain.svg');
+
+			this.loaded = true;
+		}
+
+		async loadSvgFromFile(filename) {
+			const svgResource = await fetch(filename);
+			const svgData = await svgResource.text();
+			const svgElement = this.parser.parseFromString(svgData, 'image/svg+xml').documentElement;
+
+			this.svgElements[filename]= svgElement;
+		}
+
+		addSvgElement(name, svgElement) {
+			this.svgElements[name]= svgElement;
+		}
+	}
+
+	class InfoArea {
+		constructor(gameState, hexGrid) {
+			this.gameState = gameState;
+			this.hexGrid = hexGrid;
+			this.svg = null;
+		}
+
+		updatePhaseText() {
+			this.svg.querySelector('.phase').textContent = "PHASE: " + this.gameState.currentTurnPhase.toUpperCase();
+		}
+
+		updatePlayerText() {
+			this.svg.querySelector('.turn').textContent = "PLAYER: " + this.gameState.activePlayer.toUpperCase();
+		}
+
+		endPhase() {
+			if (this.gameState.currentTurnPhase == TurnPhase.MOVE) {
+				this.gameState.currentTurnPhase = TurnPhase.ATTACK;
+				this.updatePhaseText();
+			}
+			else if (this.gameState.currentTurnPhase == TurnPhase.ATTACK) {
+				this.gameState.activePlayer = this.gameState.activePlayer == PlayerType.GREY
+					? this.gameState.activePlayer = PlayerType.GREEN
+					: this.gameState.activePlayer = PlayerType.GREY;
+
+				this.gameState.currentTurnPhase = TurnPhase.MOVE;
+
+				this.updatePhaseText();
+				this.updatePlayerText();
+			}
+
+			this.hexGrid.clearSelections();
+			this.hexGrid.clearActionDone();
+		}
+
+		draw() {
+			const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+			text.setAttribute('fill', 'black');
+			text.setAttribute('font-family', "Arial, sans-serif");
+			text.setAttribute('font-size', '22px');
+			text.style.userSelect = 'none';
+	
+			var x = 1050;
+			var y = 50;
+
+			const tspan1 = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+			tspan1.textContent = "PLAYER: " + this.gameState.activePlayer.toUpperCase();
+			tspan1.setAttribute('x', x);
+			tspan1.setAttribute('dy', '1.2em');
+			tspan1.setAttribute('class', 'turn');
+
+			const tspan2 = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+			tspan2.textContent = "PHASE: " + this.gameState.currentTurnPhase.toUpperCase();
+			tspan2.setAttribute('class', 'phase');	
+			tspan2.setAttribute('x', x);
+			tspan2.setAttribute('dy', '1.2em');
+
+			text.appendChild(tspan1);
+			text.appendChild(tspan2);
+
+			text.setAttribute('y', y);
+
+			this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+			this.svg.appendChild(text);
+
+			const buttonSVG = this.createButtonSVG(100, 30, "End phase");
+			buttonSVG.setAttribute('x', x);
+			buttonSVG.setAttribute('y', y + 75);;
+			this.svg.appendChild(buttonSVG);
+
+			const handleClick = () => {
+				this.endPhase();
+			};
+
+			buttonSVG.addEventListener('click', handleClick);
+		}
+
+		createButtonSVG(width, height, text) {
+			const svgNS = "http://www.w3.org/2000/svg";
+			const svg = document.createElementNS(svgNS, "svg");
+			
+			svg.setAttribute("width", width + 4);
+			svg.setAttribute("height", height + 4);
+
+			const rect = document.createElementNS(svgNS, "rect");
+			rect.setAttribute("x", 2);
+			rect.setAttribute("y", 2);
+			rect.setAttribute("width", width);
+			rect.setAttribute("height", height);
+			rect.setAttribute("fill", "#ebf2fa");
+			rect.setAttribute("rx", 5);
+			rect.setAttribute('stroke', 'black');
+			rect.setAttribute('stroke-width', 2);
+
+			const buttonText = document.createElementNS(svgNS, "text");
+			buttonText.setAttribute("x", width / 2 + 2);
+			buttonText.setAttribute("y", height / 2 + 2);
+			buttonText.setAttribute("dominant-baseline", "middle");
+			buttonText.setAttribute("text-anchor", "middle");
+			buttonText.setAttribute("font-family", "Arial");
+			buttonText.setAttribute("font-size", "16px");
+			buttonText.style.userSelect = 'none';
+			buttonText.textContent = text;
+
+			svg.appendChild(rect);
+			svg.appendChild(buttonText);
+			svg.setAttribute("x", 10);
+			svg.setAttribute("y", 10);
+
+			return svg;
+		}
+	}
+
+	async function drawGame() {
+		const svg = document.getElementById('hexGrid');
+		const hexRadius = 50;
+		const numCols = 13;
+		const numRows = 9;
+		const lineWidth = 2;
+
+		const svgService = new SvgService();
+		await svgService.load();
+
+		var scenarioMap = new ScenarioMap();
+		await scenarioMap.load("map01.json");
+
+		var gameState = new GameState();
+
+		var hexGrid = new HexGrid(numRows, numCols, scenarioMap, hexRadius, lineWidth, gameState);
+		await hexGrid.drawHexGrid();
+		svg.appendChild(hexGrid.svg);
+
+		scenarioMap.mapHexes.filter(mh => mh.unit != null).forEach(mh => {
+			const svgElement = svgService.svgElements[mh.unit + ".svg"];
+			var moveRange = UnitInfo[mh.unit].moveRange;
+			var unit = new Unit(mh.x , mh.y, mh.unit, svgElement.cloneNode(true), mh.unitSide, hexRadius, lineWidth, hexGrid, gameState);
+			unit.createUnit();
+			hexGrid.addUnit(unit);
+		})
+
+		var infoArea = new InfoArea(gameState, hexGrid);
+		infoArea.draw();
+		svg.appendChild(infoArea.svg);
+	}
+
+	function getHexWidth(hexRadius) {
+		return 2 * hexRadius;
+	}
+
+	function getHexHeight(hexRadius) {
+		return Math.sqrt(3) * hexRadius;
+	}
+
+	function getMargin(lineWidth) {
+		return Math.round(lineWidth / 2) + 1;
+	}
+
+    window.onload = drawGame;
+</script>
+
+</body>
+</html>

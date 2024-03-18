@@ -1,0 +1,107 @@
+[
+	{
+		"x": 0,
+		"y": 0,
+		"terrain": "empty",
+		"unit": "infantry",
+		"unitSide": "grey"
+	},
+	{
+		"x": 1,
+		"y": 1,
+		"terrain": "empty",
+		"unit": "infantry",
+		"unitSide": "grey"
+	},
+	{
+		"x": 1,
+		"y": 2,
+		"terrain": "empty",
+		"unit": "infantry",
+		"unitSide": "grey"
+	},
+	{
+		"x": 3,
+		"y": 3,
+		"terrain": "empty",
+		"unit": "tank",
+		"unitSide": "grey"
+	},
+	{
+		"x": 3,
+		"y": 4,
+		"terrain": "empty",
+		"unit": "infantry",
+		"unitSide": "grey"
+	},
+	{
+		"x": 5,
+		"y": 2,
+		"terrain": "mountain",
+		"unit": null,
+		"unitSide": null
+	},
+	{
+		"x": 5,
+		"y": 3,
+		"terrain": "mountain",
+		"unit": null,
+		"unitSide": null
+	},
+	{
+		"x": 5,
+		"y": 5,
+		"terrain": "mountain",
+		"unit": null,
+		"unitSide": null
+	},
+	{
+		"x": 6,
+		"y": 5,
+		"terrain": "mountain",
+		"unit": null,
+		"unitSide": null
+	},
+	{
+		"x": 9,
+		"y": 0,
+		"terrain": "empty",
+		"unit": "tank",
+		"unitSide": "green"
+	},
+	{
+		"x": 10,
+		"y": 3,
+		"terrain": "empty",
+		"unit": "infantry",
+		"unitSide": "green"
+	},
+	{
+		"x": 10,
+		"y": 4,
+		"terrain": "empty",
+		"unit": "infantry",
+		"unitSide": "green"
+	},	
+	{
+		"x": 11,
+		"y": 4,
+		"terrain": "empty",
+		"unit": "tank",
+		"unitSide": "green"
+	},
+	{
+		"x": 10,
+		"y": 5,
+		"terrain": "empty",
+		"unit": "tank",
+		"unitSide": "grey"
+	},
+	{
+		"x": 11,
+		"y": 5,
+		"terrain": "empty",
+		"unit": "infantry",
+		"unitSide": "grey"
+	}
+]

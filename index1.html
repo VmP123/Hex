@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+  <meta charset="UTF-8">
+  <title>Heksaruudukko Pixi.js:llä</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.3.0/pixi.min.js"></script>
+  <script>
+ // Heksaruudun leveys
+const HEX_SIZE = 64;
+
+// Heksaruudun korkeus
+const HEX_SPACING = 32;
+
+// Heksaruudun koordinaatit
+const HEX_COORDS = [
+  [0, HEX_SIZE / 2],
+  [HEX_SIZE / 4, 0],
+  [3 * HEX_SIZE / 4, 0],
+  [HEX_SIZE, HEX_SIZE / 2],
+  [3 * HEX_SIZE / 4, HEX_SIZE],
+  [HEX_SIZE / 4, HEX_SIZE],
+];
+
+// Heksaruudun piirtäminen
+function createHex(x, y) {
+  const graphics = new PIXI.Graphics();
+  graphics.lineStyle(2, 0x000000);
+  graphics.moveTo(...HEX_COORDS[0]);
+  for (let i = 1; i < HEX_COORDS.length; i++) {
+    graphics.lineTo(...HEX_COORDS[i]);
+  }
+  graphics.closePath();
+  graphics.x = x * (HEX_SIZE * (3 / 2)) + (y % 2) * (HEX_SIZE * (3 / 4));
+  graphics.y = y * (HEX_SIZE - HEX_SPACING);
+  return graphics;
+}
+
+// Heksaruudun klikkaus
+function onHexClick(hex) {
+  console.log(`Heksaruudun koordinaatit: (${hex.x}, ${hex.y})`);
+}
+
+// Pixi-sovelluksen alustaminen
+const app = new PIXI.Application({
+  width: window.innerWidth,
+  height: window.innerHeight,
+  backgroundColor: 0xffffff,
+});
+
+// Heksaruudun kontti
+const hexContainer = new PIXI.Container();
+app.stage.addChild(hexContainer);
+
+// Ruudukon luominen
+for (let x = 0; x < 10; x++) {
+  for (let y = 0; y < 10; y++) {
+    const hex = createHex(x, y);
+    hexContainer.addChild(hex);
+
+    // Klikkaustapahtuman kuuntelija
+    hex.interactive = true;
+    hex.on("onMouseDown", () => onHexClick(hex));
+  }
+}
+
+// Sovelluksen käynnistäminen
+app.ticker.add(() => {
+  // Sovelluksen renderöinti
+  app.renderer.render(app.stage);
+});
+
+document.body.appendChild(app.view);
+
+  </script>
+</body>
+</html>
