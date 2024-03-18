@@ -48,6 +48,12 @@
 		ATTACK: "attack"
 	}
 
+	const HealthStatus = {
+		FULL: "full",
+		REDUCED: "reduced",
+		DEAD: "dead"
+	}
+
 	const UnitInfo = {
 		[UnitType.INFANTRY]: {
 			moveRange: 1,
@@ -99,6 +105,7 @@
 	const CombatResultsTable = [
 		{
 			'ratio': 1/2,
+			'ratioText': '1:2',
 			'1': 'A1',
 			'2': 'A1',
 			'3': 'A1',
@@ -108,6 +115,7 @@
 		},
 		{
 			'ratio': 1/1,
+			'ratioText': '1:1',
 			'1': 'A1',
 			'2': 'A1',
 			'3': 'NE',
@@ -117,6 +125,7 @@
 		},
 		{
 			'ratio': 2/1,
+			'ratioText': '2:1',
 			'1': 'A1',
 			'2': 'NE',
 			'3': 'EX',
@@ -126,14 +135,48 @@
 		},
 		{
 			'ratio': 3/1,
+			'ratioText': '3:1',
 			'1': 'NE',
 			'2': 'EX',
 			'3': 'D1',
 			'4': 'D1',
 			'5': 'D1',
 			'6': 'D2',
+		},
+		{
+			'ratio': 4/1,
+			'ratioText': '4:1',
+			'1': 'EX',
+			'2': 'D1',
+			'3': 'D1',
+			'4': 'D1',
+			'5': 'D2',
+			'6': 'D2',
 		}
 	];
+
+	const CombatResultTableValueEffect = {
+		'A1': {
+			attacker: -1,
+			defender: 0
+		},
+		'D1': {
+			attacker: 0,
+			defender: -1
+		},
+		'D2': {
+			attacker: 0,
+			defender: -2
+		},
+		'EX': {
+			attacker: -1,
+			defender: -1
+		},
+		'NE': {
+			attacker: 0,
+			defender: 0
+		}
+	}
 
 	class GameState {
 		constructor() {
@@ -434,10 +477,11 @@
 			this.player = player;
 			this.currentHealth = UnitInfo[this.unitType].maxHealth;
 			this.maxHealth = UnitInfo[this.unitType].maxHealth;
-			this.updateHealthText();
-			this.setBackgroundColor();
 			this.actionDone = false;
 			this.svg = null;
+			this.healthStatus = HealthStatus.FULL;
+			this.updateStatusText();
+			this.setBackgroundColor();
 		}
 
 		setBackgroundColor() {
@@ -460,7 +504,7 @@
 			dimmerRect.setAttribute("width", 56);
 			dimmerRect.setAttribute("height", 56);
 			dimmerRect.setAttribute("fill", "#ebf2fa");
-			dimmerRect.setAttribute("opacity", "60%");
+			dimmerRect.setAttribute("opacity", "50%");
 			dimmerRect.setAttribute("class", "dimmer");
 			dimmerRect.setAttribute("rx", 6);
 			dimmerRect.setAttribute('stroke-width', 2);
@@ -468,13 +512,13 @@
 
 			const selectRect = document.createElementNS('http://www.w3.org/2000/svg', "rect");	
 			selectRect.setAttribute("alignment-baseline", "middle");
-			selectRect.setAttribute("x", 4);
-			selectRect.setAttribute("y", 4);
-			selectRect.setAttribute("width", 52);
-			selectRect.setAttribute("height", 52);
+			selectRect.setAttribute("x", 2);
+			selectRect.setAttribute("y", 2);
+			selectRect.setAttribute("width", 56);
+			selectRect.setAttribute("height", 56);
 			selectRect.setAttribute("fill", "none");
 			selectRect.setAttribute("rx", 6);
-			selectRect.setAttribute('stroke-width', 4);
+			selectRect.setAttribute('stroke-width', 6);
 			selectRect.setAttribute('stroke', 'black');
 			selectRect.setAttribute("class", "selectRect");
 			selectRect.setAttribute('display', 'none');
@@ -510,24 +554,15 @@
 					this.hexGrid.highlightAdjacentEnemyHexes(this.hexGrid.selectedUnits);
 				}
 				else if (this.hexGrid.getHex(this.x, this.y).highlighted){
-					var attackStrengthSum = this.hexGrid.selectedUnits.reduce((total, su) => total + UnitInfo[su.unitType].attackStrength, 0);
-					console.log('attackStrengthSum', attackStrengthSum);
-					console.log('defendStrength', UnitInfo[this.unitType].defendStrength);
-
-					this.hexGrid.selectedUnits.forEach(su => {
-						this.attack(su);
-					
-						su.updateActionDone(true);
-						su.selected = false;
-						su.updateSelectRect();
-					})
+					var attackers = this.hexGrid.selectedUnits;
+					this.attack(attackers);
 
 					this.hexGrid.selectedUnits = [];
 					this.hexGrid.clearHighlightAdjacentHexes();
 
-					if (this.isDead()) {
-						this.remove();
-					}
+					[this, ...attackers]
+						.filter(u => u.isDead())
+						.forEach(u => u.remove());
 				}
 			}
 	
@@ -576,33 +611,105 @@
 			this.updateActionDone(true);
 		}
 
-		attack(attacker) {
-			var hasAttackerHalfHealth = attacker.currentHealth <= (attacker.maxHealth / 2);
-			var attackPower = UnitInfo[attacker.unitType].attackPowerByTarget[this.unitType]
-			var finalAttackPower = hasAttackerHalfHealth ? Math.ceil(attackPower / 2) : attackPower;
+		// attack(attacker) {
+		// 	var hasAttackerHalfHealth = attacker.currentHealth <= (attacker.maxHealth / 2);
+		// 	var attackPower = UnitInfo[attacker.unitType].attackPowerByTarget[this.unitType]
+		// 	var finalAttackPower = hasAttackerHalfHealth ? Math.ceil(attackPower / 2) : attackPower;
 
-			this.setCurrentHealth(Math.max(0, this.currentHealth - finalAttackPower));
-		}
+		// 	this.setCurrentHealth(Math.max(0, this.currentHealth - finalAttackPower));
+		// }
 
-		getCrtRatio() {
+		attack(attackers) {
+			this.hexGrid.selectedUnits.forEach(su => {
+				su.updateActionDone(true);
+				su.selected = false;
+				su.updateSelectRect();
+			})
 
+			var attackStrengthSum = this.hexGrid.selectedUnits.reduce(
+				(total, su) => total + (su.healthStatus === HealthStatus.FULL 
+					? UnitInfo[su.unitType].attackStrength 
+					: UnitInfo[su.unitType].reducedAttackStrength), 0
+			);
+			var defendStrength = this.healthStatus === HealthStatus.FULL 
+				? UnitInfo[this.unitType].defendStrength
+				: UnitInfo[this.unitType].reducedDefendStrength;
+
+			console.log('attackStrengthSum', attackStrengthSum);
+			console.log('defendStrength', defendStrength);
+			console.log('(attackStrengthSum/defendStrength)', (attackStrengthSum/defendStrength));
+
+			var crtv = [...CombatResultsTable].reverse().find(crtv => crtv.ratio <= (attackStrengthSum/defendStrength));
+			console.log('crtv', crtv.ratioText);
+			
+			var d6Value = Math.floor(Math.random() * 6) + 1;
+			var crtResult = crtv[d6Value];
+			console.log('crtResult', d6Value, crtResult);
+			
+			var effect = CombatResultTableValueEffect[crtResult];
+
+			if (effect.defender === -1) {
+				if (this.healthStatus === HealthStatus.FULL) {
+					this.healthStatus = HealthStatus.REDUCED;
+				}
+				else if (this.healthStatus === HealthStatus.REDUCED) {
+					this.healthStatus = HealthStatus.DEAD;
+				}
+			}
+			else if (effect.defender === -2) {
+				this.healthStatus = HealthStatus.DEAD;
+			}
+
+			// TODO: pelaaja saa valita vaurioituvan yksikön
+			const attacker = autoSelectUnit(attackers);
+
+			if (effect.attacker === -1) {
+				console.log('effect.attacker === -1');
+				if (attacker.healthStatus === HealthStatus.FULL) {
+					console.log('attacker.healthStatus === HealthStatus.FULL');
+					attacker.healthStatus = HealthStatus.REDUCED;
+				}
+				else if (attacker.healthStatus === HealthStatus.REDUCED) {
+					console.log('attacker.healthStatus === HealthStatus.REDUCED');
+					attacker.healthStatus = HealthStatus.DEAD;
+				}	
+			}
+
+			this.updateStatusIndicator();
+			this.updateStatusText();
+			attacker.updateStatusIndicator();
+			attacker.updateStatusText();
 		}
 
 		isDead() {
-			return this.currentHealth <= 0;
+			return this.healthStatus === HealthStatus.DEAD;
+			//return this.currentHealth <= 0;
 		}
 
 		setCurrentHealth(value) {
 			this.currentHealth = value;
-			this.updateHealthText();
+			this.updateStatusText();
 		}
 
-		updateHealthText() {
-			console.log('this.baseRect', this.baseRect);
+		updateStatusIndicator() {
+			var reducedRect = this.baseRect.querySelector('.reduced');
+			reducedRect.setAttribute('display', this.healthStatus === HealthStatus.FULL ? 'none' : "block");
+		}
+
+		updateStatusText() {
 			//this.baseRect.querySelector('.health').textContent = this.currentHealth + "/" + this.maxHealth;
+
+			const attack = this.healthStatus === HealthStatus.FULL 
+				? UnitInfo[this.unitType].attackStrength
+				: UnitInfo[this.unitType].reducedAttackStrength
+
+			const defend = this.healthStatus === HealthStatus.FULL 
+				? UnitInfo[this.unitType].defendStrength
+				: UnitInfo[this.unitType].reducedDefendStrength
+
 			this.baseRect.querySelector('.health').textContent = 
-				UnitInfo[this.unitType].attackStrength + "-" + 
-				UnitInfo[this.unitType].defendStrength + "-" + 
+				attack + "-" +
+				defend + "-" +
 				UnitInfo[this.unitType].moveRange;
 		}
 
@@ -640,7 +747,6 @@
 					mapHex.unitSide = hexData.unitSide;
 					return mapHex;
 				});
-
 			} catch (error) {
 				console.error('Virhe karttatiedoston lataamisessa:', error.message);
 				return null;
@@ -847,6 +953,21 @@
 
 	function getMargin(lineWidth) {
 		return Math.round(lineWidth / 2) + 1;
+	}
+
+	function autoSelectUnit(units) {
+		var sortedUnits = [
+			...units.filter(u => u.unitType === UnitType.INFANTRY && u.healthStatus === HealthStatus.FULL).sort(randomCompare),
+			...units.filter(u => u.unitType === UnitType.TANK && u.healthStatus === HealthStatus.FULL).sort(randomCompare),
+			...units.filter(u => u.unitType === UnitType.INFANTRY && u.healthStatus === HealthStatus.REDUCED).sort(randomCompare),
+			...units.filter(u => u.unitType === UnitType.TANK && u.healthStatus === HealthStatus.REDUCED).sort(randomCompare)
+		]
+		
+		return sortedUnits[0];
+	}
+
+	function randomCompare() {
+    	return Math.random() - 0.5;
 	}
 
     window.onload = drawGame;
