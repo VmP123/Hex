@@ -2,34 +2,55 @@
 	{
 		"x": 0,
 		"y": 0,
+		"terrain": "star",
+		"unit": null,
+		"unitSide": "grey"
+	},
+	{
+		"x": 4,
+		"y": 0,
 		"terrain": "empty",
 		"unit": "infantry",
 		"unitSide": "grey"
 	},
 	{
-		"x": 1,
+		"x": 4,
 		"y": 1,
 		"terrain": "empty",
 		"unit": "infantry",
 		"unitSide": "grey"
 	},
 	{
-		"x": 1,
-		"y": 2,
+		"x": 5,
+		"y": 1,
 		"terrain": "empty",
 		"unit": "infantry",
 		"unitSide": "grey"
 	},
 	{
-		"x": 3,
-		"y": 3,
+		"x": 4,
+		"y": 4,
 		"terrain": "empty",
 		"unit": "tank",
 		"unitSide": "grey"
 	},
 	{
-		"x": 3,
+		"x": 5,
 		"y": 4,
+		"terrain": "empty",
+		"unit": "infantry",
+		"unitSide": "grey"
+	},
+	{
+		"x": 5,
+		"y": 6,
+		"terrain": "empty",
+		"unit": "tank",
+		"unitSide": "grey"
+	},
+	{
+		"x": 5,
+		"y": 7,
 		"terrain": "empty",
 		"unit": "infantry",
 		"unitSide": "grey"
@@ -91,17 +112,17 @@
 		"unitSide": "green"
 	},
 	{
-		"x": 10,
-		"y": 5,
+		"x": 12,
+		"y": 6,
 		"terrain": "empty",
 		"unit": "tank",
-		"unitSide": "grey"
+		"unitSide": "green"
 	},
 	{
-		"x": 11,
-		"y": 5,
+		"x": 12,
+		"y": 7,
 		"terrain": "empty",
 		"unit": "infantry",
-		"unitSide": "grey"
+		"unitSide": "green"
 	}
 ]
