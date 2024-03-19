@@ -6,7 +6,7 @@
 <title>Green men, grey tanks</title>
 <style>
     svg {
-        width: 1224px;
+        width: 1424px;
         height: 800px;
     }
 
@@ -56,7 +56,7 @@
 
 	const UnitInfo = {
 		[UnitType.INFANTRY]: {
-			moveRange: 1,
+			movementAllowance: 1,
 			attackRange: 1,
 			attackPowerByTarget:{
 				[UnitType.INFANTRY] : 1,
@@ -70,7 +70,7 @@
 			
 		},
 		[UnitType.TANK]: {
-			moveRange: 2,
+			movementAllowance: 2,
 			attackRange: 1,
 			attackPowerByTarget:{
 				[UnitType.INFANTRY] : 2,
@@ -83,7 +83,7 @@
 			reducedDefendStrength: 2
 		},
 		[UnitType.ARTILLERY]: {
-			moveRange: 1,
+			movementAllowance: 1,
 			attackRange: 2,
 			attackPowerByTarget:{
 				[UnitType.INFANTRY] : 1,
@@ -182,6 +182,20 @@
 		constructor() {
 			this.activePlayer = PlayerType.GREY;
 			this.currentTurnPhase = TurnPhase.MOVE;
+			this.crtColumn = null;
+			this.d6Value = null;
+		}
+
+		setCombatResult(crtColumn, d6Value) {
+			this.crtColumn = crtColumn;
+			this.d6Value = d6Value;
+			this.triggerCombatResultUpdatedEvent();
+		}
+
+		triggerCombatResultUpdatedEvent() {
+			if (typeof this.onCombatResultUpdated === 'function') {
+				this.onCombatResultUpdated();
+			}
 		}
 	}
 
@@ -220,8 +234,8 @@
 					var hex = new Hex(col, row, this.hexRadius, this.lineWidth, this);
 					var terrainType = terrainMapHexes.find(tmh => tmh.x === col && tmh.y === row)?.terrain;
 
-					if (terrainType != null) {
-						hex.setTerrain(TerrainType.MOUNTAIN);
+					if (terrainType != TerrainType.EMPTY) {
+						hex.setTerrain(terrainType);
 					}
 
 					hex.svg.setAttribute('x', x);
@@ -573,7 +587,7 @@
 				this.hexGrid.selectedUnits = this.selected ? [this] : [];
 				this.updateSelectRect();
 
-				this.hexGrid.highlightAdjacentEmptyHexes(this.x, this.y, UnitInfo[this.unitType].moveRange);
+				this.hexGrid.highlightAdjacentEmptyHexes(this.x, this.y, UnitInfo[this.unitType].movementAllowance);
 			}
 		}
 
@@ -635,17 +649,12 @@
 				? UnitInfo[this.unitType].defendStrength
 				: UnitInfo[this.unitType].reducedDefendStrength;
 
-			console.log('attackStrengthSum', attackStrengthSum);
-			console.log('defendStrength', defendStrength);
-			console.log('(attackStrengthSum/defendStrength)', (attackStrengthSum/defendStrength));
-
-			var crtv = [...CombatResultsTable].reverse().find(crtv => crtv.ratio <= (attackStrengthSum/defendStrength));
-			console.log('crtv', crtv.ratioText);
-			
+			var crtColumn = [...CombatResultsTable].reverse().find(crtv => crtv.ratio <= (attackStrengthSum/defendStrength));
 			var d6Value = Math.floor(Math.random() * 6) + 1;
-			var crtResult = crtv[d6Value];
-			console.log('crtResult', d6Value, crtResult);
-			
+						
+			this.gameState.setCombatResult(crtColumn, d6Value);
+
+			var crtResult = crtColumn[d6Value];
 			var effect = CombatResultTableValueEffect[crtResult];
 
 			if (effect.defender === -1) {
@@ -679,6 +688,7 @@
 			this.updateStatusText();
 			attacker.updateStatusIndicator();
 			attacker.updateStatusText();
+			//this.gameState.updateCombatResultText();
 		}
 
 		isDead() {
@@ -710,7 +720,7 @@
 			this.baseRect.querySelector('.health').textContent = 
 				attack + "-" +
 				defend + "-" +
-				UnitInfo[this.unitType].moveRange;
+				UnitInfo[this.unitType].movementAllowance;
 		}
 
 		isValidMove(gridX, gridY) {
@@ -803,6 +813,8 @@
 			this.gameState = gameState;
 			this.hexGrid = hexGrid;
 			this.svg = null;
+
+			this.gameState.onCombatResultUpdated = this.updateCombatResultText.bind(this);
 		}
 
 		updatePhaseText() {
@@ -811,6 +823,16 @@
 
 		updatePlayerText() {
 			this.svg.querySelector('.turn').textContent = "PLAYER: " + this.gameState.activePlayer.toUpperCase();
+		}
+
+		updateCombatResultText() {
+			const value = this.gameState.crtColumn != null && this.gameState.d6Value != null 
+				? this.gameState.crtColumn.ratioText + ", " + 
+				  this.gameState.d6Value + ", " + 
+				  this.gameState.crtColumn[this.gameState.d6Value]
+				: '-';
+
+			this.svg.querySelector('.combatResult').textContent = "COMBAT: " + value;
 		}
 
 		endPhase() {
@@ -825,6 +847,7 @@
 
 				this.gameState.currentTurnPhase = TurnPhase.MOVE;
 
+				this.gameState.setCombatResult(null, null);
 				this.updatePhaseText();
 				this.updatePlayerText();
 			}
@@ -855,17 +878,28 @@
 			tspan2.setAttribute('x', x);
 			tspan2.setAttribute('dy', '1.2em');
 
+			const tspan3 = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+			tspan3.textContent = "COMBAT: -";
+			tspan3.setAttribute('class', 'combatResult');	
+			tspan3.setAttribute('x', x);
+			tspan3.setAttribute('dy', '1.2em');
+
 			text.appendChild(tspan1);
 			text.appendChild(tspan2);
+			text.appendChild(tspan3);
 
 			text.setAttribute('y', y);
 
 			this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+			// this.svg.setAttribute("width", 400);
+			// this.svg.setAttribute("height", 400);
+
 			this.svg.appendChild(text);
+			
 
 			const buttonSVG = this.createButtonSVG(100, 30, "End phase");
 			buttonSVG.setAttribute('x', x);
-			buttonSVG.setAttribute('y', y + 75);;
+			buttonSVG.setAttribute('y', y + 100);;
 			this.svg.appendChild(buttonSVG);
 
 			const handleClick = () => {
@@ -932,7 +966,6 @@
 
 		scenarioMap.mapHexes.filter(mh => mh.unit != null).forEach(mh => {
 			const svgElement = svgService.svgElements[mh.unit + ".svg"];
-			var moveRange = UnitInfo[mh.unit].moveRange;
 			var unit = new Unit(mh.x , mh.y, mh.unit, svgElement.cloneNode(true), mh.unitSide, hexRadius, lineWidth, hexGrid, gameState);
 			unit.createUnit();
 			hexGrid.addUnit(unit);
