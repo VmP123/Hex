@@ -7,7 +7,7 @@
 <style>
     svg {
         width: 1424px;
-        height: 800px;
+        height: 880px;
     }
 
 	.hex {
@@ -24,13 +24,24 @@
 		TODO:
 		- Move and attacks animations
 	*/
+	const maxMovementPointCost = 9999;
+
 	const TerrainType = {
-		EMPTY: 'empty',
+		CLEAR: 'clear',
 		MOUNTAIN: 'mountain',
 		FOREST: 'forest',
 		HILL: 'hill',
 		CITY: 'city'
 	};
+
+	const TerrainInfo = {
+		[TerrainType.CLEAR]: {
+			movementPointCost: 1
+		},
+		[TerrainType.MOUNTAIN]: {
+			movementPointCost: maxMovementPointCost
+		}
+	}
 
 	const UnitType = {
 		INFANTRY: 'infantry',
@@ -70,7 +81,7 @@
 			
 		},
 		[UnitType.TANK]: {
-			movementAllowance: 2,
+			movementAllowance: 3,
 			attackRange: 1,
 			attackPowerByTarget:{
 				[UnitType.INFANTRY] : 2,
@@ -217,7 +228,7 @@
 		async drawHexGrid() {
 			const hexGrid = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 
-			const terrainMapHexes = this.scenarioMap.mapHexes.filter(mh => mh.terrain != TerrainType.EMPTY);
+			const terrainMapHexes = this.scenarioMap.mapHexes.filter(mh => mh.terrain != TerrainType.CLEAR);
 
 			for (let row = 0; row < this.rows; row++) {
 				for (let col = 0; col < this.cols; col++) {
@@ -232,11 +243,9 @@
 					const y = row * hexHeight + ((col % 2) * yOffset);
 
 					var hex = new Hex(col, row, this.hexRadius, this.lineWidth, this);
-					var terrainType = terrainMapHexes.find(tmh => tmh.x === col && tmh.y === row)?.terrain;
+					var terrainType = terrainMapHexes.find(tmh => tmh.x === col && tmh.y === row)?.terrain ?? TerrainType.CLEAR;
 
-					if (terrainType != TerrainType.EMPTY) {
-						hex.setTerrain(terrainType);
-					}
+					hex.setTerrain(terrainType);
 
 					hex.svg.setAttribute('x', x);
 					hex.svg.setAttribute('y', y);
@@ -264,14 +273,14 @@
 			return !this.units.some(unit => unit.x === x && unit.y === y) && this.hexes.some(hex => hex.x === x && hex.y === y && hex.isEmpty);
 		}
 
-		clearHighlightAdjacentHexes() {
+		clearHighlightedHexes() {
 			for(const highlightedHex of this.hexes.filter(hex => hex.highlighted)) {
 				highlightedHex.toggleInnerHex(false);
 			}
 		}
 
 		highlightAdjacentEnemyHexes(selectedUnits) {
-			this.clearHighlightAdjacentHexes();
+			this.clearHighlightedHexes();
 
 			var adjacentEnemyHexes = [];
 
@@ -294,8 +303,10 @@
 			}
 		}
 
-		highlightAdjacentEmptyHexes(x, y, range) {
-			var adjacentHexes = this.getAdjacentEmptyHexesRecursion(x, y, 1, range);
+		highlightReachableEmptyHexes(x, y, unitType) {
+			//var adjacentHexes = this.getAdjacentEmptyHexesRecursion(x, y, 1, UnitInfo[unitType].movementAllowance); // old
+			var adjacentHexes = this.getReachableHex(x, y, UnitInfo[unitType].movementAllowance); // new
+			console.log('adjacentHexes', adjacentHexes);
 
 			for(const adjacentHex of adjacentHexes) {
 				for(const hex of this.hexes) {
@@ -328,11 +339,53 @@
 			return allAdjacentHexes;
 		}
 
+		dfs(x, y, movementPoints, visited, reachableHexes) {
+			if (visited.find(v => v.x === x && v.y === y && v.movementPoints >= movementPoints) != null) {
+				return;			
+			}
+
+			const cost = !this.units.some(unit => unit.x === x && unit.y === y) 
+				? TerrainInfo[this.getHex(x, y).terrainType].movementPointCost
+				: maxMovementPointCost
+
+			if (movementPoints < cost)
+			{
+				visited.push({x: x, y: y, movementPoints: movementPoints});
+				return;
+			}
+			
+			visited.push({x: x, y: y, movementPoints: movementPoints});
+
+			if (!reachableHexes.some(rh => rh.x === x && rh.y === y)) {
+				reachableHexes.push({ x: x, y: y });
+			}
+
+			var remainingPoints = movementPoints - cost;
+			var adjacentHexes = this.getAdjacentHexes(x, y);
+			adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, remainingPoints, visited, reachableHexes));
+		}
+
+		getReachableHex(x, y, movementPoints) {
+			const reachableHexes = [];
+			const visited = [];
+		  
+			visited.push({x: x, y: y, movementPoints: movementPoints});
+		  
+			var adjacentHexes = this.getAdjacentHexes(x, y);
+			adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, movementPoints, visited, reachableHexes));
+					
+			return reachableHexes;
+		}
+
 		getAdjacentHexes(x, y) {
 			const adjacentHexes = [];
 
-			const isWithinGridBounds = (x, y) => x >= 0 && x < this.cols && y >= 0 && y < this.rows;
-			const isEvenRow = x % 2 === 0;
+			const isWithinGridBounds = (x, y) => 
+				x >= 0 &&
+				x < this.cols &&
+				y >= 0 &&
+				y < this.rows &&
+				!((y == this.rows - 1) && (x % 2 == 1));
 
 			const offsetsOddRow = [
 				[0, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]
@@ -342,6 +395,7 @@
 				[0, -1], [1, -1], [1, 0], [0, 1], [-1, 0], [-1, -1]
 			];
 
+			const isEvenRow = x % 2 === 0;
 			const offsets = isEvenRow ? offsetsEvenRow : offsetsOddRow;
 
 			for (const [dx, dy] of offsets) {
@@ -572,7 +626,7 @@
 					this.attack(attackers);
 
 					this.hexGrid.selectedUnits = [];
-					this.hexGrid.clearHighlightAdjacentHexes();
+					this.hexGrid.clearHighlightedHexes();
 
 					[this, ...attackers]
 						.filter(u => u.isDead())
@@ -587,7 +641,7 @@
 				this.hexGrid.selectedUnits = this.selected ? [this] : [];
 				this.updateSelectRect();
 
-				this.hexGrid.highlightAdjacentEmptyHexes(this.x, this.y, UnitInfo[this.unitType].movementAllowance);
+				this.hexGrid.highlightReachableEmptyHexes(this.x, this.y, this.unitType);
 			}
 		}
 
@@ -673,13 +727,10 @@
 			const attacker = autoSelectUnit(attackers);
 
 			if (effect.attacker === -1) {
-				console.log('effect.attacker === -1');
 				if (attacker.healthStatus === HealthStatus.FULL) {
-					console.log('attacker.healthStatus === HealthStatus.FULL');
 					attacker.healthStatus = HealthStatus.REDUCED;
 				}
 				else if (attacker.healthStatus === HealthStatus.REDUCED) {
-					console.log('attacker.healthStatus === HealthStatus.REDUCED');
 					attacker.healthStatus = HealthStatus.DEAD;
 				}	
 			}
@@ -857,6 +908,8 @@
 		}
 
 		draw() {
+			this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+
 			const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
 			text.setAttribute('fill', 'black');
 			text.setAttribute('font-family', "Arial, sans-serif");
@@ -890,16 +943,13 @@
 
 			text.setAttribute('y', y);
 
-			this.svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-			// this.svg.setAttribute("width", 400);
-			// this.svg.setAttribute("height", 400);
-
 			this.svg.appendChild(text);
 			
 
 			const buttonSVG = this.createButtonSVG(100, 30, "End phase");
 			buttonSVG.setAttribute('x', x);
-			buttonSVG.setAttribute('y', y + 100);;
+			buttonSVG.setAttribute('y', y + 100);
+
 			this.svg.appendChild(buttonSVG);
 
 			const handleClick = () => {
@@ -949,7 +999,7 @@
 		const svg = document.getElementById('hexGrid');
 		const hexRadius = 50;
 		const numCols = 13;
-		const numRows = 9;
+		const numRows = 10;
 		const lineWidth = 2;
 
 		const svgService = new SvgService();
