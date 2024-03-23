@@ -1,16 +1,17 @@
 [
 	{
 		"x": 0,
-		"y": 0,
-		"terrain": "star",
-		"unitSide": "grey"
+		"y": 4,
+		"terrain": "flag",
+		"flag": "square",
+		"player": "grey"
 	},
 	{
 		"x": 4,
 		"y": 0,
 		"terrain": "clear",
 		"unit": "infantry",
-		"unitSide": "grey",
+		"player": "grey",
 		"riverEdges": [2]
 	},
 	{
@@ -18,57 +19,60 @@
 		"y": 1,
 		"terrain": "clear",
 		"unit": "infantry",
-		"unitSide": "grey",
+		"player": "grey",
 		"riverEdges": [4, 5]
 	},
 	{
 		"x": 5,
-		"y": 1,
+		"y": 2,
 		"terrain": "clear",
 		"unit": "infantry",
-		"unitSide": "grey",
+		"player": "grey",
 		"riverEdges": [2, 3]
+	},
+	{
+		"x": 4,
+		"y": 3,
+		"terrain": "clear",
+		"unit": "infantry",
+		"player": "grey"
 	},
 	{
 		"x": 4,
 		"y": 4,
 		"terrain": "clear",
 		"unit": "tank",
-		"unitSide": "grey"
+		"player": "grey"
 	},
 	{
 		"x": 5,
 		"y": 4,
 		"terrain": "clear",
 		"unit": "infantry",
-		"unitSide": "grey"
+		"player": "grey"
 	},
 	{
 		"x": 5,
 		"y": 6,
 		"terrain": "clear",
 		"unit": "tank",
-		"unitSide": "grey"
+		"player": "grey"
 	},
 	{
 		"x": 5,
 		"y": 7,
 		"terrain": "clear",
 		"unit": "infantry",
-		"unitSide": "grey"
+		"player": "grey"
 	},
 	{
 		"x": 6,
 		"y": 8,
 		"terrain": "clear",
 		"unit": "infantry",
-		"unitSide": "grey"
+		"player": "grey"
 	},
-	{
-		"x": 5,
-		"y": 2,
-		"terrain": "mountain"
-	},
+
 	{
 		"x": 5,
 		"y": 3,
@@ -89,48 +93,62 @@
 		"y": 0,
 		"terrain": "clear",
 		"unit": "tank",
-		"unitSide": "green"
+		"player": "green"
+	},
+	{
+		"x": 9,
+		"y": 1,
+		"terrain": "clear",
+		"unit": "infantry",
+		"player": "green"
 	},
 	{
 		"x": 9,
 		"y": 3,
 		"terrain": "clear",
 		"unit": "infantry",
-		"unitSide": "green"
+		"player": "green"
 	},
 	{
 		"x": 10,
 		"y": 5,
 		"terrain": "clear",
 		"unit": "infantry",
-		"unitSide": "green"
+		"player": "green"
 	},	
 	{
 		"x": 10,
 		"y": 4,
 		"terrain": "clear",
 		"unit": "tank",
-		"unitSide": "green"
+		"player": "green"
 	},
 	{
 		"x": 11,
 		"y": 6,
 		"terrain": "clear",
 		"unit": "tank",
-		"unitSide": "green"
+		"player": "green"
 	},
 	{
 		"x": 11,
 		"y": 7,
 		"terrain": "clear",
 		"unit": "infantry",
-		"unitSide": "green"
+		"player": "green"
 	},
 	{
 		"x": 10,
 		"y": 8,
 		"terrain": "clear",
 		"unit": "infantry",
-		"unitSide": "green"
+		"player": "green"
+	},
+	{
+		"x": 12,
+		"y": 4,
+		"terrain": "flag",
+		"flag": "square",
+		"player": "green"
 	}
 ]

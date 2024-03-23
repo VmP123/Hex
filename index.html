@@ -36,7 +36,8 @@
 		WATER: 'water',
 		FOREST: 'forest',
 		HILL: 'hill',
-		CITY: 'city'
+		CITY: 'city',
+		FLAG: 'flag'
 	};
 
 	const TerrainInfo = {
@@ -118,10 +119,25 @@
 		[PlayerType.GREEN]: "#b5c599"
 	}
 
+	const GameStatus = {
+		GAMEON: 'gameon',
+		ENDED: 'ended',
+	}
+
 	const CombatResultsTable = [
 		{
 			'ratio': 1/2,
 			'ratioText': '1:2',
+			'1': 'A1',
+			'2': 'A1',
+			'3': 'A1',
+			'4': 'A1',
+			'5': 'NE',
+			'6': 'EX',
+		},
+		{
+			'ratio': 1/1,
+			'ratioText': '1:1',
 			'1': 'A1',
 			'2': 'A1',
 			'3': 'A1',
@@ -130,8 +146,8 @@
 			'6': 'D1',
 		},
 		{
-			'ratio': 1/1,
-			'ratioText': '1:1',
+			'ratio': 2/1,
+			'ratioText': '2:1',
 			'1': 'A1',
 			'2': 'A1',
 			'3': 'NE',
@@ -140,8 +156,8 @@
 			'6': 'D1',
 		},
 		{
-			'ratio': 2/1,
-			'ratioText': '2:1',
+			'ratio': 3/1,
+			'ratioText': '3:1',
 			'1': 'A1',
 			'2': 'NE',
 			'3': 'EX',
@@ -150,8 +166,8 @@
 			'6': 'D1',
 		},
 		{
-			'ratio': 3/1,
-			'ratioText': '3:1',
+			'ratio': 4/1,
+			'ratioText': '4:1',
 			'1': 'NE',
 			'2': 'EX',
 			'3': 'D1',
@@ -160,14 +176,14 @@
 			'6': 'D2',
 		},
 		{
-			'ratio': 4/1,
-			'ratioText': '4:1',
+			'ratio': 5/1,
+			'ratioText': '5:1',
 			'1': 'EX',
 			'2': 'D1',
 			'3': 'D1',
 			'4': 'D1',
 			'5': 'D2',
-			'6': 'D2',
+			'6': 'D2'
 		}
 	];
 
@@ -196,6 +212,8 @@
 
 	class GameState {
 		constructor() {
+			this.status = GameStatus.GAMEON;
+			this.winner = null;
 			this.activePlayer = PlayerType.GREY;
 			this.currentTurnPhase = TurnPhase.MOVE;
 			this.crtColumn = null;
@@ -208,9 +226,21 @@
 			this.triggerCombatResultUpdatedEvent();
 		}
 
+		
 		triggerCombatResultUpdatedEvent() {
 			if (typeof this.onCombatResultUpdated === 'function') {
 				this.onCombatResultUpdated();
+			}
+		}
+
+		setWinner(winner) {
+			this.winner = winner;
+			this.triggerWinnerUpdatedEvent();
+		}
+
+		triggerWinnerUpdatedEvent() {
+			if (typeof this.onWinnerUpdated === 'function') {
+				this.onWinnerUpdated();
 			}
 		}
 	}
@@ -241,6 +271,7 @@
 			unitLayer.setAttribute('id', 'unitLayer');
 
 			const terrainMapHexes = this.scenarioMap.mapHexes.filter(mh => mh.terrain != TerrainType.CLEAR);
+			const flagMapHexes = this.scenarioMap.mapHexes.filter(mh => mh.flag !== null && mh.flag !== undefined);
 			const riverMapHexes = this.scenarioMap.mapHexes.filter(mh => Array.isArray(mh.riverEdges) && mh.riverEdges.length > 0);
 
 			for (let row = 0; row < this.rows; row++) {
@@ -256,10 +287,13 @@
 					const y = row * hexHeight + ((col % 2) * yOffset);
 
 					const hex = new Hex(col, row, this.hexRadius, this.lineWidth, this);
+
 					const terrainType = terrainMapHexes.find(tmh => tmh.x === col && tmh.y === row)?.terrain ?? TerrainType.CLEAR;
+					const flagHex = flagMapHexes.find(tmh => tmh.x === col && tmh.y === row) || {};
 					const riverEdges = riverMapHexes.find(tmh => tmh.x === col && tmh.y === row)?.riverEdges ?? [];
 
 					hex.setTerrain(terrainType);
+					hex.setFlag(flagHex.flag, flagHex.player);
 					hex.setRiverEdges(riverEdges);
 
 					hex.svg.setAttribute('x', x);
@@ -355,8 +389,8 @@
 		}
 
 		highlightReachableEmptyHexes(x, y, unitType) {
-			// const adjacentHexes = this.getAdjacentEmptyHexesRecursion(x, y, 1, UnitInfo[unitType].movementAllowance); // old
-			const adjacentHexes = this.getReachableHex(x, y, UnitInfo[unitType].movementAllowance); // new
+			 const adjacentHexes = this.getAdjacentEmptyHexesRecursion(x, y, 1, UnitInfo[unitType].movementAllowance); // old
+			//const adjacentHexes = this.getReachableHex(x, y, UnitInfo[unitType].movementAllowance); // new
 
 			for(const adjacentHex of adjacentHexes) {
 				for(const hex of this.hexes) {
@@ -369,7 +403,7 @@
 
 		getAdjacentEmptyHexesRecursion(x, y, currentDepth, maxDepth) {
 			const adjacentHexes = this.getAdjacentHexes(x, y).filter(ah => this.isEmpty(ah.x, ah.y));
-			const allAdjacentHexes = [...adjacentHexes];
+			var allAdjacentHexes = [...adjacentHexes];
 
 			if (currentDepth < maxDepth) {
 				for(const adjacentHex of adjacentHexes) {
@@ -479,6 +513,33 @@
 		clearActionDone() {
 			this.units.forEach(u => u.updateActionDone(false));
 		}
+
+		checkWinningConditions() {		
+			const winner = this.getWinner();
+
+			if (winner != null) {
+				this.gameState.status = GameState.ENDED;
+				this.gameState.setWinner(winner);
+				console.log('Winner is ' + winner);
+			}
+		}
+
+		getWinner() {
+		
+			for (const player of Object.values(PlayerType)) {
+				if (!this.units.some(u => u.player == getAnotherPlayer(player)))
+				{
+					return player;
+				}
+
+				const flagHex = this.hexes.find(h => h.flag != null && h.player == getAnotherPlayer(player));			
+				if (this.units.some(u => u.x === flagHex.x && u.y === flagHex.y && u.player === player)) {
+					return player;
+				}
+			}
+
+			return null;
+		}
 	}
 
 	class Hex {
@@ -492,6 +553,7 @@
 			this.terrainType = null;
 			this.isEmpty = true;
 			this.riverEdges = [];
+			this.flag = null;
 			this.svg = this.draxHexSvg();
 		}
 
@@ -537,12 +599,18 @@
 		}
 
 		clickHandler() {
+			if (this.hexGrid.gameState.status !== GameStatus.GAMEON) {
+				return;
+			}
+
 			if (this.hexGrid.gameState.currentTurnPhase == TurnPhase.MOVE && 
 				this.hexGrid.selectedUnits.length > 0 && 
 				this.hexGrid.selectedUnits[0].isValidMove(this.x, this.y)) {
 				const selectedUnit = this.hexGrid.selectedUnits[0];
 				selectedUnit.select();
 				selectedUnit.move(this.x, this.y);
+
+				this.hexGrid.checkWinningConditions();
 			}
 		}
 
@@ -586,6 +654,33 @@
 				const baseHex = this.svg.querySelector('.baseHex');
 				baseHex.setAttribute('fill', '#80c0ff');
 			}
+		}
+
+		setFlag(value, player) {
+			if (value === undefined || value === null || player === undefined || player === null)
+				return;
+
+			this.isEmpty = true;
+			this.flag = value;
+			this.player = player;
+
+			const svgService = new SvgService();
+			const flagSvgElement = svgService.svgElements['flag.svg'].cloneNode(true);
+
+			const flagColor = flagSvgElement.querySelector('.flagColor');
+			flagColor.setAttribute('fill', ColorByPlayer[player]);
+
+			const hexWidth = getHexWidth(this.hexRadius);
+			const hexHeight = getHexHeight(this.hexRadius);
+			const margin = getMargin(this.lineWidth);
+
+			const x = (hexWidth / 2) - 37 + margin - 10;
+			const y = (hexHeight / 2) - 35 + margin;
+
+			flagSvgElement.setAttribute('x', x);
+			flagSvgElement.setAttribute('y', y);
+
+			this.svg.appendChild(flagSvgElement);
 		}
 
 		setRiverEdges(riverEdges) {
@@ -672,6 +767,10 @@
 		}
 
 		select() {
+			if (this.gameState.status !== GameStatus.GAMEON) {
+				return;
+			}
+
 			if (this.gameState.currentTurnPhase === TurnPhase.ATTACK) {
 				if (this.player === this.gameState.activePlayer && !this.actionDone) {
 					if (!this.hexGrid.selectedUnits.includes(this)) {
@@ -696,6 +795,9 @@
 					[this, ...attackers]
 						.filter(u => u.isDead())
 						.forEach(u => u.remove());
+
+					const winner = this.hexGrid.checkWinningConditions();
+					console.log('winner', winner);
 				}
 			}
 	
@@ -872,8 +974,9 @@
 					mapHex.y = hexData.y;
 					mapHex.terrain = hexData.terrain;
 					mapHex.unit = hexData.unit;
-					mapHex.unitSide = hexData.unitSide;
+					mapHex.player = hexData.player;
 					mapHex.riverEdges = hexData.riverEdges;
+					mapHex.flag = hexData.flag;
 					return mapHex;
 				});
 			} catch (error) {
@@ -889,7 +992,7 @@
 			this.y = null;
 			this.terrain = null;
 			this.unit = null;
-			this.unitSide = null;
+			this.player = null;
 			this.riverEdges = null;
 		}
 	}
@@ -911,6 +1014,8 @@
 			await this.loadSvgFromFile('infantry.svg');
 			await this.loadSvgFromFile('tank.svg');
 			await this.loadSvgFromFile('mountain.svg');
+			await this.loadSvgFromFile('flag.svg');
+			await this.loadSvgFromFile('triangle-flag.svg');
 
 			this.loaded = true;
 		}
@@ -935,6 +1040,7 @@
 			this.svg = null;
 
 			this.gameState.onCombatResultUpdated = this.updateCombatResultText.bind(this);
+			this.gameState.onWinnerUpdated = this.updateStatusText.bind(this);
 		}
 
 		updatePhaseText() {
@@ -955,7 +1061,15 @@
 			this.svg.querySelector('.combatResult').textContent = "COMBAT: " + value;
 		}
 
+		updateStatusText() {
+			this.svg.querySelector('.statusText').textContent = this.gameState.winner.toUpperCase() + " PLAYER WON";
+		}
+
 		endPhase() {
+			if (this.hexGrid.gameState.status !== GameStatus.GAMEON) {
+				return;
+			}
+
 			if (this.gameState.currentTurnPhase == TurnPhase.MOVE) {
 				this.gameState.currentTurnPhase = TurnPhase.ATTACK;
 				this.updatePhaseText();
@@ -1024,7 +1138,19 @@
 				this.endPhase();
 			};
 
-			buttonSVG.addEventListener('click', handleClick);
+			buttonSVG.addEventListener('click', () => this.endPhase());
+
+			const statusText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+			statusText.setAttribute('fill', 'black');
+			statusText.setAttribute('font-family', "Arial, sans-serif");
+			statusText.setAttribute('font-size', '22px');
+			statusText.style.userSelect = 'none';
+			statusText.textContent = ""
+			statusText.setAttribute('class', 'statusText');	
+			statusText.setAttribute('x', x);
+			statusText.setAttribute('y', y + 170);
+
+			this.svg.appendChild(statusText);
 		}
 
 		createButtonSVG(width, height, text) {
@@ -1085,7 +1211,7 @@
 
 		scenarioMap.mapHexes.filter(mh => mh.unit !== null && mh.unit !== undefined).forEach(mh => {
 			const svgElement = svgService.svgElements[mh.unit + ".svg"];
-			const unit = new Unit(mh.x , mh.y, mh.unit, svgElement.cloneNode(true), mh.unitSide, hexRadius, lineWidth, hexGrid, gameState);
+			const unit = new Unit(mh.x , mh.y, mh.unit, svgElement.cloneNode(true), mh.player, hexRadius, lineWidth, hexGrid, gameState);
 			unit.createUnit();
 			hexGrid.addUnit(unit);
 		})
@@ -1105,6 +1231,10 @@
 
 	function getMargin(lineWidth) {
 		return Math.round(lineWidth / 2) + 1;
+	}
+
+	function getAnotherPlayer(player) {
+		return player === PlayerType.GREEN ? PlayerType.GREY : PlayerType.GREEN;
 	}
 
 	function autoSelectUnit(units) {
