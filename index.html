@@ -217,8 +217,8 @@
 			this.winner = null;
 			this.activePlayer = PlayerType.GREY;
 			this.currentTurnPhase = TurnPhase.MOVE;
-			this.currentSpecialPhase = null;
 			this.unassignedDamagePoints = 0;
+			this.specialPhaseQueue = [];
 			this.crtColumn = null;
 			this.d6Value = null;
 		}
@@ -228,7 +228,6 @@
 			this.d6Value = d6Value;
 			this.triggerCombatResultUpdatedEvent();
 		}
-
 		
 		triggerCombatResultUpdatedEvent() {
 			if (typeof this.onCombatResultUpdated === 'function') {
@@ -241,15 +240,14 @@
 			this.triggerWinnerUpdatedEvent();
 		}
 
-		setCurrentSpecialPhase(specialPhase) {
-			this.currentSpecialPhase = specialPhase;
-			this.triggerCurrentSpecialPhaseUpdatedEvent();
-		}
-
 		triggerWinnerUpdatedEvent() {
 			if (typeof this.onWinnerUpdated === 'function') {
 				this.onWinnerUpdated();
 			}
+		}
+
+		getCurrentSpecialPhase() {
+			return this.specialPhaseQueue.length > 0 ? this.specialPhaseQueue[0] : null;
 		}
 
 		triggerCurrentSpecialPhaseUpdatedEvent() {
@@ -258,6 +256,20 @@
 			}
 		}
 
+		pushSpecialPhaseQueue(specialPhase) {
+			this.specialPhaseQueue.push(specialPhase);
+
+			if (this.specialPhaseQueue.length > 0) {
+				this.triggerCurrentSpecialPhaseUpdatedEvent();
+			}
+		}
+
+		shiftSpecialPhaseQueue() {
+			const specialPhase = this.specialPhaseQueue.shift();
+			this.triggerCurrentSpecialPhaseUpdatedEvent();
+
+			return specialPhase;
+		}
 		
 	}
 
@@ -568,17 +580,18 @@
 					.forEach(u => u.remove());
 		}
 
-		clearSpecialPhase() {
-			if (this.gameState.currentSpecialPhase === SpecialPhaseType.ATTACKER_DAMAGE) {
-				this.gameState.setCurrentSpecialPhase(null);
+		endSpecialPhase() {
+			const currentSpecialPhase = this.gameState.shiftSpecialPhaseQueue();
+
+			if (currentSpecialPhase === SpecialPhaseType.ATTACKER_DAMAGE) {
 				this.endAttack();
-			}	
+			}			
 		}
 
 		endAttack() {
 			this.selectedUnits.forEach(su => {
 				su.selected = false;
-				su.updateSelectRect();
+				su.refreshSelectRect();
 			})
 
 			this.selectedUnits = [];
@@ -819,7 +832,9 @@
 				return;
 			}
 
-			if (this.gameState.currentSpecialPhase === SpecialPhaseType.ATTACKER_DAMAGE && this.selected) {
+			const currentSpecialPhase = this.gameState.getCurrentSpecialPhase();
+			
+			if (currentSpecialPhase === SpecialPhaseType.ATTACKER_DAMAGE && this.selected) {
 				this.takeDamage();
 				this.gameState.unassignedDamagePoints--;
 				this.updateStatusIndicator();
@@ -827,11 +842,11 @@
 				this.hexGrid.removeDeadUnits();
 
 				if (this.gameState.unassignedDamagePoints === 0) {
-					this.hexGrid.clearSpecialPhase();
+					this.hexGrid.endSpecialPhase();
 				}
 			}
 
-			else if (this.gameState.currentTurnPhase === TurnPhase.ATTACK && this.gameState.currentSpecialPhase === null) {
+			else if (this.gameState.currentTurnPhase === TurnPhase.ATTACK && currentSpecialPhase === null) {
 				if (this.player === this.gameState.activePlayer && !this.attacked) {
 					if (!this.hexGrid.selectedUnits.includes(this)) {
 						this.hexGrid.selectedUnits.push(this);
@@ -853,7 +868,7 @@
 				}
 			}
 	
-			else if (this.gameState.currentTurnPhase === TurnPhase.MOVE && this.gameState.currentSpecialPhase === null &&
+			else if (this.gameState.currentTurnPhase === TurnPhase.MOVE && currentSpecialPhase === null &&
 				(this.hexGrid.selectedUnits.length === 0 || this.hexGrid.selectedUnits[0] === this) && 
 				this.player == this.gameState.activePlayer && !this.moved) {
 				this.selected = !this.selected;
@@ -872,14 +887,16 @@
 		refreshDimmer() {
 			var dimm = false;
 
-			if (this.gameState.currentSpecialPhase === null) {
+			const currentSpecialPhase = this.gameState.getCurrentSpecialPhase();
+
+			if (currentSpecialPhase === null) {
 				dimm = 
 					(this.gameState.currentTurnPhase === TurnPhase.ATTACK && this.attacked) ||
 					(this.gameState.currentTurnPhase === TurnPhase.MOVE && this.moved);
 
 			}
 			else {
-				dimm = this.gameState.currentSpecialPhase === SpecialPhaseType.ATTACKER_DAMAGE && !this.selected;
+				dimm = currentSpecialPhase === SpecialPhaseType.ATTACKER_DAMAGE && !this.selected;
 			}
 
 			const dimmerRect = this.svg.querySelector('.dimmer');
@@ -924,38 +941,18 @@
 						
 			this.gameState.setCombatResult(crtColumn, d6Value);
 
+			// TODO: - hyökkäys voi, johtaa perääntymiseen ja pelaaja saa valita perääntyvän yksikön
+			// TODO: - hyökkääjä voi siirtyä hyökkäyksen seurauksena vapautuneeseen hexaan
+			// TODO: - samassa ruudussa voi olla monta yksikköä ja ruudun/yksikön klikkaaminen avaa valinta näkymän			
+			
 			const crtResult = crtColumn[d6Value];
 			const effect = CombatResultTableValueEffect[crtResult];
 
-			if (effect.defender === -1) {
-				if (this.healthStatus === HealthStatus.FULL) {
-					this.healthStatus = HealthStatus.REDUCED;
-				}
-				else if (this.healthStatus === HealthStatus.REDUCED) {
-					this.healthStatus = HealthStatus.DEAD;
-				}
-			}
-			else if (effect.defender === -2) {
-				this.healthStatus = HealthStatus.DEAD;
-			}
-
-			// TODO: - pelaaja saa valita vaurioituvan yksikön
-			// TODO: - hyökkäys voi, johtaa perääntymiseen ja pelaaja saa valita perääntyvän yksikön
-			// TODO: - hyökkääjä voi siirtyä hyökkäyksen seurauksena vapautuneeseen hexaan
-			// TODO: - samassa ruudussa voi olla monta yksikköä ja ruudun/yksikön klikkaaminen avaa valinta näkymän
-			
-			
-			attackers.forEach(a => {
-				a.attacked = true;
-				a.refreshDimmer();
-			})
-			
-			// DimmAllUnitExcept
-			
 			if (effect.attacker === -1) {
 				if (attackers.length > 1) {
 					this.gameState.unassignedDamagePoints = 1;
-					this.gameState.setCurrentSpecialPhase(SpecialPhaseType.ATTACKER_DAMAGE);
+					this.gameState.pushSpecialPhaseQueue(SpecialPhaseType.ATTACKER_DAMAGE);
+
 					this.hexGrid.refreshUnitDimmers();
 				}
 
@@ -974,10 +971,32 @@
 				}
 			}
 
+			attackers.forEach(a => {
+				a.attacked = true;
+				a.refreshDimmer();
+			})
+
+			if (effect.defender === -1) {
+				if (this.healthStatus === HealthStatus.FULL) {
+					this.healthStatus = HealthStatus.REDUCED;
+				}
+				else if (this.healthStatus === HealthStatus.REDUCED) {
+					this.healthStatus = HealthStatus.DEAD;
+				}
+			}
+			else if (effect.defender === -2) {
+				this.healthStatus = HealthStatus.DEAD;
+			}
+
+			// TODO
+			// if (this.healthStatus === HealthStatus.DEAD) {
+			// 	this.gameState.pushSpecialPhaseQueue(SpecialPhaseType.ADVANCE);
+			// }
+
 			this.updateStatusIndicator();
 			this.updateStatusText();
 
-			if (this.gameState.currentSpecialPhase !== SpecialPhaseType.ATTACKER_DAMAGE) {
+			if (this.gameState.getCurrentSpecialPhase() !== SpecialPhaseType.ATTACKER_DAMAGE) {
 				this.hexGrid.endAttack();
 			}
 		}
@@ -1141,7 +1160,7 @@
 			if (this.gameState.winner !== null) {
 				statusText.textContent = this.gameState.winner.toUpperCase() + " PLAYER WON";
 			}
-			else if (this.gameState.currentSpecialPhase === SpecialPhaseType.ATTACKER_DAMAGE) {
+			else if (this.gameState.getCurrentSpecialPhase() === SpecialPhaseType.ATTACKER_DAMAGE) {
 				statusText.textContent = `Assign damage to attacker, ${this.gameState.unassignedDamagePoints} left`;
 			}
 			else {
