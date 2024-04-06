@@ -24,6 +24,10 @@
 	/*	
 		TODO:
 		- Move and attacks animations
+		- hyökkäys voi, johtaa perääntymiseen ja pelaaja saa valita perääntyvän yksikön
+		- end phase -painikkeen ulkonäkö riippumaan siitä onko painike aktiivinen
+		- samassa ruudussa voi olla monta yksikköä ja ruudun/yksikön klikkaaminen avaa valinta näkymän
+		- special phase muutettava olioksi, jotta siihen liittyvät tiedot saadaan paremmin kytkettyä mukaan
 	*/
 	const maxMovementPointCost = 9999;
 
@@ -977,11 +981,6 @@
 			const d6Value = Math.floor(Math.random() * 6) + 1;
 						
 			this.gameState.setCombatResult(crtColumn, d6Value);
-
-			// TODO: - hyökkäys voi, johtaa perääntymiseen ja pelaaja saa valita perääntyvän yksikön
-			// TODO: - end phase -painikkeen ulkonäkö riippumaan siitä onko painike aktiivinen
-			// TODO: - samassa ruudussa voi olla monta yksikköä ja ruudun/yksikön klikkaaminen avaa valinta näkymän
-			// TODO: - special phase muutettava olioksi, jotta siihen liittyvät tiedot saadaan paremmin kytkettyä mukaan
 			
 			const crtResult = crtColumn[d6Value];
 			const effect = CombatResultTableValueEffect[crtResult];
@@ -1408,22 +1407,6 @@
 
 	function getAnotherPlayer(player) {
 		return player === PlayerType.GREEN ? PlayerType.GREY : PlayerType.GREEN;
-	}
-
-	// This might be redundant
-	function autoSelectUnit(units) {
-		const sortedUnits = [
-			...units.filter(u => u.unitType === UnitType.INFANTRY && u.healthStatus === HealthStatus.FULL).sort(randomCompare),
-			...units.filter(u => u.unitType === UnitType.TANK && u.healthStatus === HealthStatus.FULL).sort(randomCompare),
-			...units.filter(u => u.unitType === UnitType.INFANTRY && u.healthStatus === HealthStatus.REDUCED).sort(randomCompare),
-			...units.filter(u => u.unitType === UnitType.TANK && u.healthStatus === HealthStatus.REDUCED).sort(randomCompare)
-		]
-		
-		return sortedUnits[0];
-	}
-
-	function randomCompare() {
-    	return Math.random() - 0.5;
 	}
 
     window.onload = drawGame;
