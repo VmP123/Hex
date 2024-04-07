@@ -386,7 +386,6 @@
 		}
 
 		clearHighlightedHexes() {
-			console.log('clearHighlightedHexes');
 			for(const highlightedHex of this.hexes.filter(hex => hex.highlighted)) {
 				highlightedHex.toggleInnerHex(false);
 			}
@@ -595,8 +594,6 @@
 		}
 
 		endSpecialPhase() {
-			console.log('endSpecialPhase');
-
 			if(this.gameState.getCurrentSpecialPhase() === SpecialPhaseType.ADVANCE) {
 				this.clearHighlightedHexes();
 				this.clearSelections();
@@ -687,7 +684,6 @@
 		}
 
 		toggleInnerHex(value) {
-			console.log('toggleInnerHex', value);
 			const innerHex = this.svg.querySelector('.innerHex');
 			if (value === undefined || value === null) {
 				this.highlighted = !this.highlighted;
