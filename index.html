@@ -24,10 +24,9 @@
 	/*	
 		TODO:
 		- Move and attacks animations
-		- hyökkäys voi, johtaa perääntymiseen ja pelaaja saa valita perääntyvän yksikön
-		- end phase -painikkeen ulkonäkö riippumaan siitä onko painike aktiivinen
-		- samassa ruudussa voi olla monta yksikköä ja ruudun/yksikön klikkaaminen avaa valinta näkymän
-		- special phase muutettava olioksi, jotta siihen liittyvät tiedot saadaan paremmin kytkettyä mukaan
+		- Hyökkäys voi, johtaa perääntymiseen ja pelaaja saa valita perääntyvän yksikön
+		- Samassa ruudussa voi olla monta yksikköä ja ruudun/yksikön klikkaaminen avaa valinta näkymän. Ehkä?
+		- Special phase muutettava olioksi, jotta siihen liittyvät tiedot saadaan paremmin kytkettyä mukaan
 	*/
 	const maxMovementPointCost = 9999;
 
@@ -226,6 +225,10 @@
 			this.specialPhaseQueue = [];
 			this.crtColumn = null;
 			this.d6Value = null;
+
+			this.onCombatResultUpdated = [];
+			this.onWinnerUpdated = [];
+			this.onCurrentSpecialPhaseUpdated = [];
 		}
 
 		setCombatResult(crtColumn, d6Value) {
@@ -235,9 +238,7 @@
 		}
 		
 		triggerCombatResultUpdatedEvent() {
-			if (typeof this.onCombatResultUpdated === 'function') {
-				this.onCombatResultUpdated();
-			}
+			this.onCombatResultUpdated.forEach(f => f());
 		}
 
 		setWinner(winner) {
@@ -246,9 +247,7 @@
 		}
 
 		triggerWinnerUpdatedEvent() {
-			if (typeof this.onWinnerUpdated === 'function') {
-				this.onWinnerUpdated();
-			}
+			this.onWinnerUpdated.forEach(f => f());
 		}
 
 		getCurrentSpecialPhase() {
@@ -256,10 +255,7 @@
 		}
 
 		triggerCurrentSpecialPhaseUpdatedEvent() {
-			console.log('triggerCurrentSpecialPhaseUpdatedEvent');
-			if (typeof this.onCurrentSpecialPhaseUpdated === 'function') {
-				this.onCurrentSpecialPhaseUpdated();
-			}
+			this.onCurrentSpecialPhaseUpdated.forEach(f => f());
 		}
 
 		pushSpecialPhaseQueue(specialPhase) {
@@ -1169,9 +1165,11 @@
 			this.hexGrid = hexGrid;
 			this.svg = null;
 
-			this.gameState.onCombatResultUpdated = this.refreshCombatResultText.bind(this);
-			this.gameState.onWinnerUpdated = this.refreshStatusText.bind(this);
-			this.gameState.onCurrentSpecialPhaseUpdated = this.refreshPhaseAndStatusText.bind(this);
+			this.gameState.onCombatResultUpdated.push(this.refreshCombatResultText.bind(this));
+			this.gameState.onWinnerUpdated.push(this.refreshStatusText.bind(this));
+			this.gameState.onCurrentSpecialPhaseUpdated.push(this.updatePhaseText.bind(this));
+			this.gameState.onCurrentSpecialPhaseUpdated.push(this.refreshStatusText.bind(this));
+			this.gameState.onCurrentSpecialPhaseUpdated.push(this.refreshEndPhaseButton.bind(this));
 		}
 
 		updatePhaseText() {			
@@ -1194,11 +1192,6 @@
 
 		updatePlayerText() {
 			this.svg.querySelector('.turn').textContent = "PLAYER: " + this.gameState.activePlayer.toUpperCase();
-		}
-
-		refreshPhaseAndStatusText() {
-			this.updatePhaseText();
-			this.refreshStatusText();
 		}
 
 		refreshCombatResultText() {
@@ -1226,6 +1219,14 @@
 			else {
 				statusText.textContent = "";
 			}
+		}
+
+		refreshEndPhaseButton() {
+			const endPhaseButtonText = this.svg.querySelector('.endPhaseButton .buttonText');
+
+			const currentSpecialPhase = this.gameState.getCurrentSpecialPhase();
+			const color = currentSpecialPhase === SpecialPhaseType.ATTACKER_DAMAGE ? "grey" : "black";
+			endPhaseButtonText.setAttribute('fill', color);
 		}
 
 		endPhase() {
@@ -1301,6 +1302,7 @@
 			this.svg.appendChild(text);
 			
 			const buttonSVG = this.createButtonSVG(100, 30, "End phase");
+			buttonSVG.setAttribute('class', 'endPhaseButton');	
 			buttonSVG.setAttribute('x', x);
 			buttonSVG.setAttribute('y', y + 100);
 
@@ -1345,6 +1347,7 @@
 			const buttonText = document.createElementNS(svgNS, "text");
 			buttonText.setAttribute("x", width / 2 + 2);
 			buttonText.setAttribute("y", height / 2 + 2);
+			buttonText.setAttribute("class", "buttonText");
 			buttonText.setAttribute("dominant-baseline", "middle");
 			buttonText.setAttribute("text-anchor", "middle");
 			buttonText.setAttribute("font-family", "Arial");
