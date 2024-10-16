@@ -40,7 +40,7 @@
 		FLAG: 'flag'
 	};
 
-	const TerrainInfo = {
+	const TerrainProperties = {
 		[TerrainType.CLEAR]: {
 			movementPointCost: 1
 		},
@@ -55,30 +55,7 @@
 		ARTILLERY: 'artillery',
 	};
 
-	const PlayerType = {
-		GREY: "grey",
-		GREEN: "green"
-	}
-
-	const TurnPhase = {
-		MOVE: "move",
-		ATTACK: "attack"
-	}
-
-	const SpecialPhaseType = {
-		ATTACKER_RETREAT: "attackerRetreat",
-		DEFENDER_RETREAT: "defenderRetreat",
-		ADVANCE: "advance",
-		ATTACKER_DAMAGE: "attackerDamage",
-	}
-
-	const HealthStatus = {
-		FULL: "full",
-		REDUCED: "reduced",
-		DEAD: "dead"
-	}
-
-	const UnitInfo = {
+	const UnitProperties = {
 		[UnitType.INFANTRY]: {
 			movementAllowance: 1,
 			attackRange: 1,
@@ -118,9 +95,32 @@
 		}
 	}
 
+	const PlayerType = {
+		GREY: "grey",
+		GREEN: "green"
+	}
+
 	const ColorByPlayer = {
 		[PlayerType.GREY]: "#d8d8d8",
 		[PlayerType.GREEN]: "#b5c599"
+	}
+
+	const TurnPhase = {
+		MOVE: "move",
+		ATTACK: "attack"
+	}
+
+	const SpecialPhaseType = {
+		ATTACKER_RETREAT: "attackerRetreat",
+		DEFENDER_RETREAT: "defenderRetreat",
+		ADVANCE: "advance",
+		ATTACKER_DAMAGE: "attackerDamage",
+	}
+
+	const HealthStatus = {
+		FULL: "full",
+		REDUCED: "reduced",
+		DEAD: "dead"
 	}
 
 	const GameStatus = {
@@ -270,7 +270,6 @@
 			this.specialPhaseQueue.shift();
 			this.triggerCurrentSpecialPhaseUpdatedEvent();
 		}
-		
 	}
 
 	class HexGrid {
@@ -416,8 +415,8 @@
 		}
 
 		highlightReachableEmptyHexes(x, y, unitType) {
-			 const adjacentHexes = this.getAdjacentEmptyHexesRecursion(x, y, 1, UnitInfo[unitType].movementAllowance); // old
-			//const adjacentHexes = this.getReachableHex(x, y, UnitInfo[unitType].movementAllowance); // new
+			 const adjacentHexes = this.getAdjacentEmptyHexesRecursion(x, y, 1, UnitProperties[unitType].movementAllowance); // old
+			//const adjacentHexes = this.getReachableHex(x, y, UnitProperties[unitType].movementAllowance); // new
 
 			for(const adjacentHex of adjacentHexes) {
 				for(const hex of this.hexes) {
@@ -456,7 +455,7 @@
 			}
 
 			const cost = !this.units.some(unit => unit.x === x && unit.y === y) 
-				? TerrainInfo[this.getHex(x, y).terrainType].movementPointCost
+				? TerrainProperties[this.getHex(x, y).terrainType].movementPointCost
 				: maxMovementPointCost
 
 			if (movementPoints < cost)
@@ -506,18 +505,10 @@
 				[0, -1], [1, -1], [1, 0], [0, 1], [-1, 0], [-1, -1]
 			];
 
-			const isEvenRow = x % 2 === 0;
-			const offsets = isEvenRow ? offsetsEvenRow : offsetsOddRow;
-
-			for (const [dx, dy] of offsets) {
-				const newX = x + dx;
-				const newY = y + dy;
-				if (isWithinGridBounds(newX, newY)) {
-					adjacentHexes.push({ x: newX, y: newY });
-				}
-			}
-
-			return adjacentHexes;
+			const offsets = x % 2 === 0 ? offsetsEvenRow : offsetsOddRow;
+			return offsets.filter(([dx, dy]) => {
+				return isWithinGridBounds(x + dx, y + dy);
+			}).map(([dx, dy]) => ({ x: x + dx, y: y + dy }));
 		}
 
 		getHex(x, y) {
@@ -538,7 +529,6 @@
 		refreshUnitSelectRects() {
 			this.units.forEach(u => u.refreshSelectRect());
 		}
-
 
 		clearUnitMovedAttacked() {
 			this.units.forEach(u => {
@@ -641,7 +631,7 @@
 			const baseHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
 			baseHex.setAttribute('class', 'hex baseHex');
 			baseHex.setAttribute('points', calculateHexPoints(hexCenterX, hexCenterY, this.hexRadius));
-			baseHex.setAttribute('fill', '#ffffff');
+			baseHex.setAttribute('fill', '#ffffff'); // #698B4F
 			baseHex.setAttribute('stroke', 'black');
 			baseHex.setAttribute('stroke-width', this.lineWidth);
 
@@ -963,12 +953,12 @@
 
 			const attackStrengthSum = this.hexGrid.selectedUnits.reduce(
 				(total, su) => total + (su.healthStatus === HealthStatus.FULL 
-					? UnitInfo[su.unitType].attackStrength 
-					: UnitInfo[su.unitType].reducedAttackStrength), 0
+					? UnitProperties[su.unitType].attackStrength 
+					: UnitProperties[su.unitType].reducedAttackStrength), 0
 			);
 			const defendStrength = this.healthStatus === HealthStatus.FULL 
-				? UnitInfo[this.unitType].defendStrength
-				: UnitInfo[this.unitType].reducedDefendStrength;
+				? UnitProperties[this.unitType].defendStrength
+				: UnitProperties[this.unitType].reducedDefendStrength;
 
 			const crtColumn = [...CombatResultsTable].reverse().find(crtv => crtv.ratio <= (attackStrengthSum/defendStrength));
 			const d6Value = Math.floor(Math.random() * 6) + 1;
@@ -1052,17 +1042,17 @@
 
 		refreshStatusText() {
 			const attack = this.healthStatus === HealthStatus.FULL 
-				? UnitInfo[this.unitType].attackStrength
-				: UnitInfo[this.unitType].reducedAttackStrength
+				? UnitProperties[this.unitType].attackStrength
+				: UnitProperties[this.unitType].reducedAttackStrength
 
 			const defend = this.healthStatus === HealthStatus.FULL 
-				? UnitInfo[this.unitType].defendStrength
-				: UnitInfo[this.unitType].reducedDefendStrength
+				? UnitProperties[this.unitType].defendStrength
+				: UnitProperties[this.unitType].reducedDefendStrength
 
 			this.baseRect.querySelector('.health').textContent = 
 				attack + "-" +
 				defend + "-" +
-				UnitInfo[this.unitType].movementAllowance;
+				UnitProperties[this.unitType].movementAllowance;
 		}
 
 		isValidMove(gridX, gridY) {
