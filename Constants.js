@@ -1,0 +1,201 @@
+const TerrainType = {
+	CLEAR: 'clear',
+	MOUNTAIN: 'mountain',
+	WATER: 'water',
+	FOREST: 'forest',
+	HILL: 'hill',
+	CITY: 'city',
+	FLAG: 'flag'
+};
+
+const PlayerType = {
+	GREY: "grey",
+	GREEN: "green"
+}
+
+const ColorByPlayer = {
+	[PlayerType.GREY]: "#d8d8d8",
+	[PlayerType.GREEN]: "#b5c599"
+}
+
+const HealthStatus = {
+	FULL: "full",
+	REDUCED: "reduced",
+	DEAD: "dead"
+}
+
+const GameStatus = {
+	GAMEON: 'gameon',
+	ENDED: 'ended',
+}
+
+const UnitType = {
+	INFANTRY: 'infantry',
+	TANK: 'tank',
+	ARTILLERY: 'artillery',
+};
+
+const TurnPhase = {
+	MOVE: "move",
+	ATTACK: "attack"
+};
+
+const SpecialPhaseType = {
+	ATTACKER_RETREAT: "attackerRetreat",
+	DEFENDER_RETREAT: "defenderRetreat",
+	ADVANCE: "advance",
+	ATTACKER_DAMAGE: "attackerDamage",
+}
+
+const UnitProperties = {
+	[UnitType.INFANTRY]: {
+		movementAllowance: 1,
+		attackRange: 1,
+		attackPowerByTarget:{
+			[UnitType.INFANTRY] : 1,
+			[UnitType.TANK] : 1,
+		},
+		attackStrength: 3,
+		defendStrength: 3,
+		reducedAttackStrength: 2,
+		reducedDefendStrength: 2
+		
+	},
+	[UnitType.TANK]: {
+		movementAllowance: 2,
+		attackRange: 1,
+		attackPowerByTarget:{
+			[UnitType.INFANTRY] : 2,
+			[UnitType.TANK] : 2,
+		},
+		attackStrength: 5,
+		defendStrength: 4,
+		reducedAttackStrength: 2,
+		reducedDefendStrength: 2
+	},
+	[UnitType.ARTILLERY]: {
+		movementAllowance: 1,
+		attackRange: 2,
+		attackPowerByTarget:{
+			[UnitType.INFANTRY] : 1,
+			[UnitType.TANK] : 1,
+		},
+		attackStrength: 4,
+		defendStrength: 3,
+		reducedAttackStrength: 2,
+		reducedDefendStrength: 1
+	}
+};
+
+const CombatResultsTable = [
+	{
+		'ratio': 1/2,
+		'ratioText': '1:2',
+		'1': 'A1',
+		'2': 'A1',
+		'3': 'A1',
+		'4': 'A1',
+		'5': 'NE',
+		'6': 'EX',
+	},
+	{
+		'ratio': 1/1,
+		'ratioText': '1:1',
+		'1': 'A1',
+		'2': 'A1',
+		'3': 'A1',
+		'4': 'NE',
+		'5': 'EX',
+		'6': 'D1',
+	},
+	{
+		'ratio': 2/1,
+		'ratioText': '2:1',
+		'1': 'A1',
+		'2': 'A1',
+		'3': 'NE',
+		'4': 'EX',
+		'5': 'D1',
+		'6': 'D1',
+	},
+	{
+		'ratio': 3/1,
+		'ratioText': '3:1',
+		'1': 'A1',
+		'2': 'NE',
+		'3': 'EX',
+		'4': 'D1',
+		'5': 'D1',
+		'6': 'D1',
+	},
+	{
+		'ratio': 4/1,
+		'ratioText': '4:1',
+		'1': 'NE',
+		'2': 'EX',
+		'3': 'D1',
+		'4': 'D1',
+		'5': 'D1',
+		'6': 'D2',
+	},
+	{
+		'ratio': 5/1,
+		'ratioText': '5:1',
+		'1': 'EX',
+		'2': 'D1',
+		'3': 'D1',
+		'4': 'D1',
+		'5': 'D2',
+		'6': 'D2'
+	}
+];
+
+const CombatResultTableValueEffect = {
+	'A1': {
+		attacker: -1,
+		defender: 0
+	},
+	'D1': {
+		attacker: 0,
+		defender: -1
+	},
+	'D2': {
+		attacker: 0,
+		defender: -2
+	},
+	'EX': {
+		attacker: -1,
+		defender: -1
+	},
+	'NE': {
+		attacker: 0,
+		defender: 0
+	}
+}
+
+const MaxMovementPointCost = 9999;
+
+const TerrainProperties = {
+	[TerrainType.CLEAR]: {
+		movementPointCost: 1
+	},
+	[TerrainType.MOUNTAIN]: {
+		movementPointCost: MaxMovementPointCost
+	}
+}
+
+export { 
+	TerrainType, 
+	PlayerType, 
+	ColorByPlayer, 
+	HealthStatus, 
+	GameStatus, 
+	UnitType,
+	TurnPhase,
+	SpecialPhaseType,
+	UnitProperties,
+	CombatResultsTable,
+	CombatResultTableValueEffect,
+	MaxMovementPointCost,
+	TerrainProperties 
+}
