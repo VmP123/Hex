@@ -35,6 +35,7 @@ async function initGame() {
     const infoArea = new InfoArea(gameState, hexGrid);
     infoArea.draw();
     svg.appendChild(infoArea.svg);
+
 }
 
 window.onload = initGame;

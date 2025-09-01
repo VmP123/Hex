@@ -6,7 +6,8 @@ import {
 	TurnPhase, 
 	SpecialPhaseType, 
 	CombatResultsTable, 
-	CombatResultTableValueEffect 
+	CombatResultTableValueEffect,
+	TerrainType
 } from './Constants.js';
 import { getHexWidth, getHexHeight, getMargin } from './utils.js';
 
@@ -115,6 +116,8 @@ export class Unit {
 			this.player == this.gameState.activePlayer && !this.moved) {
 				this.handleMovePhaseSelection()
 		}
+
+    console.log(this.x, this.y);
 	}
 
 	handleAttackerDamageSelection() {
@@ -227,18 +230,37 @@ export class Unit {
 	attack(attackers) {
 		attackers.forEach(a => {
 			a.attacked = true;
-		})
+		});
 
-		const attackStrengthSum = this.hexGrid.selectedUnits.reduce(
-			(total, su) => total + (su.healthStatus === HealthStatus.FULL 
-				? UnitProperties[su.unitType].attackStrength 
-				: UnitProperties[su.unitType].reducedAttackStrength), 0
+		const defenderHex = this.hexGrid.getHex(this.x, this.y);
+
+		const attackStrengthSum = attackers.reduce(
+			(total, su) => {
+				let strength = (su.healthStatus === HealthStatus.FULL 
+					? UnitProperties[su.unitType].attackStrength 
+					: UnitProperties[su.unitType].reducedAttackStrength);
+				
+				const attackerHex = this.hexGrid.getHex(su.x, su.y);
+				if (this.hexGrid.isRiverBetween(attackerHex, defenderHex)) {
+					strength /= 2;
+				}
+				return total + strength;
+			}, 0
 		);
+
 		const defendStrength = this.healthStatus === HealthStatus.FULL 
 			? UnitProperties[this.unitType].defendStrength
 			: UnitProperties[this.unitType].reducedDefendStrength;
 
-		const crtColumn = [...CombatResultsTable].reverse().find(crtv => crtv.ratio <= (attackStrengthSum/defendStrength));
+		let crtColumn = [...CombatResultsTable].reverse().find(crtv => crtv.ratio <= (attackStrengthSum/defendStrength));
+
+		if (defenderHex.terrainType === TerrainType.FOREST) {
+			const currentIndex = CombatResultsTable.indexOf(crtColumn);
+			if (currentIndex > 0) {
+				crtColumn = CombatResultsTable[currentIndex - 1];
+			}
+		}
+
 		const d6Value = Math.floor(Math.random() * 6) + 1;
 					
 		this.gameState.setCombatResult(crtColumn, d6Value);

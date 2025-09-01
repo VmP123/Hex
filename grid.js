@@ -122,6 +122,44 @@ export class HexGrid {
         return svg;
     }
 
+    isRiverBetween(hexA, hexB) {
+        const dx = hexB.x - hexA.x;
+        const dy = hexB.y - hexA.y;
+
+        console.log(dx, dy);
+
+        const offsetsOddRow = [
+            [1, 1], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, 0]
+        ];
+
+        const offsetsEvenRow = [
+            [1, 0], [0, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]
+        ];
+
+        const offsets = hexA.x % 2 === 0 ? offsetsEvenRow : offsetsOddRow;
+
+        console.log('offsets', offsets);
+
+        const edgeIndexA = offsets.findIndex(offset => offset[0] === dx && offset[1] === dy);
+
+        console.log('edgeIndexA', edgeIndexA);
+
+        if (edgeIndexA === -1) {
+            return false; // Not adjacent
+        }
+
+        const oppositeEdgeMap = { 0: 3, 1: 4, 2: 5, 3: 0, 4: 1, 5: 2 };
+        const edgeIndexB = oppositeEdgeMap[edgeIndexA];
+
+        const sideAHasRiver = hexA.riverEdges.includes(edgeIndexA);
+        const sideBHasRiver = hexB.riverEdges.includes(edgeIndexB);
+
+        console.log('sideAHasRiver', sideAHasRiver);
+        console.log('sideBHasRiver', sideBHasRiver);
+
+        return sideAHasRiver || sideBHasRiver;
+    }
+
     addUnit(unit) {
         this.units.push(unit);
 
