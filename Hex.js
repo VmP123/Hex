@@ -1,5 +1,6 @@
 import { TerrainType, ColorByPlayer, GameStatus, TurnPhase, SpecialPhaseType } from './Constants.js';
 import { SvgService } from './SvgService.js';
+import { getHexWidth, getHexHeight, getMargin } from './utils.js';
 
 export class Hex {
 	constructor(x, y, hexRadius, lineWidth, hexGrid) {
@@ -18,9 +19,9 @@ export class Hex {
 
 	// TODO: Siirretään tämä erilliseen SvgServiceen
 	draxHexSvg() {
-			const hexWidth = this.getHexWidth(this.hexRadius);
-			const hexHeight = this.getHexHeight(this.hexRadius);
-			const margin = this.getMargin(this.lineWidth);
+			const hexWidth = getHexWidth(this.hexRadius);
+			const hexHeight = getHexHeight(this.hexRadius);
+			const margin = getMargin(this.lineWidth);
 			const hexCenterX = (hexWidth * 0.5) + margin;
 			const hexCenterY = (hexHeight * 0.5) + margin;
 
@@ -107,9 +108,9 @@ export class Hex {
 			const svgService = new SvgService();
 			const mountainSvgElement = svgService.svgElements['mountain.svg'].cloneNode(true);
 
-			const hexWidth = this.getHexWidth(this.hexRadius);
-			const hexHeight = this.getHexHeight(this.hexRadius);
-			const margin = this.getMargin(this.lineWidth);
+			const hexWidth = getHexWidth(this.hexRadius);
+			const hexHeight = getHexHeight(this.hexRadius);
+			const margin = getMargin(this.lineWidth);
 
 			const x = (hexWidth / 2) - 37 + margin;
 			const y = (hexHeight / 2) - 35 + margin;
@@ -124,9 +125,9 @@ export class Hex {
 			const svgService = new SvgService();
 			const forestSvgElement = svgService.svgElements['forest.svg'].cloneNode(true);
 
-			const hexWidth = this.getHexWidth(this.hexRadius);
-			const hexHeight = this.getHexHeight(this.hexRadius);
-			const margin = this.getMargin(this.lineWidth);
+			const hexWidth = getHexWidth(this.hexRadius);
+			const hexHeight = getHexHeight(this.hexRadius);
+			const margin = getMargin(this.lineWidth);
 
 			const x = (hexWidth / 2) - 40 + margin;
 			const y = (hexHeight / 2) - 45 + margin;
@@ -161,9 +162,9 @@ export class Hex {
 		const flagColor = flagSvgElement.querySelector('.flagColor');
 		flagColor.setAttribute('fill', ColorByPlayer[player]);
 
-		const hexWidth = this.getHexWidth(this.hexRadius);
-		const hexHeight = this.getHexHeight(this.hexRadius);
-		const margin = this.getMargin(this.lineWidth);
+		const hexWidth = getHexWidth(this.hexRadius);
+		const hexHeight = getHexHeight(this.hexRadius);
+		const margin = getMargin(this.lineWidth);
 
 		const x = (hexWidth / 2) - 37 + margin - 10;
 		const y = (hexHeight / 2) - 35 + margin;
@@ -176,17 +177,5 @@ export class Hex {
 
 	setRiverEdges(riverEdges) {
 		this.riverEdges = riverEdges;
-	}
-
-	getHexWidth(hexRadius) {
-		return 2 * hexRadius;
-	}
-
-	getHexHeight(hexRadius) {
-		return Math.sqrt(3) * hexRadius;
-	}
-
-	getMargin(lineWidth) {
-		return Math.round(lineWidth / 2) + 1;
 	}
 }

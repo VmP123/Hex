@@ -8,6 +8,7 @@ import {
 	CombatResultsTable, 
 	CombatResultTableValueEffect 
 } from './Constants.js';
+import { getHexWidth, getHexHeight, getMargin } from './utils.js';
 
 export class Unit {
 	constructor(x, y, unitType, baseRect, player, hexRadius, lineWidth, hexGrid, gameState) {
@@ -43,9 +44,9 @@ export class Unit {
 	createUnit() {
 		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 
-		const margin = this.getMargin(this.lineWidth);
-		const hexWidth = this.getHexWidth(this.hexRadius);
-		const hexHeight = this.getHexHeight(this.hexRadius);
+		const margin = getMargin(this.lineWidth);
+		const hexWidth = getHexWidth(this.hexRadius);
+		const hexHeight = getHexHeight(this.hexRadius);
 
 		const dimmerRect = document.createElementNS('http://www.w3.org/2000/svg', "rect");
 		dimmerRect.setAttribute("x", 3);
@@ -197,9 +198,9 @@ export class Unit {
 		this.x = gridX;
 		this.y = gridY;
 
-		const hexWidth = this.getHexWidth(this.hexRadius);
-		const hexHeight = this.getHexHeight(this.hexRadius);
-		const margin = this.getMargin(this.lineWidth);
+		const hexWidth = getHexWidth(this.hexRadius);
+		const hexHeight = getHexHeight(this.hexRadius);
+		const margin = getMargin(this.lineWidth);
 
 		const xOffset = hexWidth * 0.75;
 		const yOffset = hexHeight * 0.5;
@@ -340,17 +341,5 @@ export class Unit {
 		const unitLayer = this.hexGrid.svg.querySelector('#unitLayer');
 		unitLayer.removeChild(this.svg);
 		this.hexGrid.units = this.hexGrid.units.filter(u => u !== this);
-	}
-
-	getMargin(lineWidth) { // Siirrä unit-luokkaan
-		return Math.round(lineWidth / 2) + 1;
-	}
-
-	getHexWidth(hexRadius) {
-		return 2 * hexRadius;
-	}
-
-	getHexHeight(hexRadius) {
-		return Math.sqrt(3) * hexRadius;
 	}
 }

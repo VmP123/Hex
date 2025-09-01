@@ -1,0 +1,327 @@
+import { Hex } from './Hex.js';
+import { TerrainType, UnitProperties, MaxMovementPointCost, TerrainProperties, SpecialPhaseType, GameStatus, PlayerType } from './Constants.js';
+import { getHexWidth, getHexHeight, getAnotherPlayer } from './utils.js';
+
+export class HexGrid {
+    constructor(rows, cols, scenarioMap, hexRadius, lineWidth, gameState) {
+        this.hexes = [];
+        this.units = [];
+        this.svg = null;
+        this.rows = rows;
+        this.cols = cols;
+        this.scenarioMap = scenarioMap;
+        this.hexRadius = hexRadius;
+        this.lineWidth = lineWidth;
+        this.selectedUnits = [];
+        this.gameState = gameState;
+    }
+
+    async drawHexGrid() {
+        const hexGrid = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        hexGrid.setAttribute('id', 'hexGrid');
+        const hexLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        hexLayer.setAttribute('id', 'hexLayer');
+        const riverLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        riverLayer.setAttribute('id', 'riverLayer');
+        const unitLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        unitLayer.setAttribute('id', 'unitLayer');
+
+        const terrainMapHexes = this.scenarioMap.mapHexes.filter(mh => mh.terrain != TerrainType.CLEAR);
+        const flagMapHexes = this.scenarioMap.mapHexes.filter(mh => mh.flag !== null && mh.flag !== undefined);
+        const riverMapHexes = this.scenarioMap.mapHexes.filter(mh => Array.isArray(mh.riverEdges) && mh.riverEdges.length > 0);
+
+        for (let row = 0; row < this.rows; row++) {
+            for (let col = 0; col < this.cols; col++) {
+                if ((row == this.rows - 1) && (col % 2 == 1)) {
+                    continue;
+                }
+                const hexWidth = getHexWidth(this.hexRadius);
+                const xOffset = hexWidth * 0.75;
+                const x = col * xOffset;
+                const hexHeight = getHexHeight(this.hexRadius);
+                const yOffset = hexHeight * 0.5;
+                const y = row * hexHeight + ((col % 2) * yOffset);
+
+                const hex = new Hex(col, row, this.hexRadius, this.lineWidth, this);
+
+                const terrainType = terrainMapHexes.find(tmh => tmh.x === col && tmh.y === row)?.terrain ?? TerrainType.CLEAR;
+                const flagHex = flagMapHexes.find(tmh => tmh.x === col && tmh.y === row) || {};
+                const riverEdges = riverMapHexes.find(tmh => tmh.x === col && tmh.y === row)?.riverEdges ?? [];
+
+                hex.setTerrain(terrainType);
+                hex.setFlag(flagHex.flag, flagHex.player);
+                hex.setRiverEdges(riverEdges);
+
+                hex.svg.setAttribute('x', x);
+                hex.svg.setAttribute('y', y);
+
+                hex.svg.addEventListener('click', (function(hex) {
+                    return function() {
+                        hex.clickHandler();
+                    };
+                })(hex));
+
+                this.hexes.push(hex);
+                hexLayer.appendChild(hex.svg);
+
+                // Not in use
+                riverEdges.forEach(riverEdge => {
+                    const riverSvg = this.drawRiver(getHexWidth(this.hexRadius) / 2 + 3.5, getHexHeight(this.hexRadius) / 2 + 3.5, riverEdge)
+                    riverSvg.setAttribute('x', x - 2);
+                    riverSvg.setAttribute('y', y - 2);
+                    riverLayer.appendChild(riverSvg);
+                })
+            }
+        }
+
+        hexGrid.appendChild(hexLayer);
+        hexGrid.appendChild(riverLayer);
+        hexGrid.appendChild(unitLayer);
+        this.svg = hexGrid;
+    }
+
+    drawRiver(x, y, edge) {
+        function calculateHexEdgePoints(x, y, radius, startVertex) {
+            const startAngle = (Math.PI / 3) * startVertex;
+            const endAngle = (Math.PI / 3) * (startVertex + 1);
+
+            return [
+                (x + radius * Math.cos(startAngle)) + "," + (y + radius * Math.sin(startAngle)),
+                (x + radius * Math.cos(endAngle)) + "," + (y + radius * Math.sin(endAngle))
+            ]
+        }
+
+        const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        polygon.setAttribute('points', calculateHexEdgePoints(x, y, 50, edge));
+        polygon.setAttribute('fill', 'none');
+        polygon.setAttribute('stroke', '#80c0ff');
+        polygon.setAttribute('stroke-width', 7);
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.appendChild(polygon);
+
+        return svg;
+    }
+
+    addUnit(unit) {
+        this.units.push(unit);
+
+        const unitLayer = this.svg.querySelector('#unitLayer');
+        unitLayer.appendChild(unit.svg);
+    }
+
+    isEmpty(x, y) {
+        return !this.units.some(unit => unit.x === x && unit.y === y) && this.hexes.some(hex => hex.x === x && hex.y === y && hex.isEmpty);
+    }
+
+    clearHighlightedHexes() {
+        for(const highlightedHex of this.hexes.filter(hex => hex.highlighted)) {
+            highlightedHex.toggleInnerHex(false);
+        }
+    }
+
+    highlightAdjacentEnemyHexes(selectedUnits) {
+        this.clearHighlightedHexes();
+
+        let adjacentEnemyHexes = [];
+
+        selectedUnits.forEach((su, index) => {
+            const hexes = this.getAdjacentHexes(su.x, su.y)
+                .filter(ah => this.units.some(unit => unit.x === ah.x && unit.y === ah.y && unit.player != this.gameState.activePlayer))
+                .map(ah => this.hexes.find(h => h.x === ah.x && h.y === ah.y))
+
+                index == 0 ? 
+                    adjacentEnemyHexes.push(...hexes) : 
+                    adjacentEnemyHexes = adjacentEnemyHexes.filter(value => hexes.includes(value));
+        })
+
+        for(const adjacentHex of adjacentEnemyHexes) {
+            for(const hex of this.hexes) {
+                if (adjacentHex.x == hex.x && adjacentHex.y == hex.y) {
+                    hex.toggleInnerHex(true);
+                }
+            }
+        }
+    }
+
+    highlightReachableEmptyHexes(x, y, unitType) {
+        const adjacentHexes = this.getAdjacentEmptyHexesRecursion(x, y, 1, UnitProperties[unitType].movementAllowance); // old
+        //const adjacentHexes = this.getReachableHex(x, y, UnitProperties[unitType].movementAllowance); // new
+
+        for(const adjacentHex of adjacentHexes) {
+            for(const hex of this.hexes) {
+                if (adjacentHex.x == hex.x && adjacentHex.y == hex.y) {
+                    hex.toggleInnerHex();
+                }
+            }
+        }
+    }
+
+    getAdjacentEmptyHexesRecursion(x, y, currentDepth, maxDepth) {
+        const adjacentHexes = this.getAdjacentHexes(x, y).filter(ah => this.isEmpty(ah.x, ah.y));
+        var allAdjacentHexes = [...adjacentHexes];
+
+        if (currentDepth < maxDepth) {
+            for(const adjacentHex of adjacentHexes) {
+                const adjacentHexesRecursion =
+                    this.getAdjacentEmptyHexesRecursion(adjacentHex.x, adjacentHex.y, currentDepth + 1, maxDepth)
+                    .filter(ah => !(ah.x == x && ah.y == y));
+
+                allAdjacentHexes.push(...adjacentHexesRecursion);
+            }
+        }
+
+        if (currentDepth === 1 && maxDepth > 1)
+        {
+            allAdjacentHexes = Array.from(new Set(allAdjacentHexes.map(JSON.stringify)), JSON.parse);
+        }
+
+        return allAdjacentHexes;
+    }
+
+    dfs(x, y, movementPoints, visited, reachableHexes) {
+        if (visited.find(v => v.x === x && v.y === y && v.movementPoints >= movementPoints) != null) {
+            return;			
+        }
+
+        const cost = !this.units.some(unit => unit.x === x && unit.y === y) 
+            ? TerrainProperties[this.getHex(x, y).terrainType].movementPointCost
+            : MaxMovementPointCost
+
+        if (movementPoints < cost)
+        {
+            visited.push({x: x, y: y, movementPoints: movementPoints});
+            return;
+        }
+        
+        visited.push({x: x, y: y, movementPoints: movementPoints});
+
+        if (!reachableHexes.some(rh => rh.x === x && rh.y === y)) {
+            reachableHexes.push({ x: x, y: y });
+        }
+
+        const remainingPoints = movementPoints - cost;
+        const adjacentHexes = this.getAdjacentHexes(x, y);
+        adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, remainingPoints, visited, reachableHexes));
+    }
+
+    getReachableHex(x, y, movementPoints) {
+        const reachableHexes = [];
+        const visited = [];
+      
+        visited.push({x: x, y: y, movementPoints: movementPoints});
+      
+        const adjacentHexes = this.getAdjacentHexes(x, y);
+        adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, movementPoints, visited, reachableHexes));
+                
+        return reachableHexes;
+    }
+
+    getAdjacentHexes(x, y) {
+        const adjacentHexes = [];
+
+        const isWithinGridBounds = (x, y) => 
+            x >= 0 &&
+            x < this.cols &&
+            y >= 0 &&
+            y < this.rows &&
+            !((y == this.rows - 1) && (x % 2 == 1));
+
+        const offsetsOddRow = [
+            [0, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]
+        ];
+
+        const offsetsEvenRow = [
+            [0, -1], [1, -1], [1, 0], [0, 1], [-1, 0], [-1, -1]
+        ];
+
+        const offsets = x % 2 === 0 ? offsetsEvenRow : offsetsOddRow;
+        return offsets.filter(([dx, dy]) => {
+            return isWithinGridBounds(x + dx, y + dy);
+        }).map(([dx, dy]) => ({ x: x + dx, y: y + dy }));
+    }
+
+    getHex(x, y) {
+        return this.hexes.find(h => h.x === x && h.y === y);
+    }
+
+    clearSelections() {			
+        this.selectedUnits.forEach(su => su.selected = false)
+        this.selectedUnits = [];
+
+        this.refreshUnitSelectRects();
+    }
+
+    refreshUnitDimmers() {
+        this.units.forEach(u => u.refreshDimmer());
+    }
+
+    refreshUnitSelectRects() {
+        this.units.forEach(u => u.refreshSelectRect());
+    }
+
+    clearUnitMovedAttacked() {
+        this.units.forEach(u => {
+            u.moved = false;
+            u.attacked = false;
+            u.advanced = false;
+            u.refreshDimmer();
+        });
+    }
+
+    checkWinningConditions() {		
+        const winner = this.getWinner();
+
+        if (winner != null) {
+            this.gameState.status = GameStatus.ENDED;
+            this.gameState.setWinner(winner);
+        }
+    }
+
+    getWinner() {
+        for (const player of Object.values(PlayerType)) {
+            if (!this.units.some(u => u.player == getAnotherPlayer(player)))
+            {
+                return player;
+            }
+
+            const flagHex = this.hexes.find(h => h.flag != null && h.player == getAnotherPlayer(player));			
+            if (this.units.some(u => u.x === flagHex.x && u.y === flagHex.y && u.player === player)) {
+                return player;
+            }
+        }
+
+        return null;
+    }
+
+    removeDeadUnits() {
+        [...this.units]
+                .filter(u => u.isDead())
+                .forEach(u => u.remove());
+    }
+
+    startSpecialPhase(specialPhase) {
+        if (specialPhase === SpecialPhaseType.ADVANCE) {
+            if (this.gameState.attackers.every(a => a.isDead())) {
+                this.endSpecialPhase();
+            }
+            else {
+                this.clearHighlightedHexes();
+                this.gameState.vacatedHex.toggleInnerHex(true);
+                this.refreshUnitDimmers();
+            }
+        }
+    }
+
+    endSpecialPhase() {
+        if(this.gameState.getCurrentSpecialPhase() === SpecialPhaseType.ADVANCE) {
+            this.clearHighlightedHexes();
+            this.clearSelections();
+        }
+
+        this.gameState.shiftSpecialPhaseQueue();
+
+        this.refreshUnitDimmers();
+        this.startSpecialPhase(this.gameState.getCurrentSpecialPhase());
+    }
+}
