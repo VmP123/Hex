@@ -97,20 +97,51 @@ export class Unit {
 		const currentSpecialPhase = this.gameState.getCurrentSpecialPhase();
 		
 		if (currentSpecialPhase === SpecialPhaseType.ATTACKER_DAMAGE && this.gameState.attackers.includes(this)) {
-			this.takeDamage();
-			this.gameState.unassignedDamagePoints--;
-			this.refreshStatusIndicator();
-			this.refreshStatusText();
-			this.hexGrid.removeDeadUnits();
-
-			if (this.gameState.unassignedDamagePoints === 0) {
-				this.hexGrid.endSpecialPhase();
-			}
+			this.handleAttackerDamageSelection();
 		}
 
 		else if (currentSpecialPhase === SpecialPhaseType.ADVANCE && this.gameState.attackers.includes(this) && 
 			(this.hexGrid.selectedUnits.length === 0 || this.hexGrid.selectedUnits[0] === this)) {
+				this.handleAdvanceSelection();
+		}
 
+		else if (this.gameState.currentTurnPhase === TurnPhase.ATTACK && currentSpecialPhase === null) {
+			this.handleAttackPhaseSelection();
+		}
+
+		else if (this.gameState.currentTurnPhase === TurnPhase.MOVE && currentSpecialPhase === null &&
+			(this.hexGrid.selectedUnits.length === 0 || this.hexGrid.selectedUnits[0] === this) && 
+			this.player == this.gameState.activePlayer && !this.moved) {
+				this.handleMovePhaseSelection()
+		}
+	}
+
+	handleAttackerDamageSelection() {
+		this.takeDamage();
+		this.gameState.unassignedDamagePoints--;
+		this.refreshStatusIndicator();
+		this.refreshStatusText();
+		this.hexGrid.removeDeadUnits();
+
+		if (this.gameState.unassignedDamagePoints === 0) {
+			this.hexGrid.endSpecialPhase();
+		}
+	}
+
+	handleAdvanceSelection() {
+		if (!this.hexGrid.selectedUnits.includes(this)) {
+			this.hexGrid.selectedUnits.push(this);
+		}
+		else {
+			this.hexGrid.selectedUnits = this.hexGrid.selectedUnits.filter(u => u !== this);
+		}
+
+		this.selected = !this.selected;
+		this.refreshSelectRect();
+	}
+
+	handleAttackPhaseSelection() {
+		if (this.player === this.gameState.activePlayer && !this.attacked) {
 			if (!this.hexGrid.selectedUnits.includes(this)) {
 				this.hexGrid.selectedUnits.push(this);
 			}
@@ -120,37 +151,21 @@ export class Unit {
 
 			this.selected = !this.selected;
 			this.refreshSelectRect();
+
+			this.hexGrid.highlightAdjacentEnemyHexes(this.hexGrid.selectedUnits);
 		}
-
-		else if (this.gameState.currentTurnPhase === TurnPhase.ATTACK && currentSpecialPhase === null) {
-			if (this.player === this.gameState.activePlayer && !this.attacked) {
-				if (!this.hexGrid.selectedUnits.includes(this)) {
-					this.hexGrid.selectedUnits.push(this);
-				}
-				else {
-					this.hexGrid.selectedUnits = this.hexGrid.selectedUnits.filter(u => u !== this);
-				}
-
-				this.selected = !this.selected;
-				this.refreshSelectRect();
-
-				this.hexGrid.highlightAdjacentEnemyHexes(this.hexGrid.selectedUnits);
-			}
-			else if (this.hexGrid.getHex(this.x, this.y).highlighted){
-				const attackers = this.hexGrid.selectedUnits;
-				this.attack(attackers);
-			}
+		else if (this.hexGrid.getHex(this.x, this.y).highlighted){
+			const attackers = this.hexGrid.selectedUnits;
+			this.attack(attackers);
 		}
+	}
 
-		else if (this.gameState.currentTurnPhase === TurnPhase.MOVE && currentSpecialPhase === null &&
-			(this.hexGrid.selectedUnits.length === 0 || this.hexGrid.selectedUnits[0] === this) && 
-			this.player == this.gameState.activePlayer && !this.moved) {
-			this.selected = !this.selected;
-			this.hexGrid.selectedUnits = this.selected ? [this] : [];
-			this.refreshSelectRect();
+	handleMovePhaseSelection() {
+		this.selected = !this.selected;
+		this.hexGrid.selectedUnits = this.selected ? [this] : [];
+		this.refreshSelectRect();
 
-			this.hexGrid.highlightReachableEmptyHexes(this.x, this.y, this.unitType);
-		}
+		this.hexGrid.highlightReachableEmptyHexes(this.x, this.y, this.unitType);
 	}
 
 	refreshSelectRect() {
