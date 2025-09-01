@@ -14,6 +14,7 @@ export class SvgService {
 
 		await this.loadSvgFromFile('infantry.svg');
 		await this.loadSvgFromFile('tank.svg');
+		await this.loadSvgFromFile('forest.svg');
 		await this.loadSvgFromFile('mountain.svg');
 		await this.loadSvgFromFile('flag.svg');
 		await this.loadSvgFromFile('triangle-flag.svg');

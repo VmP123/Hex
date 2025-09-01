@@ -120,6 +120,25 @@ export class Hex {
 			this.svg.appendChild(mountainSvgElement);
 		}
 
+		if (terrainType == TerrainType.FOREST) {
+			const svgService = new SvgService();
+			const forestSvgElement = svgService.svgElements['forest.svg'].cloneNode(true);
+
+			const hexWidth = this.getHexWidth(this.hexRadius);
+			const hexHeight = this.getHexHeight(this.hexRadius);
+			const margin = this.getMargin(this.lineWidth);
+
+			const x = (hexWidth / 2) - 40 + margin;
+			const y = (hexHeight / 2) - 45 + margin;
+
+			forestSvgElement.setAttribute('x', x);
+			forestSvgElement.setAttribute('y', y);
+			forestSvgElement.setAttribute('width', 80);
+			forestSvgElement.setAttribute('height', 80);
+
+			this.svg.appendChild(forestSvgElement);
+		}
+
 		if (terrainType == TerrainType.WATER) {
 			this.isEmpty = false;
 

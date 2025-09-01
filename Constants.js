@@ -179,6 +179,9 @@ const TerrainProperties = {
 	[TerrainType.CLEAR]: {
 		movementPointCost: 1
 	},
+	[TerrainType.FOREST]: {
+		movementPointCost: 2
+	},
 	[TerrainType.MOUNTAIN]: {
 		movementPointCost: MaxMovementPointCost
 	}

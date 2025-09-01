@@ -165,12 +165,12 @@
 					hexLayer.appendChild(hex.svg);
 
 					// Not in use
-					// riverEdges.forEach(riverEdge => {
-					// 	const riverSvg = this.drawRiver(getHexWidth(this.hexRadius) / 2 + 3.5, getHexHeight(this.hexRadius) / 2 + 3.5, riverEdge)
-					// 	riverSvg.setAttribute('x', x - 2);
-					// 	riverSvg.setAttribute('y', y - 2);
-					// 	riverLayer.appendChild(riverSvg);
-					// })
+					riverEdges.forEach(riverEdge => {
+						const riverSvg = this.drawRiver(getHexWidth(this.hexRadius) / 2 + 3.5, getHexHeight(this.hexRadius) / 2 + 3.5, riverEdge)
+						riverSvg.setAttribute('x', x - 2);
+						riverSvg.setAttribute('y', y - 2);
+						riverLayer.appendChild(riverSvg);
+					})
 				}
 			}
 
