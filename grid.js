@@ -17,60 +17,28 @@ export class HexGrid {
     }
 
     async drawHexGrid() {
-        const hexGrid = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        hexGrid.setAttribute('id', 'hexGrid');
-        const hexLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        hexLayer.setAttribute('id', 'hexLayer');
-        const riverLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        riverLayer.setAttribute('id', 'riverLayer');
-        const unitLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        unitLayer.setAttribute('id', 'unitLayer');
-
-        const terrainMapHexes = this.scenarioMap.mapHexes.filter(mh => mh.terrain != TerrainType.CLEAR);
-        const flagMapHexes = this.scenarioMap.mapHexes.filter(mh => mh.flag !== null && mh.flag !== undefined);
-        const riverMapHexes = this.scenarioMap.mapHexes.filter(mh => Array.isArray(mh.riverEdges) && mh.riverEdges.length > 0);
+        const { hexGrid, hexLayer, riverLayer, unitLayer } = this._createLayers();
+        const mapData = this._preprocessMapData();
 
         for (let row = 0; row < this.rows; row++) {
             for (let col = 0; col < this.cols; col++) {
-                if ((row == this.rows - 1) && (col % 2 == 1)) {
+                if ((row === this.rows - 1) && (col % 2 === 1)) {
                     continue;
                 }
-                const hexWidth = getHexWidth(this.hexRadius);
-                const xOffset = hexWidth * 0.75;
-                const x = col * xOffset;
-                const hexHeight = getHexHeight(this.hexRadius);
-                const yOffset = hexHeight * 0.5;
-                const y = row * hexHeight + ((col % 2) * yOffset);
+                
+                const hex = this._initializeHex(col, row, mapData);
+                const position = this._calculateHexPosition(col, row);
 
-                const hex = new Hex(col, row, this.hexRadius, this.lineWidth, this);
-
-                const terrainType = terrainMapHexes.find(tmh => tmh.x === col && tmh.y === row)?.terrain ?? TerrainType.CLEAR;
-                const flagHex = flagMapHexes.find(tmh => tmh.x === col && tmh.y === row) || {};
-                const riverEdges = riverMapHexes.find(tmh => tmh.x === col && tmh.y === row)?.riverEdges ?? [];
-
-                hex.setTerrain(terrainType);
-                hex.setFlag(flagHex.flag, flagHex.player);
-                hex.setRiverEdges(riverEdges);
-
-                hex.svg.setAttribute('x', x);
-                hex.svg.setAttribute('y', y);
-
-                hex.svg.addEventListener('click', (function(hex) {
-                    return function() {
-                        hex.clickHandler();
-                    };
-                })(hex));
+                hex.svg.setAttribute('x', position.x);
+                hex.svg.setAttribute('y', position.y);
 
                 this.hexes.push(hex);
                 hexLayer.appendChild(hex.svg);
 
-                // Not in use
-                riverEdges.forEach(riverEdge => {
-                    const riverSvg = this.drawRiver(getHexWidth(this.hexRadius) / 2 + 3.5, getHexHeight(this.hexRadius) / 2 + 3.5, riverEdge)
-                    riverSvg.setAttribute('x', x - 2);
-                    riverSvg.setAttribute('y', y - 2);
-                    riverLayer.appendChild(riverSvg);
-                })
+                const mapHexData = mapData.get(`${col},${row}`) || {};
+                if (mapHexData.riverEdges && mapHexData.riverEdges.length > 0) {
+                    this._drawRivers(riverLayer, mapHexData.riverEdges, position);
+                }
             }
         }
 
@@ -80,6 +48,57 @@ export class HexGrid {
         this.svg = hexGrid;
     }
 
+    _createLayers() {
+        const hexGrid = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        hexGrid.setAttribute('id', 'hexGrid');
+        const hexLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        hexLayer.setAttribute('id', 'hexLayer');
+        const riverLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        riverLayer.setAttribute('id', 'riverLayer');
+        const unitLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        unitLayer.setAttribute('id', 'unitLayer');
+        return { hexGrid, hexLayer, riverLayer, unitLayer };
+    }
+
+    _preprocessMapData() {
+        const mapData = new Map();
+        this.scenarioMap.mapHexes.forEach(hex => {
+            mapData.set(`${hex.x},${hex.y}`, hex);
+        });
+        return mapData;
+    }
+
+    _calculateHexPosition(col, row) {
+        const hexWidth = getHexWidth(this.hexRadius);
+        const xOffset = hexWidth * 0.75;
+        const x = col * xOffset;
+        const hexHeight = getHexHeight(this.hexRadius);
+        const yOffset = hexHeight * 0.5;
+        const y = row * hexHeight + ((col % 2) * yOffset);
+        return { x, y };
+    }
+
+    _initializeHex(col, row, mapData) {
+        const hex = new Hex(col, row, this.hexRadius, this.lineWidth, this);
+        const mapHexData = mapData.get(`${col},${row}`) || {};
+
+        hex.setTerrain(mapHexData.terrain || TerrainType.CLEAR);
+        hex.setFlag(mapHexData.flag, mapHexData.player);
+        hex.setRiverEdges(mapHexData.riverEdges || []);
+
+        hex.svg.addEventListener('click', () => hex.clickHandler());
+        return hex;
+    }
+
+    _drawRivers(riverLayer, riverEdges, position) {
+        riverEdges.forEach(riverEdge => {
+            const riverSvg = this.drawRiver(getHexWidth(this.hexRadius) / 2 + 3.5, getHexHeight(this.hexRadius) / 2 + 3.5, riverEdge);
+            riverSvg.setAttribute('x', position.x - 2);
+            riverSvg.setAttribute('y', position.y - 2);
+            riverLayer.appendChild(riverSvg);
+        });
+    }
+    
     drawRiver(x, y, edge) {
         function calculateHexEdgePoints(x, y, radius, startVertex) {
             const startAngle = (Math.PI / 3) * startVertex;
@@ -145,7 +164,7 @@ export class HexGrid {
     }
 
     highlightReachableEmptyHexes(x, y, unitType) {
-        const adjacentHexes = this.getAdjacentEmptyHexesRecursion(x, y, 1, UnitProperties[unitType].movementAllowance); // old
+         const adjacentHexes = this.getAdjacentEmptyHexesRecursion(x, y, 1, UnitProperties[unitType].movementAllowance); // old
         //const adjacentHexes = this.getReachableHex(x, y, UnitProperties[unitType].movementAllowance); // new
 
         for(const adjacentHex of adjacentHexes) {
