@@ -367,6 +367,9 @@ export class HexGrid {
     }
 
     startSpecialPhase(specialPhase) {
+        if (this.gameState.status === GameStatus.ENDED) {
+            return;
+        }
         if (specialPhase === SpecialPhaseType.ADVANCE) {
             if (this.gameState.attackers.every(a => a.isDead())) {
                 this.endSpecialPhase();
