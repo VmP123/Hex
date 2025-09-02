@@ -103,10 +103,10 @@ const CombatResultsTable = [
 		'ratioText': '1:1',
 		'1': 'A1',
 		'2': 'A1',
-		'3': 'A1',
+		'3': 'NE',
 		'4': 'NE',
 		'5': 'EX',
-		'6': 'D1',
+		'6': 'EX',
 	},
 	{
 		'ratio': 2/1,

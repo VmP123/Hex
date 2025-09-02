@@ -45,6 +45,15 @@ export class HexGrid {
         hexGrid.appendChild(hexLayer);
         hexGrid.appendChild(riverLayer);
         hexGrid.appendChild(unitLayer);
+
+        const hexWidth = getHexWidth(this.hexRadius);
+        const hexHeight = getHexHeight(this.hexRadius);
+        const totalWidth = (this.cols * hexWidth * 0.75) + (hexWidth * 0.25) + 5;
+        const totalHeight = (this.rows * hexHeight) + (hexHeight * 0.5);
+
+        hexGrid.setAttribute('width', totalWidth);
+        hexGrid.setAttribute('height', totalHeight);
+
         this.svg = hexGrid;
     }
 

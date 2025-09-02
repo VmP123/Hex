@@ -4,21 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Green men, grey tanks</title>
-<style>
-    svg {
-        width: 1424px;
-        height: 880px;
-    }
-
-	.clearHex {
-		/* fill: #a2ba79 */
-		fill: white;
-	}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<svg id="main" cursor="pointer"></svg>
+<div class="game-container">
+    <svg id="main"></svg>
+    <svg id="info-area"></svg>
+</div>
 
 <script type="module" src="game.js"></script>
 

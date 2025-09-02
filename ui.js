@@ -1,4 +1,4 @@
-import { GameStatus, PlayerType, SpecialPhaseType, TurnPhase } from './Constants.js';
+import { GameStatus, PlayerType, SpecialPhaseType, TurnPhase, CombatResultsTable } from './Constants.js';
 
 export class InfoArea {
     constructor(gameState, hexGrid) {
@@ -113,7 +113,7 @@ export class InfoArea {
         text.setAttribute('font-size', '22px');
         text.style.userSelect = 'none';
     
-        const x = 1050;
+        const x = 50;
         const y = 50;
 
         const tspan1 = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
@@ -162,6 +162,57 @@ export class InfoArea {
         statusText.setAttribute('y', y + 170);
 
         this.svg.appendChild(statusText);
+
+        const crt = this.drawCrt(x, y + 250);
+        this.svg.appendChild(crt);
+    }
+
+    drawCrt(x, y) {
+        const crtGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        crtGroup.style.userSelect = 'none';
+        crtGroup.setAttribute('class', 'crt-table');
+
+        const header = ['Ratio', '1', '2', '3', '4', '5', '6'];
+        const colWidth = 35;
+        const rowHeight = 20;
+        const fontSize = '16px';
+        const firstColWidth = 50;
+
+        // Draw header
+        header.forEach((text, i) => {
+            const headerCell = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            headerCell.setAttribute('x', x + (i === 0 ? 0 : firstColWidth + (i - 1) * colWidth));
+            headerCell.setAttribute('y', y);
+            headerCell.setAttribute('font-size', fontSize);
+            headerCell.setAttribute('font-weight', 'bold');
+            headerCell.textContent = text;
+            crtGroup.appendChild(headerCell);
+        });
+
+        // Draw rows
+        CombatResultsTable.forEach((row, rowIndex) => {
+            const yPos = y + (rowIndex + 1) * rowHeight;
+            
+            // Ratio
+            const ratioCell = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            ratioCell.setAttribute('x', x);
+            ratioCell.setAttribute('y', yPos);
+            ratioCell.setAttribute('font-size', fontSize);
+            ratioCell.textContent = row.ratioText;
+            crtGroup.appendChild(ratioCell);
+
+            // Results
+            for (let i = 1; i <= 6; i++) {
+                const resultCell = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                resultCell.setAttribute('x', x + firstColWidth + (i - 1) * colWidth);
+                resultCell.setAttribute('y', yPos);
+                resultCell.setAttribute('font-size', fontSize);
+                resultCell.textContent = row[i.toString()];
+                crtGroup.appendChild(resultCell);
+            }
+        });
+
+        return crtGroup;
     }
 
     createButtonSVG(width, height, text) {
