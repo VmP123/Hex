@@ -1,9 +1,10 @@
 import { GameStatus, PlayerType, SpecialPhaseType, TurnPhase, CombatResultsTable } from './Constants.js';
 
 export class InfoArea {
-    constructor(gameState, hexGrid) {
+    constructor(gameState, hexGrid, zoomFunction) {
         this.gameState = gameState;
         this.hexGrid = hexGrid;
+        this.zoomFunction = zoomFunction;
         this.svg = null;
 
         this.gameState.onCombatResultUpdated.push(this.refreshCombatResultText.bind(this));
@@ -114,7 +115,7 @@ export class InfoArea {
         text.style.userSelect = 'none';
     
         const x = 50;
-        const y = 50;
+        let currentY = 50; // Use a variable for Y position
 
         const tspan1 = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
         tspan1.textContent = "PLAYER: " + this.gameState.activePlayer.toUpperCase();
@@ -138,18 +139,19 @@ export class InfoArea {
         text.appendChild(tspan2);
         text.appendChild(tspan3);
 
-        text.setAttribute('y', y);
-
+        text.setAttribute('y', currentY); // Set initial Y for text block
         this.svg.appendChild(text);
-        
-        const buttonSVG = this.createButtonSVG(100, 30, "End phase");
-        buttonSVG.setAttribute('class', 'endPhaseButton');	
-        buttonSVG.setAttribute('x', x);
-        buttonSVG.setAttribute('y', y + 100);
 
-        this.svg.appendChild(buttonSVG);
+        currentY += 100; // Move Y down for the next element
 
-        buttonSVG.addEventListener('click', () => this.endPhase());
+        const endPhaseButton = this.createButtonSVG(100, 30, "End phase");
+        endPhaseButton.setAttribute('class', 'endPhaseButton');	
+        endPhaseButton.setAttribute('x', x);
+        endPhaseButton.setAttribute('y', currentY);
+        this.svg.appendChild(endPhaseButton);
+        endPhaseButton.addEventListener('click', () => this.endPhase());
+
+        currentY += 50; // Move Y down for the next element
 
         const statusText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         statusText.setAttribute('fill', 'black');
@@ -159,11 +161,19 @@ export class InfoArea {
         statusText.textContent = ""
         statusText.setAttribute('class', 'statusText');	
         statusText.setAttribute('x', x);
-        statusText.setAttribute('y', y + 170);
-
+        statusText.setAttribute('y', currentY);
         this.svg.appendChild(statusText);
 
-        const crt = this.drawCrt(x, y + 250);
+        currentY += 50; // Move Y down for the next element
+
+        // Zoom Toggle Button
+        const zoomButton = this.createButtonSVG(100, 30, "Zoom"); // Text "Zoom"
+        zoomButton.setAttribute('x', x);
+        zoomButton.setAttribute('y', 880 - 50); // Position at bottom-left
+        this.svg.appendChild(zoomButton);
+        zoomButton.addEventListener('click', () => this.zoomFunction());
+
+        const crt = this.drawCrt(x, 250); // Hardcode Y for crt
         this.svg.appendChild(crt);
     }
 

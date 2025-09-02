@@ -33,7 +33,7 @@ async function initGame() {
         hexGrid.addUnit(unit);
     });
 
-    const infoArea = new InfoArea(gameState, hexGrid);
+    const infoArea = new InfoArea(gameState, hexGrid, zoom);
     infoArea.draw();
     infoAreaSvg.appendChild(infoArea.svg);
 
@@ -47,6 +47,7 @@ async function initGame() {
     let startX, startY;
     let startViewBox;
     let isZoomedOut = false;
+    let lastZoomInViewBox = null;
 
     const margin = 100;
 
@@ -97,29 +98,45 @@ async function initGame() {
         svg.setAttribute('viewBox', `${clampedX} ${clampedY} ${startViewBox[2]} ${startViewBox[3]}`);
     });
 
-    svg.addEventListener('dblclick', () => {
-        isZoomedOut = !isZoomedOut;
+    function zoom(clientX = null, clientY = null) {
         const oldViewBoxString = svg.getAttribute('viewBox');
-
         const oldViewBox = oldViewBoxString.split(' ').map(parseFloat);
         if (oldViewBox.length < 4) return;
 
         const [oldX, oldY, oldWidth, oldHeight] = oldViewBox;
 
-        const centerX = oldX + oldWidth / 2;
-        const centerY = oldY + oldHeight / 2;
-
         let newWidth, newHeight;
-        if (isZoomedOut) {
+        let newX, newY;
+
+        if (!isZoomedOut) { // If currently zoomed in (isZoomedOut is false), zoom out
+            isZoomedOut = true;
+            lastZoomInViewBox = oldViewBox; // Save current viewBox before zooming out
             newWidth = mapWidth + margin * 2;
             newHeight = mapHeight + margin * 2;
-        } else {
-            newWidth = 1024;
-            newHeight = 880;
-        }
+            newX = oldX + oldWidth / 2 - newWidth / 2; // Center on current view
+            newY = oldY + oldHeight / 2 - newHeight / 2; // Center on current view
+        } else { // If currently zoomed out (isZoomedOut is true), zoom in
+            isZoomedOut = false;
+            newWidth = 1024; // Default zoom-in width
+            newHeight = 880; // Default zoom-in height
 
-        const newX = centerX - newWidth / 2;
-        const newY = centerY - newHeight / 2;
+            if (clientX !== null && clientY !== null) { // Double-click zoom to point
+                const rect = svg.getBoundingClientRect();
+                const scaleX = oldWidth / rect.width;
+                const scaleY = oldHeight / rect.height;
+
+                const svgX = oldX + (clientX - rect.left) * scaleX;
+                const svgY = oldY + (clientY - rect.top) * scaleY;
+
+                newX = svgX - newWidth / 2;
+                newY = svgY - newHeight / 2;
+            } else if (lastZoomInViewBox) { // Button zoom to last saved location
+                [newX, newY, newWidth, newHeight] = lastZoomInViewBox;
+            } else { // Default zoom-in, center on current view
+                newX = oldX + oldWidth / 2 - newWidth / 2;
+                newY = oldY + oldHeight / 2 - newHeight / 2;
+            }
+        }
 
         const minX = -margin;
         const minY = -margin;
@@ -130,6 +147,10 @@ async function initGame() {
         const clampedY = clamp(newY, minY, maxY);
 
         svg.setAttribute('viewBox', `${clampedX} ${clampedY} ${newWidth} ${newHeight}`);
+    }
+
+    svg.addEventListener('dblclick', (e) => {
+        zoom(e.clientX, e.clientY);
     });
 
     window.addEventListener('mouseup', endPan);
