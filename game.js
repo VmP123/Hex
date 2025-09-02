@@ -9,8 +9,8 @@ async function initGame() {
     const svg = document.getElementById('main');
     const infoAreaSvg = document.getElementById('info-area');
     const hexRadius = 50;
-    const numCols = 13;
-    const numRows = 9;
+    const numCols = 20;
+    const numRows = 20;
     const lineWidth = 2;
 
     const svgService = new SvgService();
@@ -37,6 +37,10 @@ async function initGame() {
     infoArea.draw();
     infoAreaSvg.appendChild(infoArea.svg);
 
+    const mapWidth = parseFloat(hexGrid.svg.getAttribute('width'));
+    const mapHeight = parseFloat(hexGrid.svg.getAttribute('height'));
+    svg.setAttribute('viewBox', `0 0 1024 880`);
+
     // --- Panning and Zooming Logic ---
 
     let isPanning = false;
@@ -44,12 +48,7 @@ async function initGame() {
     let startViewBox;
     let isZoomedOut = false;
 
-    const mapWidth = parseFloat(hexGrid.svg.getAttribute('width'));
-    const mapHeight = parseFloat(hexGrid.svg.getAttribute('height'));
     const margin = 100;
-
-    // Set initial viewBox
-    svg.setAttribute('viewBox', `0 0 1024 880`);
 
     function clamp(value, min, max) {
         return Math.max(min, Math.min(value, max));
@@ -63,7 +62,6 @@ async function initGame() {
     svg.addEventListener('mousedown', (e) => {
         if (e.button !== 0) return;
         const viewBoxString = svg.getAttribute('viewBox');
-        if (!viewBoxString) return;
 
         const viewBox = viewBoxString.split(' ').map(parseFloat);
         if (viewBox.length < 4) return;
@@ -78,8 +76,9 @@ async function initGame() {
     svg.addEventListener('mousemove', (e) => {
         if (!isPanning || !startViewBox) return;
 
-        const scaleX = startViewBox[2] / svg.clientWidth;
-        const scaleY = startViewBox[3] / svg.clientHeight;
+        const rect = svg.getBoundingClientRect();
+        const scaleX = startViewBox[2] / rect.width;
+        const scaleY = startViewBox[3] / rect.height;
 
         const dx = (e.clientX - startX) * scaleX;
         const dy = (e.clientY - startY) * scaleY;
@@ -101,7 +100,6 @@ async function initGame() {
     svg.addEventListener('dblclick', () => {
         isZoomedOut = !isZoomedOut;
         const oldViewBoxString = svg.getAttribute('viewBox');
-        if (!oldViewBoxString) return;
 
         const oldViewBox = oldViewBoxString.split(' ').map(parseFloat);
         if (oldViewBox.length < 4) return;
@@ -136,6 +134,32 @@ async function initGame() {
 
     window.addEventListener('mouseup', endPan);
     svg.addEventListener('mouseleave', endPan);
+
+    // --- Scaling Logic ---
+
+    const gameWrapper = document.getElementById('game-wrapper');
+    const baseWidth = 1424;
+    const baseHeight = 880;
+    const marginHorizontal = 10; // 50px margin on each side
+    const marginVertical = 10; // 50px margin on top and bottom
+
+    function resizeGame() {
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        const availableWidth = viewportWidth - marginHorizontal * 2;
+        const availableHeight = viewportHeight - marginVertical * 2;
+
+        const scaleX = availableWidth / baseWidth;
+        const scaleY = availableHeight / baseHeight;
+
+        const scale = Math.min(scaleX, scaleY);
+
+        gameWrapper.style.transform = `scale(${scale})`;
+    }
+
+    window.addEventListener('resize', resizeGame);
+    resizeGame(); // Initial resize
 }
 
 window.onload = initGame;
