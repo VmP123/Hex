@@ -140,11 +140,42 @@ export class Hex {
 			this.svg.appendChild(forestSvgElement);
 		}
 
-		if (terrainType == TerrainType.WATER) {
-			this.isEmpty = false;
+		if (terrainType == TerrainType.SWAMP) {
+			const svgService = new SvgService();
+			const swampSvgElement = svgService.svgElements['swamp.svg'].cloneNode(true);
 
-			const baseHex = this.svg.querySelector('.baseHex');
-			baseHex.setAttribute('fill', '#80c0ff');
+			const hexWidth = getHexWidth(this.hexRadius);
+			const hexHeight = getHexHeight(this.hexRadius);
+			const margin = getMargin(this.lineWidth);
+
+			const x = (hexWidth / 2) - 40 + margin;
+			const y = (hexHeight / 2) - 45 + margin;
+
+			swampSvgElement.setAttribute('x', x);
+			swampSvgElement.setAttribute('y', y);
+			swampSvgElement.setAttribute('width', 80);
+			swampSvgElement.setAttribute('height', 80);
+
+			this.svg.appendChild(swampSvgElement);
+		}
+
+		if (terrainType == TerrainType.WATER) {
+			const svgService = new SvgService();
+			const waterSvgElement = svgService.svgElements['water.svg'].cloneNode(true);
+
+			const hexWidth = getHexWidth(this.hexRadius);
+			const hexHeight = getHexHeight(this.hexRadius);
+			const margin = getMargin(this.lineWidth);
+
+			const x = (hexWidth / 2) - 40 + margin;
+			const y = (hexHeight / 2) - 45 + margin;
+
+			waterSvgElement.setAttribute('x', x);
+			waterSvgElement.setAttribute('y', y);
+			waterSvgElement.setAttribute('width', 80);
+			waterSvgElement.setAttribute('height', 80);
+
+			this.svg.appendChild(waterSvgElement);
 		}
 	}
 
