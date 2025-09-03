@@ -49,7 +49,7 @@ const SpecialPhaseType = {
 
 const UnitProperties = {
 	[UnitType.INFANTRY]: {
-		movementAllowance: 1,
+		movementAllowance: 2,
 		attackRange: 1,
 		attackPowerByTarget:{
 			[UnitType.INFANTRY] : 1,
@@ -62,7 +62,7 @@ const UnitProperties = {
 		
 	},
 	[UnitType.TANK]: {
-		movementAllowance: 2,
+		movementAllowance: 3,
 		attackRange: 1,
 		attackPowerByTarget:{
 			[UnitType.INFANTRY] : 2,
@@ -181,6 +181,9 @@ const TerrainProperties = {
 	},
 	[TerrainType.FOREST]: {
 		movementPointCost: 2
+	},
+	[TerrainType.FLAG]: {
+		movementPointCost: 1
 	},
 	[TerrainType.MOUNTAIN]: {
 		movementPointCost: MaxMovementPointCost

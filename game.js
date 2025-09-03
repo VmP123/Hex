@@ -161,15 +161,14 @@ async function initGame() {
     const gameWrapper = document.getElementById('game-wrapper');
     const baseWidth = 1424;
     const baseHeight = 880;
-    const marginHorizontal = 10; // 50px margin on each side
-    const marginVertical = 10; // 50px margin on top and bottom
+    const outerMargin = 25;
 
     function resizeGame() {
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
 
-        const availableWidth = viewportWidth - marginHorizontal * 2;
-        const availableHeight = viewportHeight - marginVertical * 2;
+        const availableWidth = viewportWidth - outerMargin * 2;
+        const availableHeight = viewportHeight - outerMargin * 2;
 
         const scaleX = availableWidth / baseWidth;
         const scaleY = availableHeight / baseHeight;

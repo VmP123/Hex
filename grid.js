@@ -211,8 +211,8 @@ export class HexGrid {
     }
 
     highlightReachableEmptyHexes(x, y, unitType) {
-         const adjacentHexes = this.getAdjacentEmptyHexesRecursion(x, y, 1, UnitProperties[unitType].movementAllowance); // old
-        //const adjacentHexes = this.getReachableHex(x, y, UnitProperties[unitType].movementAllowance); // new
+        //const adjacentHexes = this.getAdjacentEmptyHexesRecursion(x, y, 1, UnitProperties[unitType].movementAllowance); // old
+        const adjacentHexes = this.getReachableHex(x, y, UnitProperties[unitType].movementAllowance); // new
 
         for(const adjacentHex of adjacentHexes) {
             for(const hex of this.hexes) {
@@ -245,22 +245,29 @@ export class HexGrid {
         return allAdjacentHexes;
     }
 
-    dfs(x, y, movementPoints, visited, reachableHexes) {
+    dfs(x, y, movementPoints, visited, reachableHexes, fromX, fromY) {
         if (visited.find(v => v.x === x && v.y === y && v.movementPoints >= movementPoints) != null) {
-            return;			
-        }
-
-        const cost = !this.units.some(unit => unit.x === x && unit.y === y) 
-            ? TerrainProperties[this.getHex(x, y).terrainType].movementPointCost
-            : MaxMovementPointCost
-
-        if (movementPoints < cost)
-        {
-            visited.push({x: x, y: y, movementPoints: movementPoints});
             return;
         }
-        
-        visited.push({x: x, y: y, movementPoints: movementPoints});
+
+        let cost = !this.units.some(unit => unit.x === x && unit.y === y)
+            ? TerrainProperties[this.getHex(x, y).terrainType].movementPointCost
+            : MaxMovementPointCost;
+
+        if (fromX !== undefined && fromY !== undefined) {
+            const fromHex = this.getHex(fromX, fromY);
+            const currentHex = this.getHex(x, y);
+            if (this.isRiverBetween(fromHex, currentHex)) {
+                cost += 1;
+            }
+        }
+
+        if (movementPoints < cost) {
+            visited.push({ x: x, y: y, movementPoints: movementPoints });
+            return;
+        }
+
+        visited.push({ x: x, y: y, movementPoints: movementPoints });
 
         if (!reachableHexes.some(rh => rh.x === x && rh.y === y)) {
             reachableHexes.push({ x: x, y: y });
@@ -268,7 +275,7 @@ export class HexGrid {
 
         const remainingPoints = movementPoints - cost;
         const adjacentHexes = this.getAdjacentHexes(x, y);
-        adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, remainingPoints, visited, reachableHexes));
+        adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, remainingPoints, visited, reachableHexes, x, y));
     }
 
     getReachableHex(x, y, movementPoints) {
@@ -278,7 +285,7 @@ export class HexGrid {
         visited.push({x: x, y: y, movementPoints: movementPoints});
       
         const adjacentHexes = this.getAdjacentHexes(x, y);
-        adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, movementPoints, visited, reachableHexes));
+        adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, movementPoints, visited, reachableHexes, x, y));
                 
         return reachableHexes;
     }
