@@ -7,7 +7,8 @@ import {
 	SpecialPhaseType, 
 	CombatResultsTable, 
 	CombatResultTableValueEffect,
-	TerrainType
+	TerrainType,
+	TerrainProperties
 } from './Constants.js';
 import { getHexWidth, getHexHeight, getMargin } from './utils.js';
 
@@ -241,6 +242,10 @@ export class Unit {
 					: UnitProperties[su.unitType].reducedAttackStrength);
 				
 				const attackerHex = this.hexGrid.getHex(su.x, su.y);
+				const attackerTerrain = attackerHex.terrainType;
+				const attackModifier = TerrainProperties[attackerTerrain]?.attackModifier || 1;
+				strength *= attackModifier;
+
 				if (this.hexGrid.isRiverBetween(attackerHex, defenderHex)) {
 					strength /= 2;
 				}
@@ -254,10 +259,19 @@ export class Unit {
 
 		let crtColumn = [...CombatResultsTable].reverse().find(crtv => crtv.ratio <= (attackStrengthSum/defendStrength));
 
-		if (defenderHex.terrainType === TerrainType.FOREST) {
+		const defenderTerrain = defenderHex.terrainType;
+		const crtShift = TerrainProperties[defenderTerrain]?.defenderCrtShift || 0;
+
+		if (crtShift !== 0) {
 			const currentIndex = CombatResultsTable.indexOf(crtColumn);
-			if (currentIndex > 0) {
-				crtColumn = CombatResultsTable[currentIndex - 1];
+			const newIndex = currentIndex + crtShift;
+
+			if (newIndex >= 0 && newIndex < CombatResultsTable.length) {
+				crtColumn = CombatResultsTable[newIndex];
+			} else if (newIndex < 0) {
+				crtColumn = CombatResultsTable[0];
+			} else {
+				crtColumn = CombatResultsTable[CombatResultsTable.length - 1];
 			}
 		}
 

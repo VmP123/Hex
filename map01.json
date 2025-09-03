@@ -117,6 +117,11 @@
 		"y": 3,
 		"terrain": "forest"
 	},
+  	{
+		"x": 6,
+		"y": 4,
+		"terrain": "swamp"
+	},
 	{
 		"x": 6,
 		"y": 6,

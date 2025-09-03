@@ -178,22 +178,34 @@ const MaxMovementPointCost = 9999;
 
 const TerrainProperties = {
 	[TerrainType.CLEAR]: {
-		movementPointCost: 1
+		movementPointCost: 1,
+		defenderCrtShift: 0,
+		attackModifier: 1
 	},
 	[TerrainType.FOREST]: {
-		movementPointCost: 2
+		movementPointCost: 2,
+		defenderCrtShift: -1,
+		attackModifier: 1
 	},
 	[TerrainType.FLAG]: {
-		movementPointCost: 1
+		movementPointCost: 1,
+		defenderCrtShift: 0,
+		attackModifier: 1
 	},
 	[TerrainType.MOUNTAIN]: {
-		movementPointCost: MaxMovementPointCost
+		movementPointCost: MaxMovementPointCost,
+		defenderCrtShift: 0,
+		attackModifier: 1
 	},
 	[TerrainType.SWAMP]: {
-		movementPointCost: 2
+		movementPointCost: 2,
+		defenderCrtShift: 0,
+		attackModifier: 0.5
 	},
 	[TerrainType.WATER]: {
-		movementPointCost: MaxMovementPointCost
+		movementPointCost: MaxMovementPointCost,
+		defenderCrtShift: 0,
+		attackModifier: 1
 	}
 }
 
