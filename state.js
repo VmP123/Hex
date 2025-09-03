@@ -11,6 +11,7 @@ export class GameState {
         this.specialPhaseQueue = [];
         this.crtColumn = null;
         this.d6Value = null;
+        this.isAnimating = false;
 
         this.onCombatResultUpdated = [];
         this.onWinnerUpdated = [];

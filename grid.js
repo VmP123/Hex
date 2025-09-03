@@ -1,6 +1,6 @@
 import { Hex } from './Hex.js';
 import { TerrainType, UnitProperties, MaxMovementPointCost, TerrainProperties, SpecialPhaseType, GameStatus, PlayerType } from './Constants.js';
-import { getHexWidth, getHexHeight, getAnotherPlayer } from './utils.js';
+import { getHexWidth, getHexHeight, getAnotherPlayer, getMargin } from './utils.js';
 
 export class HexGrid {
     constructor(rows, cols, scenarioMap, hexRadius, lineWidth, gameState) {
@@ -135,8 +135,6 @@ export class HexGrid {
         const dx = hexB.x - hexA.x;
         const dy = hexB.y - hexA.y;
 
-        console.log(dx, dy);
-
         const offsetsOddRow = [
             [1, 1], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, 0]
         ];
@@ -147,11 +145,7 @@ export class HexGrid {
 
         const offsets = hexA.x % 2 === 0 ? offsetsEvenRow : offsetsOddRow;
 
-        console.log('offsets', offsets);
-
         const edgeIndexA = offsets.findIndex(offset => offset[0] === dx && offset[1] === dy);
-
-        console.log('edgeIndexA', edgeIndexA);
 
         if (edgeIndexA === -1) {
             return false; // Not adjacent
@@ -162,9 +156,6 @@ export class HexGrid {
 
         const sideAHasRiver = hexA.riverEdges.includes(edgeIndexA);
         const sideBHasRiver = hexB.riverEdges.includes(edgeIndexB);
-
-        console.log('sideAHasRiver', sideAHasRiver);
-        console.log('sideBHasRiver', sideBHasRiver);
 
         return sideAHasRiver || sideBHasRiver;
     }
@@ -212,9 +203,9 @@ export class HexGrid {
 
     highlightReachableEmptyHexes(x, y, unitType) {
         //const adjacentHexes = this.getAdjacentEmptyHexesRecursion(x, y, 1, UnitProperties[unitType].movementAllowance); // old
-        const adjacentHexes = this.getReachableHex(x, y, UnitProperties[unitType].movementAllowance); // new
+        const { reachableHexes } = this.getReachableHex(x, y, UnitProperties[unitType].movementAllowance); // new
 
-        for(const adjacentHex of adjacentHexes) {
+        for(const adjacentHex of reachableHexes) {
             for(const hex of this.hexes) {
                 if (adjacentHex.x == hex.x && adjacentHex.y == hex.y) {
                     hex.toggleInnerHex();
@@ -245,7 +236,7 @@ export class HexGrid {
         return allAdjacentHexes;
     }
 
-    dfs(x, y, movementPoints, visited, reachableHexes, fromX, fromY) {
+    dfs(x, y, movementPoints, visited, reachableHexes, fromX, fromY, cameFrom, gScore) {
         if (visited.find(v => v.x === x && v.y === y && v.movementPoints >= movementPoints) != null) {
             return;
         }
@@ -273,21 +264,59 @@ export class HexGrid {
             reachableHexes.push({ x: x, y: y });
         }
 
+        // Store cameFrom and gScore for path reconstruction
+        if (fromX !== undefined && fromY !== undefined) {
+            const currentHex = this.getHex(x, y);
+            const prevHex = this.getHex(fromX, fromY);
+            cameFrom.set(currentHex, prevHex);
+            gScore.set(currentHex, (gScore.get(prevHex) || 0) + cost);
+        } else {
+            // For the starting hex of the DFS
+            const currentHex = this.getHex(x, y);
+            gScore.set(currentHex, 0);
+        }
+
         const remainingPoints = movementPoints - cost;
         const adjacentHexes = this.getAdjacentHexes(x, y);
-        adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, remainingPoints, visited, reachableHexes, x, y));
+        adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, remainingPoints, visited, reachableHexes, x, y, cameFrom, gScore));
     }
 
     getReachableHex(x, y, movementPoints) {
         const reachableHexes = [];
         const visited = [];
+        const cameFrom = new Map();
+        const gScore = new Map();
       
         visited.push({x: x, y: y, movementPoints: movementPoints});
       
         const adjacentHexes = this.getAdjacentHexes(x, y);
-        adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, movementPoints, visited, reachableHexes, x, y));
+        adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, movementPoints, visited, reachableHexes, x, y, cameFrom, gScore));
                 
-        return reachableHexes;
+        return { reachableHexes, cameFrom, gScore };
+    }
+
+    findPath(start, end, movingUnit) {
+        // Get the movement allowance from the unit properties
+        const movementAllowance = UnitProperties[movingUnit.unitType].movementAllowance;
+
+        // Use getReachableHex to get the cameFrom map and gScore map
+        const { cameFrom, gScore } = this.getReachableHex(start.x, start.y, movementAllowance);
+
+        // Check if the end hex is reachable
+        if (cameFrom.has(end)) {
+            return this.reconstructPath(cameFrom, end);
+        }
+
+        return null; // No path found
+    }
+
+    reconstructPath(cameFrom, current) {
+        const totalPath = [current];
+        while (cameFrom.has(current)) {
+            current = cameFrom.get(current);
+            totalPath.unshift(current);
+        }
+        return totalPath;
     }
 
     getAdjacentHexes(x, y) {
@@ -309,13 +338,26 @@ export class HexGrid {
         ];
 
         const offsets = x % 2 === 0 ? offsetsEvenRow : offsetsOddRow;
-        return offsets.filter(([dx, dy]) => {
+        const result = offsets.filter(([dx, dy]) => {
             return isWithinGridBounds(x + dx, y + dy);
         }).map(([dx, dy]) => ({ x: x + dx, y: y + dy }));
+        return result;
     }
 
     getHex(x, y) {
         return this.hexes.find(h => h.x === x && h.y === y);
+    }
+
+    getUnitPosition(hex) {
+        const hexWidth = getHexWidth(this.hexRadius);
+        const hexHeight = getHexHeight(this.hexRadius);
+        const margin = getMargin(this.lineWidth);
+        const xOffset = hexWidth * 0.75;
+        const yOffset = hexHeight * 0.5;
+
+        const x = hex.x * xOffset + (hexWidth / 2) - 30 + margin;
+        const y = hex.y * hexHeight + ((hex.x % 2) * yOffset) + (hexHeight / 2) - 30 + margin;
+        return { x, y };
     }
 
     clearSelections() {			

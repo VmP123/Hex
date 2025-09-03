@@ -4,6 +4,7 @@ import { ScenarioMap } from './scenario.js';
 import { InfoArea } from './ui.js';
 import { HexGrid } from './grid.js';
 import { GameState } from './state.js';
+import { AnimationService } from './AnimationService.js';
 
 async function initGame() {
     const svg = document.getElementById('main');
@@ -20,6 +21,7 @@ async function initGame() {
     await scenarioMap.load("map01.json");
 
     const gameState = new GameState();
+    const animationService = new AnimationService();
 
     const hexGrid = new HexGrid(numRows, numCols, scenarioMap, hexRadius, lineWidth, gameState);
     await hexGrid.drawHexGrid();
@@ -28,7 +30,7 @@ async function initGame() {
 
     scenarioMap.mapHexes.filter(mh => mh.unit !== null && mh.unit !== undefined).forEach(mh => {
         const svgElement = svgService.svgElements[mh.unit + ".svg"];
-        const unit = new Unit(mh.x , mh.y, mh.unit, svgElement.cloneNode(true), mh.player, hexRadius, lineWidth, hexGrid, gameState);
+        const unit = new Unit(mh.x , mh.y, mh.unit, svgElement.cloneNode(true), mh.player, hexRadius, lineWidth, hexGrid, gameState, animationService);
         unit.createUnit();
         hexGrid.addUnit(unit);
     });
@@ -178,7 +180,7 @@ async function initGame() {
         gameWrapper.style.transform = `scale(${scale})`;
     }
 
-    window.addEventListener('resize', resizeGame);
+        window.addEventListener('resize', resizeGame);
     resizeGame(); // Initial resize
 }
 

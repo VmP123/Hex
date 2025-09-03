@@ -65,8 +65,8 @@ export class Hex {
 			return points.join(" ");
 	}
 
-	clickHandler() {
-		if (this.hexGrid.gameState.status !== GameStatus.GAMEON) {
+	async clickHandler() {
+		if (this.hexGrid.gameState.status !== GameStatus.GAMEON || this.hexGrid.gameState.isAnimating) {
 			return;
 		}
 
@@ -77,7 +77,7 @@ export class Hex {
 			this.hexGrid.selectedUnits[0].isValidMove(this.x, this.y)) {
 			const selectedUnit = this.hexGrid.selectedUnits[0];
 			selectedUnit.select();
-			selectedUnit.move(this.x, this.y);
+			await selectedUnit.move(this.x, this.y);
 
 			if (currentSpecialPhase === SpecialPhaseType.ADVANCE) {
 				this.hexGrid.endSpecialPhase();

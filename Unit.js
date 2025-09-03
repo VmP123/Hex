@@ -13,7 +13,7 @@ import {
 import { getHexWidth, getHexHeight, getMargin } from './utils.js';
 
 export class Unit {
-	constructor(x, y, unitType, baseRect, player, hexRadius, lineWidth, hexGrid, gameState) {
+	constructor(x, y, unitType, baseRect, player, hexRadius, lineWidth, hexGrid, gameState, animationService) {
 		this.j = null;
 		this.x = x;
 		this.y = y;
@@ -22,6 +22,7 @@ export class Unit {
 		this.lineWidth = lineWidth;
 		this.hexGrid = hexGrid;
 		this.gameState = gameState;
+    this.animationService = animationService;
 		this.selected = false;
 		this.baseRect = baseRect;
 		this.player = player;
@@ -55,9 +56,7 @@ export class Unit {
 		dimmerRect.setAttribute("y", 3);
 		dimmerRect.setAttribute("width", 54);
 		dimmerRect.setAttribute("height", 54);
-		//dimmerRect.setAttribute("fill", "#ebf2fa");
 		dimmerRect.setAttribute("fill", "#ffffff");
-		
 		dimmerRect.setAttribute("opacity", "65%");
 		dimmerRect.setAttribute("class", "dimmer");
 		dimmerRect.setAttribute("rx", 6);
@@ -93,7 +92,7 @@ export class Unit {
 	}
 
 	select() {
-		if (this.gameState.status !== GameStatus.GAMEON) {
+		if (this.gameState.status !== GameStatus.GAMEON || this.gameState.isAnimating) {
 			return;
 		}
 
@@ -117,8 +116,6 @@ export class Unit {
 			this.player == this.gameState.activePlayer && !this.moved) {
 				this.handleMovePhaseSelection()
 		}
-
-    console.log(this.x, this.y);
 	}
 
 	handleAttackerDamageSelection() {
@@ -215,17 +212,30 @@ export class Unit {
 		this.svg.setAttribute('y', y);
 	}
 
-	move(gridX, gridY) {
-		this.updatePosition(gridX, gridY)
+	async move(gridX, gridY) {
+      this.gameState.isAnimating = true;
+
+      const startHex = this.hexGrid.getHex(this.x, this.y);
+      const endHex = this.hexGrid.getHex(gridX, gridY);
+      const path = this.hexGrid.findPath(startHex, endHex, this);
+
+      if (path) {
+          await this.animationService.animateUnit(this, path, this.hexGrid);
+      }
+
+      this.x = gridX;
+      this.y = gridY;
+      this.updatePosition(this.x, this.y);
 		
-		if (this.gameState.currentTurnPhase === TurnPhase.MOVE) {
-			this.moved = true;
-		}
-		else if (this.gameState.currentSpecialPhase === SpecialPhaseType.ADVANCE) {
-			this.advanced = true;
-		}
-		
-		this.refreshDimmer();
+      if (this.gameState.currentTurnPhase === TurnPhase.MOVE) {
+        this.moved = true;
+      }
+      else if (this.gameState.currentSpecialPhase === SpecialPhaseType.ADVANCE) {
+        this.advanced = true;
+      }
+      
+      this.refreshDimmer();
+          this.gameState.isAnimating = false;
 	}
 
 	attack(attackers) {
