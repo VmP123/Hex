@@ -1,4 +1,4 @@
-import { GameStatus, PlayerType, SpecialPhaseType, TurnPhase, CombatResultsTable } from './Constants.js';
+import { GameStatus, PlayerType, SpecialPhaseType, TurnPhase, CombatResultsTable } from './constants.js';
 
 export class InfoArea {
     constructor(gameState, hexGrid, zoomFunction) {
@@ -142,7 +142,7 @@ export class InfoArea {
         text.setAttribute('y', currentY); // Set initial Y for text block
         this.svg.appendChild(text);
 
-        currentY += 100; // Move Y down for the next element
+        currentY += 90; // Move Y down for the next element
 
         const endPhaseButton = this.createButtonSVG(100, 30, "End phase");
         endPhaseButton.setAttribute('class', 'endPhaseButton');	
@@ -151,7 +151,7 @@ export class InfoArea {
         this.svg.appendChild(endPhaseButton);
         endPhaseButton.addEventListener('click', () => this.endPhase());
 
-        currentY += 50; // Move Y down for the next element
+        currentY += 55; // Move Y down for the next element
 
         const statusText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         statusText.setAttribute('fill', 'black');

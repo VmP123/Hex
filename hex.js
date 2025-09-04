@@ -1,5 +1,5 @@
 import { TerrainType, ColorByPlayer, GameStatus, TurnPhase, SpecialPhaseType } from './Constants.js';
-import { SvgService } from './SvgService.js';
+import { SvgService } from './svg-service.js';
 import { getHexWidth, getHexHeight, getMargin } from './utils.js';
 
 export class Hex {

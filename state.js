@@ -1,4 +1,4 @@
-import { GameStatus, PlayerType, TurnPhase } from './Constants.js';
+import { GameStatus, PlayerType, TurnPhase } from './constants.js';
 
 export class GameState {
     constructor() {

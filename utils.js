@@ -1,4 +1,4 @@
-import { PlayerType } from './Constants.js';
+import { PlayerType } from './constants.js';
 
 export function getHexWidth(hexRadius) {
     return 2 * hexRadius;

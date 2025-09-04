@@ -1,5 +1,5 @@
 import { Hex } from './Hex.js';
-import { TerrainType, UnitProperties, MaxMovementPointCost, TerrainProperties, SpecialPhaseType, GameStatus, PlayerType } from './Constants.js';
+import { TerrainType, UnitProperties, MaxMovementPointCost, TerrainProperties, SpecialPhaseType, GameStatus, PlayerType } from './constants.js';
 import { getHexWidth, getHexHeight, getAnotherPlayer, getMargin } from './utils.js';
 
 export class HexGrid {

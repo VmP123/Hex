@@ -10,7 +10,7 @@ export class AnimationService {
 
     animateUnit(unit, path, hexGrid) {
         return new Promise(resolve => {
-            const speed = 5; // pixels per frame
+            const speed = 6; // pixels per frame
             let pathIndex = 1;
 
             const step = () => {

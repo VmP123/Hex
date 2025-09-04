@@ -1,10 +1,10 @@
-import { Unit } from './Unit.js';
-import { SvgService } from './SvgService.js';
+import { Unit } from './unit.js';
+import { SvgService } from './svg-service.js';
 import { ScenarioMap } from './scenario.js';
 import { InfoArea } from './ui.js';
 import { HexGrid } from './grid.js';
 import { GameState } from './state.js';
-import { AnimationService } from './AnimationService.js';
+import { AnimationService } from './animation-service.js';
 
 async function initGame() {
     const svg = document.getElementById('main');
@@ -185,3 +185,4 @@ async function initGame() {
 }
 
 window.onload = initGame;
+

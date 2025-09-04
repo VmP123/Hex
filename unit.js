@@ -9,7 +9,7 @@ import {
 	CombatResultTableValueEffect,
 	TerrainType,
 	TerrainProperties
-} from './Constants.js';
+} from './constants.js';
 import { getHexWidth, getHexHeight, getMargin } from './utils.js';
 
 export class Unit {
