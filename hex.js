@@ -1,6 +1,6 @@
 import { TerrainType, ColorByPlayer, GameStatus, TurnPhase, SpecialPhaseType } from './Constants.js';
 import { SvgService } from './svg-service.js';
-import { getHexWidth, getHexHeight, getMargin } from './utils.js';
+import { getHexWidth, getHexHeight, getMargin, getAdjacentHexes } from './utils.js';
 
 export class Hex {
 	constructor(x, y, hexRadius, lineWidth, hexGrid) {
@@ -31,6 +31,13 @@ export class Hex {
 			const hexSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 			hexSvg.appendChild(baseHex);
 			hexSvg.appendChild(innerHex);
+
+			if (this.isEditor) {
+				for (let i = 0; i < 6; i++) {
+					const edge = this.createEdge(hexCenterX, hexCenterY, this.hexRadius, i);
+					hexSvg.appendChild(edge);
+				}
+			}
 
 			return hexSvg;
 	}
@@ -100,82 +107,50 @@ export class Hex {
 	}
 
 	setTerrain(terrainType) {
+		// Remove existing terrain
+		const existingTerrain = this.svg.querySelector('[data-terrain]');
+		if (existingTerrain) {
+			this.svg.removeChild(existingTerrain);
+		}
+
 		this.terrainType = terrainType;
+		this.isEmpty = true;
 
-		if (terrainType == TerrainType.MOUNTAIN) {
+		if (terrainType === TerrainType.MOUNTAIN || terrainType === TerrainType.FOREST || terrainType === TerrainType.SWAMP || terrainType === TerrainType.WATER) {
 			this.isEmpty = false;
-
 			const svgService = new SvgService();
-			const mountainSvgElement = svgService.svgElements['mountain.svg'].cloneNode(true);
+			const terrainSvgElement = svgService.svgElements[terrainType + '.svg'].cloneNode(true);
+			terrainSvgElement.setAttribute('data-terrain', terrainType); // Add data attribute for easy selection
 
 			const hexWidth = getHexWidth(this.hexRadius);
 			const hexHeight = getHexHeight(this.hexRadius);
 			const margin = getMargin(this.lineWidth);
 
-			const x = (hexWidth / 2) - 37 + margin;
-			const y = (hexHeight / 2) - 35 + margin;
+			let x, y, width, height;
 
-			mountainSvgElement.setAttribute('x', x);
-			mountainSvgElement.setAttribute('y', y);
+			switch (terrainType) {
+				case TerrainType.MOUNTAIN:
+					x = (hexWidth / 2) - 37 + margin;
+					y = (hexHeight / 2) - 35 + margin;
+					break;
+				case TerrainType.FOREST:
+				case TerrainType.SWAMP:
+				case TerrainType.WATER:
+					x = (hexWidth / 2) - 40 + margin;
+					y = (hexHeight / 2) - 45 + margin;
+					width = 80;
+					height = 80;
+					break;
+			}
 
-			this.svg.appendChild(mountainSvgElement);
-		}
+			terrainSvgElement.setAttribute('x', x);
+			terrainSvgElement.setAttribute('y', y);
+			if (width && height) {
+				terrainSvgElement.setAttribute('width', width);
+				terrainSvgElement.setAttribute('height', height);
+			}
 
-		if (terrainType == TerrainType.FOREST) {
-			const svgService = new SvgService();
-			const forestSvgElement = svgService.svgElements['forest.svg'].cloneNode(true);
-
-			const hexWidth = getHexWidth(this.hexRadius);
-			const hexHeight = getHexHeight(this.hexRadius);
-			const margin = getMargin(this.lineWidth);
-
-			const x = (hexWidth / 2) - 40 + margin;
-			const y = (hexHeight / 2) - 45 + margin;
-
-			forestSvgElement.setAttribute('x', x);
-			forestSvgElement.setAttribute('y', y);
-			forestSvgElement.setAttribute('width', 80);
-			forestSvgElement.setAttribute('height', 80);
-
-			this.svg.appendChild(forestSvgElement);
-		}
-
-		if (terrainType == TerrainType.SWAMP) {
-			const svgService = new SvgService();
-			const swampSvgElement = svgService.svgElements['swamp.svg'].cloneNode(true);
-
-			const hexWidth = getHexWidth(this.hexRadius);
-			const hexHeight = getHexHeight(this.hexRadius);
-			const margin = getMargin(this.lineWidth);
-
-			const x = (hexWidth / 2) - 40 + margin;
-			const y = (hexHeight / 2) - 45 + margin;
-
-			swampSvgElement.setAttribute('x', x);
-			swampSvgElement.setAttribute('y', y);
-			swampSvgElement.setAttribute('width', 80);
-			swampSvgElement.setAttribute('height', 80);
-
-			this.svg.appendChild(swampSvgElement);
-		}
-
-		if (terrainType == TerrainType.WATER) {
-			const svgService = new SvgService();
-			const waterSvgElement = svgService.svgElements['water.svg'].cloneNode(true);
-
-			const hexWidth = getHexWidth(this.hexRadius);
-			const hexHeight = getHexHeight(this.hexRadius);
-			const margin = getMargin(this.lineWidth);
-
-			const x = (hexWidth / 2) - 40 + margin;
-			const y = (hexHeight / 2) - 45 + margin;
-
-			waterSvgElement.setAttribute('x', x);
-			waterSvgElement.setAttribute('y', y);
-			waterSvgElement.setAttribute('width', 80);
-			waterSvgElement.setAttribute('height', 80);
-
-			this.svg.appendChild(waterSvgElement);
+			this.svg.appendChild(terrainSvgElement);
 		}
 	}
 
@@ -208,5 +183,124 @@ export class Hex {
 
 	setRiverEdges(riverEdges) {
 		this.riverEdges = riverEdges;
+	}
+
+	setUnit(unit) {
+		this.unit = unit;
+		this.isEmpty = false;
+	}
+
+	removeUnit() {
+		this.unit = null;
+		this.isEmpty = true;
+	}
+
+	createEdge(x, y, radius, edgeIndex) {
+		const edge = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+		const points = this.calculateHexPoints(x, y, radius);
+		const p1 = points.split(' ')[edgeIndex];
+		const p2 = points.split(' ')[(edgeIndex + 1) % 6];
+		const p_center = `${x},${y}`;
+
+		edge.setAttribute('points', `${p1} ${p2} ${p_center}`);
+		edge.setAttribute('fill', 'transparent');
+		edge.setAttribute('stroke', 'none');
+		edge.setAttribute('data-edge-index', edgeIndex);
+		edge.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.toggleRiver(edgeIndex);
+		});
+		return edge;
+	}
+
+	toggleRiver(edgeIndex) {
+		const adjacentHexes = getAdjacentHexes(this.x, this.y, this.hexGrid.rows, this.hexGrid.cols);
+		const adjacentHexInfo = adjacentHexes.find(h => {
+			const dx = h.x - this.x;
+			const dy = h.y - this.y;
+			const offsets = this.x % 2 === 0 ? [[0, -1], [1, -1], [1, 0], [0, 1], [-1, 0], [-1, -1]] : [[0, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]];
+			const index = offsets.findIndex(offset => offset[0] === dx && offset[1] === dy);
+			return index === edgeIndex;
+		});
+
+		if (!adjacentHexInfo) {
+			return; // No adjacent hex on this edge
+		}
+
+		const adjacentHex = this.hexGrid.getHex(adjacentHexInfo.x, adjacentHexInfo.y);
+		if (!adjacentHex) {
+			return;
+		}
+
+		const oppositeEdgeMap = { 0: 3, 1: 4, 2: 5, 3: 0, 4: 1, 5: 2 };
+		const oppositeEdge = oppositeEdgeMap[edgeIndex];
+
+		// Rule: the hex with the smaller x, or smaller y if x is equal, stores the river
+		const thisHexShouldStore = this.x < adjacentHex.x || (this.x === adjacentHex.x && this.y < adjacentHex.y);
+
+		if (thisHexShouldStore) {
+			const index = this.riverEdges.indexOf(edgeIndex);
+			if (index > -1) {
+				this.riverEdges.splice(index, 1);
+			} else {
+				this.riverEdges.push(edgeIndex);
+				// Ensure the other hex doesn't have the opposite edge
+				const otherIndex = adjacentHex.riverEdges.indexOf(oppositeEdge);
+				if (otherIndex > -1) {
+					adjacentHex.riverEdges.splice(otherIndex, 1);
+					adjacentHex.drawRivers();
+				}
+			}
+		} else {
+			const index = adjacentHex.riverEdges.indexOf(oppositeEdge);
+			if (index > -1) {
+				adjacentHex.riverEdges.splice(index, 1);
+			} else {
+				adjacentHex.riverEdges.push(oppositeEdge);
+				// Ensure this hex doesn't have the edge
+				const thisIndex = this.riverEdges.indexOf(edgeIndex);
+				if (thisIndex > -1) {
+					this.riverEdges.splice(thisIndex, 1);
+				}
+			}
+			adjacentHex.drawRivers();
+		}
+
+		this.drawRivers();
+	}
+
+	handleEdgeClick = (e) => {
+		e.stopPropagation();
+		const edgeIndex = parseInt(e.target.getAttribute('data-edge-index'), 10);
+		this.toggleRiver(edgeIndex);
+	}
+
+	addRiverEdgeEventListeners() {
+		this.svg.querySelectorAll('[data-edge-index]').forEach(edge => {
+			edge.addEventListener('click', this.handleEdgeClick);
+		});
+	}
+
+	removeRiverEdgeEventListeners() {
+		this.svg.querySelectorAll('[data-edge-index]').forEach(edge => {
+			edge.removeEventListener('click', this.handleEdgeClick);
+		});
+	}
+
+	drawRivers() {
+		// remove existing rivers
+		this.svg.querySelectorAll('[data-river]').forEach(r => this.svg.removeChild(r));
+
+		const hexWidth = getHexWidth(this.hexRadius);
+		const hexHeight = getHexHeight(this.hexRadius);
+		const margin = getMargin(this.lineWidth);
+		const x = (hexWidth / 2) + margin;
+		const y = (hexHeight / 2) + margin;
+
+		this.riverEdges.forEach(edgeIndex => {
+			const riverSvg = this.hexGrid.drawRiver(x, y, edgeIndex);
+			riverSvg.setAttribute('data-river', true);
+			this.svg.appendChild(riverSvg);
+		});
 	}
 }

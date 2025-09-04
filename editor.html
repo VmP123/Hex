@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hex Map Editor</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="editor-container">
+        <div id="map-container">
+            <svg id="main"></svg>
+        </div>
+        <div id="editor-controls">
+            <h2>Editor</h2>
+            <!-- Terrain Palette -->
+            <div id="terrain-palette">
+                <h3>Terrain</h3>
+                <!-- Terrain buttons will be added here -->
+            </div>
+            <!-- Unit Palette -->
+            <div id="unit-palette">
+                <h3>Units</h3>
+                <!-- Unit buttons will be added here -->
+            </div>
+            <!-- Player Selection -->
+            <div id="player-selection">
+                <h3>Player</h3>
+                <select id="player-select">
+                    <option value="0">Player 1</option>
+                    <option value="1">Player 2</option>
+                </select>
+            </div>
+            <!-- Import/Export -->
+            <div id="import-export">
+                <h3>Import/Export</h3>
+                <input type="file" id="import-map" accept=".json">
+                <button id="export-map">Export Map</button>
+            </div>
+            <div id="map-size">
+                <h3>Map Size</h3>
+                <label for="rows">Rows:</label>
+                <input type="number" id="rows" value="10" min="1">
+                <label for="cols">Cols:</label>
+                <input type="number" id="cols" value="10" min="1">
+                <button id="set-size">Set Size</button>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="editor.js"></script>
+</body>
+</html>

@@ -38,3 +38,39 @@ html, body {
     /* fill: #a2ba79 */
     fill: white;
 }
+
+.editor-container {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+}
+
+#map-container {
+    flex-grow: 1;
+    overflow: auto;
+    border-right: 1px solid black;
+}
+
+#editor-controls {
+    width: 200px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+#terrain-palette button,
+#unit-palette button {
+    display: block;
+    width: 100%;
+    margin-bottom: 5px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    cursor: pointer;
+}
+
+#terrain-palette button.selected,
+#unit-palette button.selected {
+    background-color: #a2ba79;
+    color: white;
+    border-color: #a2ba79;
+}

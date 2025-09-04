@@ -10,8 +10,6 @@ async function initGame() {
     const svg = document.getElementById('main');
     const infoAreaSvg = document.getElementById('info-area');
     const hexRadius = 50;
-    const numCols = 20;
-    const numRows = 20;
     const lineWidth = 2;
 
     const svgService = new SvgService();
@@ -23,7 +21,7 @@ async function initGame() {
     const gameState = new GameState();
     const animationService = new AnimationService();
 
-    const hexGrid = new HexGrid(numRows, numCols, scenarioMap, hexRadius, lineWidth, gameState);
+        const hexGrid = new HexGrid(scenarioMap.height, scenarioMap.width, scenarioMap, hexRadius, lineWidth, gameState);
     await hexGrid.drawHexGrid();
 
     svg.appendChild(hexGrid.svg);
