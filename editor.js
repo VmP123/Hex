@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await svgService.load();
   
   const hexRadius = 50;
-  const lineWidth = 2;
+  const lineWidth = 2; // Changed to match main application
   const gameState = new GameState();
   let hexGrid;
   const mainSvg = document.getElementById('main');
@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const clampedY = clamp(newY, minY, maxY);
     
     svg.setAttribute('viewBox', `${clampedX} ${clampedY} ${newWidth} ${newHeight}`);
+    console.log(svg.getAttribute('viewBox'));
   }
   
   async function drawMap(scenario) {
@@ -89,6 +90,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       hex.svg.addEventListener('click', (e) => onHexClick(hex, e));
     });
     
+    mapWidth = parseFloat(hexGrid.svg.getAttribute('width'));
+    mapHeight = parseFloat(hexGrid.svg.getAttribute('height'));
+
     mainSvg.setAttribute('viewBox', `${-margin} ${-margin} ${baseWidth} ${baseHeight}`);
   }
   
