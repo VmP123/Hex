@@ -185,4 +185,3 @@ async function initGame() {
 }
 
 window.onload = initGame;
-

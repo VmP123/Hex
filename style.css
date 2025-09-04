@@ -61,10 +61,10 @@ html, body {
 }
 
 #editor-controls {
-    width: 200px;
+    width: 250px;
     padding: 10px;
     box-sizing: border-box;
-    overflow-y: auto; /* Add scrollbar if content overflows vertically */
+    overflow-y: auto;
 }
 
 #terrain-palette button,

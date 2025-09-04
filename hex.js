@@ -205,11 +205,16 @@ export class Hex {
 
 	toggleRiver(edgeIndex) {
 		// Get the correct offsets for the current hex's x-coordinate
-		const offsets = this.x % 2 === 0 ? [
-			[0, -1], [1, -1], [1, 0], [0, 1], [-1, 0], [-1, -1] // Even row offsets
-		] : [
-			[0, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0] // Odd row offsets
-		];
+
+    const offsetsOddRow = [
+        [1, 1], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, 0]
+    ];
+
+    const offsetsEvenRow = [
+        [1, 0], [0, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]
+    ];
+
+    const offsets = hexA.x % 2 === 0 ? offsetsEvenRow : offsetsOddRow;
 
 		// Calculate the coordinates of the adjacent hex based on the edgeIndex
 		const [dx, dy] = offsets[edgeIndex];
