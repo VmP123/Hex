@@ -45,16 +45,26 @@ html, body {
     height: 100vh;
 }
 
+#editor-map-wrapper {
+    width: 1024px;
+    height: 880px;
+    border: 1px solid black;
+}
+
 #map-container {
     flex-grow: 1;
     overflow: auto;
     border-right: 1px solid black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #editor-controls {
     width: 200px;
     padding: 10px;
     box-sizing: border-box;
+    overflow-y: auto; /* Add scrollbar if content overflows vertically */
 }
 
 #terrain-palette button,
@@ -73,4 +83,16 @@ html, body {
     background-color: #a2ba79;
     color: white;
     border-color: #a2ba79;
+}
+
+#hex-grid,
+#main { /* Apply styles to both SVGs */
+    background-color: #eee;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+}
+
+#main { /* Specific styles for editor.html's SVG */
+    border: 1px solid black; /* Added border to match main app's #main div */
 }

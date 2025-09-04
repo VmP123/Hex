@@ -5,6 +5,7 @@ import { InfoArea } from './ui.js';
 import { HexGrid } from './grid.js';
 import { GameState } from './state.js';
 import { AnimationService } from './animation-service.js';
+import { GameStatus } from './constants.js';
 
 async function initGame() {
     const svg = document.getElementById('main');
@@ -19,6 +20,7 @@ async function initGame() {
     await scenarioMap.load("map01.json");
 
     const gameState = new GameState();
+    gameState.status = GameStatus.GAMEON;
     const animationService = new AnimationService();
 
         const hexGrid = new HexGrid(scenarioMap.height, scenarioMap.width, scenarioMap, hexRadius, lineWidth, gameState);

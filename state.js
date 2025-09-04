@@ -2,7 +2,7 @@ import { GameStatus, PlayerType, TurnPhase } from './constants.js';
 
 export class GameState {
     constructor() {
-        this.status = GameStatus.GAMEON;
+        this.status = GameStatus.EDITOR;
         this.winner = null;
         this.activePlayer = PlayerType.GREY;
         this.currentTurnPhase = TurnPhase.MOVE;

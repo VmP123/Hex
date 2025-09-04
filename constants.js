@@ -28,7 +28,8 @@ const HealthStatus = {
 const GameStatus = {
 	GAMEON: 'gameon',
 	ENDED: 'ended',
-}
+	EDITOR: 'editor',
+};
 
 const UnitType = {
 	INFANTRY: 'infantry',
