@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await svgService.load();
   
   const hexRadius = 50;
-  const lineWidth = 2; // Changed to match main application
+  const lineWidth = 2;
   const gameState = new GameState();
   let hexGrid;
   const mainSvg = document.getElementById('main');
@@ -18,9 +18,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   let mapWidth;
   let mapHeight;
   
-  mainSvg.setAttribute('viewBox', `0 0 1024 880`);
-  
-  // --- Panning Logic ---
   let isPanning = false;
   let startX, startY;
   let startViewBox;
@@ -92,10 +89,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       hex.svg.addEventListener('click', (e) => onHexClick(hex, e));
     });
     
-    mapWidth = parseFloat(hexGrid.svg.getAttribute('width'));
-    mapHeight = parseFloat(hexGrid.svg.getAttribute('height'));
-    mainSvg.setAttribute('viewBox', `0 0 ${mapWidth} ${mapHeight}`);
-    
+    mainSvg.setAttribute('viewBox', `${-margin} ${-margin} ${baseWidth} ${baseHeight}`);
   }
   
   mainSvg.addEventListener('dblclick', (e) => {
