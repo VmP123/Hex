@@ -47,6 +47,10 @@ export class HexGrid {
         const totalWidth = (this.cols * hexWidth * 0.75) + (hexWidth * 0.25) + 5;
         const totalHeight = (this.rows * hexHeight) + (hexHeight * 0.5);
 
+        [...mapData.values()].filter(mapDataHex => mapDataHex.riverEdges && mapDataHex.riverEdges.length > 0).forEach(mapDataHex => 
+            this._drawRivers(riverLayer, mapDataHex.riverEdges, mapDataHex )
+        );      
+
         hexGrid.setAttribute('width', totalWidth);
         hexGrid.setAttribute('height', totalHeight);
 
@@ -92,42 +96,49 @@ export class HexGrid {
         hex.setTerrain(mapHexData.terrain || TerrainType.CLEAR);
         hex.setFlag(mapHexData.flag, mapHexData.player);
         hex.setRiverEdges(mapHexData.riverEdges || []);
-        hex.drawRivers();
 
         hex.svg.addEventListener('click', () => hex.clickHandler());
         return hex;
     }
 
     _drawRivers(riverLayer, riverEdges, position) {
+        const {x, y} =  this.getHexPosition(position);
+
         riverEdges.forEach(riverEdge => {
-            const riverSvg = this.drawRiver(getHexWidth(this.hexRadius) / 2 + 3.5, getHexHeight(this.hexRadius) / 2 + 3.5, riverEdge);
-            riverSvg.setAttribute('x', position.x - 2);
-            riverSvg.setAttribute('y', position.y - 2);
+            const riverSvg = this._drawRiver(getHexWidth(this.hexRadius) / 2 + x, getHexHeight(this.hexRadius) / 2 + y, riverEdge);
             riverLayer.appendChild(riverSvg);
         });
     }
     
-    drawRiver(x, y, edge) {
+    _drawRiver(x, y, edge) {
         function calculateHexEdgePoints(x, y, radius, startVertex) {
             const startAngle = (Math.PI / 3) * startVertex;
             const endAngle = (Math.PI / 3) * (startVertex + 1);
 
             return [
-                (x + radius * Math.cos(startAngle)) + "," + (y + radius * Math.sin(startAngle)),
-                (x + radius * Math.cos(endAngle)) + "," + (y + radius * Math.sin(endAngle))
+                (x + radius * Math.cos(startAngle)),
+                (y + radius * Math.sin(startAngle)),
+                (x + radius * Math.cos(endAngle)),
+                (y + radius * Math.sin(endAngle))
             ]
         }
 
-        const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        polygon.setAttribute('points', calculateHexEdgePoints(x, y, 50, edge));
-        polygon.setAttribute('fill', 'none');
-        polygon.setAttribute('stroke', '#80c0ff');
-        polygon.setAttribute('stroke-width', 7);
+        const points = calculateHexEdgePoints(x, y, 50, edge);
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', points[0]);
+        line.setAttribute('y1', points[1]);
+        line.setAttribute('x2', points[2]);
+        line.setAttribute('y2', points[3]);
+        line.setAttribute('stroke-linecap', 'round');
+        line.setAttribute('fill', 'none');
+        line.setAttribute('stroke', '#80c0ff');
+        line.setAttribute('stroke-width', 10);
 
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.appendChild(polygon);
+        svg.appendChild(line);
 
-        return svg;
+        return line;
     }
 
     isRiverBetween(hexA, hexB) {
@@ -339,6 +350,17 @@ export class HexGrid {
 
         const x = hex.x * xOffset + (hexWidth / 2) - 30 + margin;
         const y = hex.y * hexHeight + ((hex.x % 2) * yOffset) + (hexHeight / 2) - 30 + margin;
+        return { x, y };
+    }
+
+    getHexPosition(hex) {
+        const hexWidth = getHexWidth(this.hexRadius);
+        const hexHeight = getHexHeight(this.hexRadius);
+        const xOffset = hexWidth * 0.75;
+        const yOffset = hexHeight * 0.5;
+
+        const x = hex.x * xOffset;
+        const y = hex.y * hexHeight + ((hex.x % 2) * yOffset);
         return { x, y };
     }
 
