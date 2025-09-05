@@ -243,12 +243,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectedTerrain = null;
     selectedUnit = null;
     updateSelectedPalette(e.target);
-    
-    if (riverMode) {
-      hexGrid.hexes.forEach(hex => hex.addRiverEdgeEventListeners());
-    } else {
-      hexGrid.hexes.forEach(hex => hex.removeRiverEdgeEventListeners());
-    }
   });
   terrainPalette.appendChild(riverButton);
   
@@ -261,12 +255,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   function onHexClick(hex, event) {
+    const editorMapWrapper = document.getElementById('editor-map-wrapper');
+    const sidebarWidth = document.getElementById('editor-controls').offsetWidth;
+    const outerMargin = 25;
+    const baseWidth = 1024;
+    const baseHeight = 880;
+    const availableWidth = window.innerWidth - sidebarWidth - outerMargin * 2;
+    const availableHeight = window.innerHeight - outerMargin * 2;
+    const scaleX = availableWidth / baseWidth;
+    const scaleY = availableHeight / baseHeight;
+    const scale = Math.min(scaleX, scaleY);
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / scale;
+    const y = (event.clientY - rect.top) / scale;
+    console.log(`Coordinates (unscaled): x: ${x}, y: ${y}`);
+
     if (riverMode) {
-      // If riverMode is true, only allow edge clicks to be handled by edge listeners
-      if (event.target.getAttribute('data-edge-index')) {
-        return; // Handled by edge click listener
-      }
-      return; // Otherwise, do nothing in riverMode
+      const edgeIndex = hex.getClosestSide(x, y);
+      hex.toggleRiver(edgeIndex);
+      return;
     }
     const player = document.getElementById('player-select').value === '0' ? PlayerType.GREY : PlayerType.GREEN;
     if (selectedTerrain) {

@@ -30,6 +30,10 @@ export class Hex {
 			const innerHex = this.createInnerHex(hexCenterX, hexCenterY, this.hexRadius - 5);
 
 			const hexSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+			const svgWidth = hexWidth + margin * 2;
+			const svgHeight = hexHeight + margin * 2;
+			hexSvg.setAttribute('width', svgWidth);
+			hexSvg.setAttribute('height', svgHeight);
 			hexSvg.appendChild(baseHex);
 			hexSvg.appendChild(innerHex);
 
@@ -67,6 +71,8 @@ export class Hex {
 	}
 
 	async clickHandler() {
+    // this.getClosestSide();
+
 		if (this.hexGrid.gameState.status !== GameStatus.GAMEON || this.hexGrid.gameState.isAnimating) {
 			return;
 		}
@@ -86,6 +92,45 @@ export class Hex {
 
 			this.hexGrid.checkWinningConditions();
 		}
+	}
+
+		getClosestSide(clickX, clickY) {
+		const hexWidth = getHexWidth(this.hexRadius);
+		const hexHeight = getHexHeight(this.hexRadius);
+		const margin = getMargin(this.lineWidth);
+		const hexCenterX = (hexWidth * 0.5) + margin;
+		const hexCenterY = (hexHeight * 0.5) + margin;
+
+		const vertices = [];
+		for (let i = 0; i < 6; i++) {
+			const angle = (Math.PI / 3) * i;
+			vertices.push({
+				x: hexCenterX + this.hexRadius * Math.cos(angle),
+				y: hexCenterY + this.hexRadius * Math.sin(angle)
+			});
+		}
+
+		let minDistanceSq = Infinity;
+		let closestSideIndex = -1;
+
+		for (let i = 0; i < 6; i++) {
+			const p1 = vertices[i];
+			const p2 = vertices[(i + 1) % 6];
+			
+			const midX = (p1.x + p2.x) / 2;
+			const midY = (p1.y + p2.y) / 2;
+			
+			const distSq = Math.pow(clickX - midX, 2) + Math.pow(clickY - midY, 2);
+			
+			if (distSq < minDistanceSq) {
+				minDistanceSq = distSq;
+				closestSideIndex = i;
+			}
+		}
+		
+		// closestSideIndex is the internal side index (0=top-right, 1=top, etc.)
+		// This is the value toggleRiver expects.
+		return closestSideIndex;
 	}
 
 	toggleInnerHex(value) {
@@ -214,7 +259,7 @@ export class Hex {
         [1, 0], [0, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]
     ];
 
-    const offsets = hexA.x % 2 === 0 ? offsetsEvenRow : offsetsOddRow;
+    const offsets = this.x % 2 === 0 ? offsetsEvenRow : offsetsOddRow;
 
 		// Calculate the coordinates of the adjacent hex based on the edgeIndex
 		const [dx, dy] = offsets[edgeIndex];
@@ -321,7 +366,7 @@ export class Hex {
 		const y = (hexHeight / 2) + margin;
 
 		this.riverEdges.forEach(edgeIndex => {
-			const riverSvg = this.hexGrid.drawRiver(x, y, edgeIndex);
+			const riverSvg = this.hexGrid._drawRiver(x, y, edgeIndex);
 			riverSvg.setAttribute('data-river', true);
 			this.svg.appendChild(riverSvg);
 		});

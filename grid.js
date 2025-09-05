@@ -97,7 +97,6 @@ export class HexGrid {
         hex.setFlag(mapHexData.flag, mapHexData.player);
         hex.setRiverEdges(mapHexData.riverEdges || []);
 
-        hex.svg.addEventListener('click', () => hex.clickHandler());
         return hex;
     }
 
