@@ -120,7 +120,7 @@ export class HexGrid {
             ]
         }
 
-        const points = calculateHexEdgePoints(x, y, 50, edge);
+        const points = calculateHexEdgePoints(x, y, this.hexRadius, edge);
 
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('x1', points[0]);
@@ -131,6 +131,7 @@ export class HexGrid {
         line.setAttribute('fill', 'none');
         line.setAttribute('stroke', '#80c0ff');
         line.setAttribute('stroke-width', 10);
+        line.setAttribute('pointer-events', 'none');
 
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.appendChild(line);
@@ -368,16 +369,20 @@ export class HexGrid {
         // Clear existing rivers
         riverLayer.innerHTML = '';
 
-        // Iterate over all hexes that are responsible for storing river data
-        this.hexes.filter(hex => hex.riverEdges && hex.riverEdges.length > 0).forEach(hex => {
-            const { x, y } = this.getHexPosition(hex);
-            const hexCenterX = getHexWidth(this.hexRadius) / 2 + x;
-            const hexCenterY = getHexHeight(this.hexRadius) / 2 + y;
+        const margin = getMargin(this.lineWidth);
 
-            hex.riverEdges.forEach(edgeIndex => {
-                const riverSvg = this._drawRiver(hexCenterX, hexCenterY, edgeIndex);
-                riverLayer.appendChild(riverSvg);
-            });
+        // Iterate over all hexes that are responsible for storing river data
+        this.hexes.forEach(hex => {
+            if (hex.riverEdges && hex.riverEdges.length > 0) {
+                const { x, y } = this.getHexPosition(hex);
+                const hexCenterX = getHexWidth(this.hexRadius) / 2 + x + margin;
+                const hexCenterY = getHexHeight(this.hexRadius) / 2 + y + margin;
+
+                hex.riverEdges.forEach(edgeIndex => {
+                    const riverSvg = this._drawRiver(hexCenterX, hexCenterY, edgeIndex);
+                    riverLayer.appendChild(riverSvg);
+                });
+            }
         });
     }
 

@@ -255,44 +255,36 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   function onHexClick(hex, event) {
-    const editorMapWrapper = document.getElementById('editor-map-wrapper');
-    const sidebarWidth = document.getElementById('editor-controls').offsetWidth;
-    const outerMargin = 25;
-    const baseWidth = 1024;
-    const baseHeight = 880;
-    const availableWidth = window.innerWidth - sidebarWidth - outerMargin * 2;
-    const availableHeight = window.innerHeight - outerMargin * 2;
-    const scaleX = availableWidth / baseWidth;
-    const scaleY = availableHeight / baseHeight;
-    const scale = Math.min(scaleX, scaleY);
+    const mainSvg = document.getElementById('main');
+    const screenPoint = new DOMPoint(event.clientX, event.clientY);
+    const inverseMatrix = mainSvg.getScreenCTM().inverse();
+    const svgPoint = screenPoint.matrixTransform(inverseMatrix);
 
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / scale;
-    const y = (event.clientY - rect.top) / scale;
-    console.log(`Coordinates (unscaled): x: ${x}, y: ${y}`);
+    const svgX = svgPoint.x;
+    const svgY = svgPoint.y;
+
+    const hexX = parseFloat(hex.svg.getAttribute('x'));
+    const hexY = parseFloat(hex.svg.getAttribute('y'));
+
+    const clickXInHex = svgX - hexX;
+    const clickYInHex = svgY - hexY;
 
     if (riverMode) {
-      const edgeIndex = hex.getClosestSide(x, y);
+      const edgeIndex = hex.getClosestSide(clickXInHex, clickYInHex);
       hex.toggleRiver(edgeIndex);
-      return;
     }
-    const player = document.getElementById('player-select').value === '0' ? PlayerType.GREY : PlayerType.GREEN;
-    if (selectedTerrain) {
+    else if (selectedTerrain) {
       hex.setTerrain(selectedTerrain);
-    } else if (selectedUnit) {
-      if (selectedUnit === 'remove') {
-        if (hex.unit) {
-          hexGrid.removeUnit(hex.unit);
-        }
-      } else {
-        if (hex.unit) {
-          hexGrid.removeUnit(hex.unit);
-        }
-        const svgElement = svgService.svgElements[selectedUnit + ".svg"].cloneNode(true);
-        const newUnit = new Unit(hex.x, hex.y, selectedUnit, svgElement, player, hexRadius, lineWidth, hexGrid, gameState, null);
-        newUnit.createUnit();
-        hexGrid.addUnit(newUnit);
+    }
+    else if (selectedUnit !== 'remove') {
+      if (hex.unit) {
+        hexGrid.removeUnit(hex.unit);
       }
+      const svgElement = svgService.svgElements[selectedUnit + ".svg"].cloneNode(true);
+      const player = document.getElementById('player-select').value === '0' ? PlayerType.GREY : PlayerType.GREEN;
+      const newUnit = new Unit(hex.x, hex.y, selectedUnit, svgElement, player, hexRadius, lineWidth, hexGrid, gameState, null);
+      newUnit.createUnit();
+      hexGrid.addUnit(newUnit);
     }
   }
   

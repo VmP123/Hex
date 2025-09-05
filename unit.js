@@ -267,7 +267,7 @@ export class Unit {
 			? UnitProperties[this.unitType].defendStrength
 			: UnitProperties[this.unitType].reducedDefendStrength;
 
-		let crtColumn = [...CombatResultsTable].reverse().find(crtv => crtv.ratio <= (attackStrengthSum/defendStrength));
+		let crtColumn = [...CombatResultsTable].reverse().find(crtv => crtv.ratio <= (attackStrengthSum/defendStrength)) || CombatResultsTable[0];
 
 		const defenderTerrain = defenderHex.terrainType;
 		const crtShift = TerrainProperties[defenderTerrain]?.defenderCrtShift || 0;
