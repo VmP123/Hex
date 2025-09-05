@@ -28,6 +28,10 @@ async function initGame() {
 
     svg.appendChild(hexGrid.svg);
 
+    hexGrid.hexes.forEach(hex => {
+        hex.svg.addEventListener('click', () => hex.clickHandler());
+    });
+
     scenarioMap.mapHexes.filter(mh => mh.unit !== null && mh.unit !== undefined).forEach(mh => {
         const svgElement = svgService.svgElements[mh.unit + ".svg"];
         const unit = new Unit(mh.x , mh.y, mh.unit, svgElement.cloneNode(true), mh.player, hexRadius, lineWidth, hexGrid, gameState, animationService);

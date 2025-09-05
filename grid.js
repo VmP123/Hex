@@ -21,6 +21,8 @@ export class HexGrid {
         const { hexGrid, hexLayer, riverLayer, unitLayer } = this._createLayers();
         const mapData = this._preprocessMapData();
 
+        this.svg = hexGrid;
+
         for (let row = 0; row < this.rows; row++) {
             for (let col = 0; col < this.cols; col++) {
                 if ((row === this.rows - 1) && (col % 2 === 1)) {
@@ -47,14 +49,10 @@ export class HexGrid {
         const totalWidth = (this.cols * hexWidth * 0.75) + (hexWidth * 0.25) + 5;
         const totalHeight = (this.rows * hexHeight) + (hexHeight * 0.5);
 
-        [...mapData.values()].filter(mapDataHex => mapDataHex.riverEdges && mapDataHex.riverEdges.length > 0).forEach(mapDataHex => 
-            this._drawRivers(riverLayer, mapDataHex.riverEdges, mapDataHex )
-        );      
+        this.redrawAllRivers();
 
         hexGrid.setAttribute('width', totalWidth);
         hexGrid.setAttribute('height', totalHeight);
-
-        this.svg = hexGrid;
     }
 
     _createLayers() {
@@ -361,6 +359,26 @@ export class HexGrid {
         const x = hex.x * xOffset;
         const y = hex.y * hexHeight + ((hex.x % 2) * yOffset);
         return { x, y };
+    }
+
+    redrawAllRivers() {
+        const riverLayer = this.svg.querySelector('#riverLayer');
+        if (!riverLayer) return;
+
+        // Clear existing rivers
+        riverLayer.innerHTML = '';
+
+        // Iterate over all hexes that are responsible for storing river data
+        this.hexes.filter(hex => hex.riverEdges && hex.riverEdges.length > 0).forEach(hex => {
+            const { x, y } = this.getHexPosition(hex);
+            const hexCenterX = getHexWidth(this.hexRadius) / 2 + x;
+            const hexCenterY = getHexHeight(this.hexRadius) / 2 + y;
+
+            hex.riverEdges.forEach(edgeIndex => {
+                const riverSvg = this._drawRiver(hexCenterX, hexCenterY, edgeIndex);
+                riverLayer.appendChild(riverSvg);
+            });
+        });
     }
 
     clearSelections() {

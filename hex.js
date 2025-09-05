@@ -71,8 +71,6 @@ export class Hex {
 	}
 
 	async clickHandler() {
-    // this.getClosestSide();
-
 		if (this.hexGrid.gameState.status !== GameStatus.GAMEON || this.hexGrid.gameState.isAnimating) {
 			return;
 		}
@@ -295,20 +293,13 @@ export class Hex {
 			if (index > -1) {
 				// River exists, remove it
 				this.riverEdges.splice(index, 1);
-				// Also remove from adjacent hex if it somehow got there (defensive)
-				const otherIndex = adjacentHex.riverEdges.indexOf(oppositeEdge);
-				if (otherIndex > -1) {
-					adjacentHex.riverEdges.splice(otherIndex, 1);
-					adjacentHex.drawRivers();
-				}
 			} else {
 				// River does not exist, add it
 				this.riverEdges.push(edgeIndex);
-				// Remove from adjacent hex if it exists there (to ensure single storage)
+				// Ensure opposite edge is not stored on other hex
 				const otherIndex = adjacentHex.riverEdges.indexOf(oppositeEdge);
 				if (otherIndex > -1) {
 					adjacentHex.riverEdges.splice(otherIndex, 1);
-					adjacentHex.drawRivers();
 				}
 			}
 		} else {
@@ -317,58 +308,17 @@ export class Hex {
 			if (index > -1) {
 				// River exists, remove it
 				adjacentHex.riverEdges.splice(index, 1);
-				// Also remove from this hex if it somehow got there (defensive)
-				const thisIndex = this.riverEdges.indexOf(edgeIndex);
-				if (thisIndex > -1) {
-					this.riverEdges.splice(thisIndex, 1);
-				}
 			} else {
 				// River does not exist, add it
 				adjacentHex.riverEdges.push(oppositeEdge);
-				// Remove from this hex if it exists there (to ensure single storage)
+				// Ensure opposite edge is not stored on this hex
 				const thisIndex = this.riverEdges.indexOf(edgeIndex);
 				if (thisIndex > -1) {
 					this.riverEdges.splice(thisIndex, 1);
 				}
 			}
-			adjacentHex.drawRivers(); // Redraw adjacent hex
 		}
 
-		this.drawRivers(); // Redraw this hex
-	}
-
-	handleEdgeClick = (e) => {
-		e.stopPropagation();
-		const edgeIndex = parseInt(e.target.getAttribute('data-edge-index'), 10);
-		this.toggleRiver(edgeIndex);
-	}
-
-	addRiverEdgeEventListeners() {
-		this.svg.querySelectorAll('[data-edge-index]').forEach(edge => {
-			edge.addEventListener('click', this.handleEdgeClick);
-		});
-	}
-
-	removeRiverEdgeEventListeners() {
-		this.svg.querySelectorAll('[data-edge-index]').forEach(edge => {
-			edge.removeEventListener('click', this.handleEdgeClick);
-		});
-	}
-
-	drawRivers() {
-		// remove existing rivers
-		this.svg.querySelectorAll('[data-river]').forEach(r => this.svg.removeChild(r));
-
-		const hexWidth = getHexWidth(this.hexRadius);
-		const hexHeight = getHexHeight(this.hexRadius);
-		const margin = getMargin(this.lineWidth);
-		const x = (hexWidth / 2) + margin;
-		const y = (hexHeight / 2) + margin;
-
-		this.riverEdges.forEach(edgeIndex => {
-			const riverSvg = this.hexGrid._drawRiver(x, y, edgeIndex);
-			riverSvg.setAttribute('data-river', true);
-			this.svg.appendChild(riverSvg);
-		});
+		this.hexGrid.redrawAllRivers();
 	}
 }
