@@ -31,6 +31,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     await hexGrid.drawHexGrid();
     mainSvg.appendChild(hexGrid.svg);
     
+    mapWidth = parseFloat(hexGrid.svg.getAttribute('width'));
+    mapHeight = parseFloat(hexGrid.svg.getAttribute('height'));
+
+    if (!viewController) {
+      viewController = new ViewController(mainSvg, mapWidth, mapHeight);
+    }
+    else {
+      viewController.updateMapDimensions(mapWidth, mapHeight);
+    }
+    hexGrid.viewController = viewController;
+
     hexGrid.hexes.forEach(hex => {
       hex.svg.addEventListener('click', (e) => {
         if (hexGrid.viewController.panned) {
@@ -40,17 +51,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
     
-    mapWidth = parseFloat(hexGrid.svg.getAttribute('width'));
-    mapHeight = parseFloat(hexGrid.svg.getAttribute('height'));
-
-    if (!viewController) {
-      hexGrid.viewController = new ViewController(mainSvg, mapWidth, mapHeight);
-      viewController = hexGrid.viewController;
-    }
-    else {
-      viewController.updateMapDimensions(mapWidth, mapHeight);
-    }
-
     mainSvg.setAttribute('viewBox', `${-100} ${-100} ${baseWidth} ${baseHeight}`);
   }
   
