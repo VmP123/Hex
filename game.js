@@ -54,7 +54,7 @@ async function initGame() {
     infoArea.draw();
     infoAreaSvg.appendChild(infoArea.svg);
 
-    svg.setAttribute('viewBox', `0 0 1024 880`);
+    hexGrid.viewController.setViewBox(0, 0, 1024, 880);
 
     // --- Scaling Logic ---
 

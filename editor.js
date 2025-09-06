@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     });
     
-    mainSvg.setAttribute('viewBox', `${-100} ${-100} ${baseWidth} ${baseHeight}`);
+    viewController.setViewBox(-100, -100, baseWidth, baseHeight);
   }
   
   // --- Scaling Logic (similar to game.js) ---

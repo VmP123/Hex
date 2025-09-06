@@ -64,16 +64,87 @@ export class ViewController {
         
         const newX = this.startViewBox[0] - dx;
         const newY = this.startViewBox[1] - dy;
+
+        this.setViewBox(newX, newY, this.startViewBox[2], this.startViewBox[3]);
+    }
+
+    endPan() {
+        this.isPanning = false;
+        this.panStarted = false;
+        this.svg.style.cursor = 'pointer';
+    }
+
+    onDoubleClick(e) {
+        this.zoom(e.clientX, e.clientY);
+    }
+
+    zoom(clientX = null, clientY = null) {
+        const oldViewBoxString = this.svg.getAttribute('viewBox');
+        const oldViewBox = oldViewBoxString.split(' ').map(parseFloat);
+        if (oldViewBox.length < 4) return;
         
-        const minX = -this.margin;
-        const minY = -this.margin;
-        const maxX = this.mapWidth - this.startViewBox[2] + this.margin;
-        const maxY = this.mapHeight - this.startViewBox[3] + this.margin;
+        const [oldX, oldY, oldWidth, oldHeight] = oldViewBox;
         
-        const clampedX = this.clamp(newX, minX, maxX);
-        const clampedY = this.clamp(newY, minY, maxY);
+        let newWidth, newHeight;
+        let newX, newY;
         
-        this.svg.setAttribute('viewBox', `${clampedX} ${clampedY} ${this.startViewBox[2]} ${this.startViewBox[3]}`);
+        if (!this.isZoomedOut) { // If currently zoomed in (isZoomedOut is false), zoom out
+          this.isZoomedOut = true;
+          this.lastZoomInViewBox = oldViewBox; // Save current viewBox before zooming out
+          newWidth = this.mapWidth + this.margin * 2;
+          newHeight = this.mapHeight + this.margin * 2;
+          newX = oldX + oldWidth / 2 - newWidth / 2; // Center on current view
+          newY = oldY + oldHeight / 2 - newHeight / 2; // Center on current view
+        } else { // If currently zoomed out (isZoomedOut is true), zoom in
+          this.isZoomedOut = false;
+          newWidth = 1024; // Default zoom-in width
+          newHeight = 880; // Default zoom-in height
+          
+          if (clientX !== null && clientY !== null) { // Double-click zoom to point
+            const rect = this.svg.getBoundingClientRect();
+            const scaleX = oldWidth / rect.width;
+            const scaleY = oldHeight / rect.height;
+            
+            const svgX = oldX + (clientX - rect.left) * scaleX;
+            const svgY = oldY + (clientY - rect.top) * scaleY;
+            
+            newX = svgX - newWidth / 2;
+            newY = svgY - newHeight / 2;
+          } else if (this.lastZoomInViewBox) { // Button zoom to last saved location
+            [newX, newY, newWidth, newHeight] = this.lastZoomInViewBox;
+          } else { // Default zoom-in, center on current view
+            newX = oldX + oldWidth / 2 - newWidth / 2;
+            newY = oldY + oldHeight / 2 - newHeight / 2;
+          }
+        }
+        
+        this.setViewBox(newX, newY, newWidth, newHeight);
+    }
+
+    setViewBox(x, y, width, height) {
+        let newX = x;
+        let newY = y;
+
+        // If the view is wider than the map, center it horizontally.
+        if (width >= this.mapWidth) {
+            newX = (this.mapWidth / 2) - (width / 2);
+        } else {
+            // Otherwise, clamp the panning normally.
+            const minX = -this.margin;
+            const maxX = this.mapWidth - width + this.margin;
+            newX = this.clamp(newX, minX, maxX);
+        }
+
+        // Same for vertical panning.
+        if (height >= this.mapHeight) {
+            newY = (this.mapHeight / 2) - (height / 2);
+        } else {
+            const minY = -this.margin;
+            const maxY = this.mapHeight - height + this.margin;
+            newY = this.clamp(newY, minY, maxY);
+        }
+        
+        this.svg.setAttribute('viewBox', `${newX} ${newY} ${width} ${height}`);
     }
 
     endPan() {
