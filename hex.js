@@ -191,9 +191,18 @@ export class Hex {
 		}
 	}
 
-	setFlag(value, player) {
-		if (value === undefined || value === null || player === undefined || player === null)
+	    setFlag(value, player) {
+		// Remove existing flag
+		const existingFlag = this.svg.querySelector('[data-flag]');
+		if (existingFlag) {
+			this.svg.removeChild(existingFlag);
+		}
+
+		if (value === undefined || value === null || player === undefined || player === null || value === false) {
+            this.flag = null;
+            this.player = null;
 			return;
+        }
 
 		this.isEmpty = true;
 		this.flag = value;
@@ -201,6 +210,7 @@ export class Hex {
 
 		const svgService = new SvgService();
 		const flagSvgElement = svgService.svgElements['flag.svg'].cloneNode(true);
+		flagSvgElement.setAttribute('data-flag', 'true'); // for easy selection
 
 		const flagColor = flagSvgElement.querySelector('.flagColor');
 		flagColor.setAttribute('fill', ColorByPlayer[player]);

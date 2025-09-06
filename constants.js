@@ -3,8 +3,6 @@ const TerrainType = {
 	MOUNTAIN: 'mountain',
 	WATER: 'water',
 	FOREST: 'forest',
-	HILL: 'hill',
-	CITY: 'city',
 	FLAG: 'flag',
   SWAMP: 'swamp'
 };
@@ -34,7 +32,7 @@ const GameStatus = {
 const UnitType = {
 	INFANTRY: 'infantry',
 	TANK: 'tank',
-	ARTILLERY: 'artillery',
+	// ARTILLERY: 'artillery', // Not yet
 };
 
 const TurnPhase = {
@@ -53,10 +51,6 @@ const UnitProperties = {
 	[UnitType.INFANTRY]: {
 		movementAllowance: 2,
 		attackRange: 1,
-		attackPowerByTarget:{
-			[UnitType.INFANTRY] : 1,
-			[UnitType.TANK] : 1,
-		},
 		attackStrength: 3,
 		defendStrength: 3,
 		reducedAttackStrength: 2,
@@ -66,22 +60,14 @@ const UnitProperties = {
 	[UnitType.TANK]: {
 		movementAllowance: 3,
 		attackRange: 1,
-		attackPowerByTarget:{
-			[UnitType.INFANTRY] : 2,
-			[UnitType.TANK] : 2,
-		},
 		attackStrength: 5,
 		defendStrength: 4,
-		reducedAttackStrength: 2,
+		reducedAttackStrength: 3,
 		reducedDefendStrength: 2
 	},
 	[UnitType.ARTILLERY]: {
 		movementAllowance: 1,
 		attackRange: 2,
-		attackPowerByTarget:{
-			[UnitType.INFANTRY] : 1,
-			[UnitType.TANK] : 1,
-		},
 		attackStrength: 4,
 		defendStrength: 3,
 		reducedAttackStrength: 2,
@@ -211,7 +197,7 @@ const TerrainProperties = {
 	[TerrainType.SWAMP]: {
 		movementPointCost: 2,
 		defenderCrtShift: 0,
-		attackModifier: 0.5
+		attackModifier: 2/3
 	},
 	[TerrainType.WATER]: {
 		movementPointCost: MaxMovementPointCost,

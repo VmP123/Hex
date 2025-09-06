@@ -85,10 +85,15 @@ export class Unit {
 		this.updatePosition(this.x, this.y);
 
 		const handleClick = () => {
+			if (this.hexGrid.viewController.panned) {
+				return;
+			}
 			this.select();
 		};
 
-		this.svg.addEventListener('click', handleClick);
+		if (!this.hexGrid.isEditor) {
+			this.svg.addEventListener('click', handleClick);
+		}
 	}
 
 	select() {
@@ -254,10 +259,10 @@ export class Unit {
 				const attackerHex = this.hexGrid.getHex(su.x, su.y);
 				const attackerTerrain = attackerHex.terrainType;
 				const attackModifier = TerrainProperties[attackerTerrain]?.attackModifier || 1;
-				strength *= attackModifier;
+				strength = Math.floor(strength * attackModifier);
 
 				if (this.hexGrid.isRiverBetween(attackerHex, defenderHex)) {
-					strength /= 2;
+          strength = Math.floor(strength * (2/3));
 				}
 				return total + strength;
 			}, 0

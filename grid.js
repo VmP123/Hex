@@ -173,6 +173,21 @@ export class HexGrid {
 
         const unitLayer = this.svg.querySelector('#unitLayer');
         unitLayer.appendChild(unit.svg);
+
+        const hex = this.getHex(unit.x, unit.y);
+        if (hex) {
+            hex.setUnit(unit);
+        }
+
+        if (this.isEditor) {
+            unit.svg.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const hex = this.getHex(unit.x, unit.y);
+                if (hex) {
+                    hex.svg.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: e.clientX, clientY: e.clientY }));
+                }
+            });
+        }
     }
 
     isEmpty(x, y) {
@@ -427,7 +442,7 @@ export class HexGrid {
             }
 
             const flagHex = this.hexes.find(h => h.flag != null && h.player == getAnotherPlayer(player));
-            if (this.units.some(u => u.x === flagHex.x && u.y === flagHex.y && u.player === player)) {
+            if (flagHex && this.units.some(u => u.x === flagHex.x && u.y === flagHex.y && u.player === player)) {
                 return player;
             }
         }

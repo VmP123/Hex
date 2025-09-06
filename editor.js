@@ -4,8 +4,13 @@ import { TerrainType, UnitType, PlayerType } from './constants.js';
 import { SvgService } from './svg-service.js';
 import { ScenarioMap } from './scenario.js';
 import { Unit } from './unit.js';
+import { ViewController } from './view-controller.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+  }
+
   const svgService = new SvgService();
   await svgService.load();
   
@@ -18,68 +23,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let mapWidth;
   let mapHeight;
   
-  let isPanning = false;
-  let startX, startY;
-  let startViewBox;
-  let isZoomedOut = false;
-  let lastZoomInViewBox = null;
-  
-  const margin = 100;
-  
-  function zoom(clientX = null, clientY = null) {
-    const svg = mainSvg;
-    
-    const oldViewBoxString = svg.getAttribute('viewBox');
-    const oldViewBox = oldViewBoxString.split(' ').map(parseFloat);
-    if (oldViewBox.length < 4) return;
-    
-    const [oldX, oldY, oldWidth, oldHeight] = oldViewBox;
-    
-    let newWidth, newHeight;
-    let newX, newY;
-    
-    if (!isZoomedOut) { // If currently zoomed in (isZoomedOut is false), zoom out
-      isZoomedOut = true;
-      lastZoomInViewBox = oldViewBox; // Save current viewBox before zooming out
-      newWidth = mapWidth + margin * 2;
-      newHeight = mapHeight + margin * 2;
-      newX = oldX + oldWidth / 2 - newWidth / 2; // Center on current view
-      newY = oldY + oldHeight / 2 - newHeight / 2; // Center on current view
-    } else { // If currently zoomed out (isZoomedOut is true), zoom in
-      isZoomedOut = false;
-      newWidth = 1024; // Default zoom-in width
-      newHeight = 880; // Default zoom-in height
-      
-      if (clientX !== null && clientY !== null) { // Double-click zoom to point
-        const rect = svg.getBoundingClientRect();
-        const scaleX = oldWidth / rect.width;
-        const scaleY = oldHeight / rect.height;
-        
-        const svgX = oldX + (clientX - rect.left) * scaleX;
-        const svgY = oldY + (clientY - rect.top) * scaleY;
-        
-        newX = svgX - newWidth / 2;
-        newY = svgY - newHeight / 2;
-      } else if (lastZoomInViewBox) { // Button zoom to last saved location
-        [newX, newY, newWidth, newHeight] = lastZoomInViewBox;
-      } else { // Default zoom-in, center on current view
-        newX = oldX + oldWidth / 2 - newWidth / 2;
-        newY = oldY + oldHeight / 2 - newHeight / 2;
-      }
-    }
-    
-    const minX = -margin;
-    const minY = -margin;
-    const maxX = mapWidth - newWidth + margin;
-    const maxY = mapHeight - newHeight + margin;
-    
-    const clampedX = clamp(newX, minX, maxX);
-    const clampedY = clamp(newY, minY, maxY);
-    
-    svg.setAttribute('viewBox', `${clampedX} ${clampedY} ${newWidth} ${newHeight}`);
-    console.log(svg.getAttribute('viewBox'));
-  }
-  
+  let viewController;
+
   async function drawMap(scenario) {
     mainSvg.innerHTML = '';
     hexGrid = new HexGrid(scenario.height, scenario.width, scenario, hexRadius, lineWidth, gameState, true);
@@ -87,75 +32,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     mainSvg.appendChild(hexGrid.svg);
     
     hexGrid.hexes.forEach(hex => {
-      hex.svg.addEventListener('click', (e) => onHexClick(hex, e));
+      hex.svg.addEventListener('click', (e) => {
+        if (hexGrid.viewController.panned) {
+            return;
+        }
+        onHexClick(hex, e)
+      });
     });
     
     mapWidth = parseFloat(hexGrid.svg.getAttribute('width'));
     mapHeight = parseFloat(hexGrid.svg.getAttribute('height'));
 
-    mainSvg.setAttribute('viewBox', `${-margin} ${-margin} ${baseWidth} ${baseHeight}`);
+    if (!viewController) {
+      hexGrid.viewController = new ViewController(mainSvg, mapWidth, mapHeight);
+      viewController = hexGrid.viewController;
+    }
+    else {
+      viewController.updateMapDimensions(mapWidth, mapHeight);
+    }
+
+    mainSvg.setAttribute('viewBox', `${-100} ${-100} ${baseWidth} ${baseHeight}`);
   }
-  
-  mainSvg.addEventListener('dblclick', (e) => {
-    zoom(e.clientX, e.clientY);
-  });
-  
-  function clamp(value, min, max) {
-    return Math.max(min, Math.min(value, max));
-  }
-  
-  function endPan() {
-    isPanning = false;
-    mainSvg.style.cursor = 'pointer';
-  }
-  
-  mainSvg.addEventListener('mousedown', (e) => {
-    if (e.button !== 0) return; // Only left click
-    const viewBoxString = mainSvg.getAttribute('viewBox');
-    if (!viewBoxString) return;
-    
-    const viewBox = viewBoxString.split(' ').map(parseFloat);
-    if (viewBox.length < 4) return;
-    
-    isPanning = true;
-    startViewBox = viewBox;
-    startX = e.clientX;
-    startY = e.clientY;
-    mainSvg.style.cursor = 'grabbing';
-  });
-  
-  mainSvg.addEventListener('mousemove', (e) => {
-    if (!isPanning || !startViewBox) return;
-    
-    const rect = mainSvg.getBoundingClientRect();
-    const scaleX = startViewBox[2] / rect.width;
-    const scaleY = startViewBox[3] / rect.height;
-    
-    const dx = (e.clientX - startX) * scaleX;
-    const dy = (e.clientY - startY) * scaleY;
-    
-    const newX = startViewBox[0] - dx;
-    const newY = startViewBox[1] - dy;
-    
-    // Clamp panning to map boundaries (with some margin)
-    const mapWidth = parseFloat(hexGrid.svg.getAttribute('width'));
-    const mapHeight = parseFloat(hexGrid.svg.getAttribute('height'));
-    const margin = 100; // Adjust as needed
-    
-    const minX = -margin;
-    const minY = -margin;
-    const maxX = mapWidth - startViewBox[2] + margin;
-    const maxY = mapHeight - startViewBox[3] + margin;
-    
-    const clampedX = clamp(newX, minX, maxX);
-    const clampedY = clamp(newY, minY, maxY);
-    
-    mainSvg.setAttribute('viewBox', `${clampedX} ${clampedY} ${startViewBox[2]} ${startViewBox[3]}`);
-  });
-  
-  window.addEventListener('mouseup', endPan);
-  mainSvg.addEventListener('mouseleave', endPan);
-  
   
   // --- Scaling Logic (similar to game.js) ---
   const editorMapWrapper = document.getElementById('editor-map-wrapper');
@@ -184,67 +81,76 @@ document.addEventListener('DOMContentLoaded', async () => {
   resizeEditor(); // Initial resize
   
   const initialScenario = new ScenarioMap();
-  initialScenario.createEmptyMap(15, 15);
+  initialScenario.createEmptyMap(10, 10);
   await drawMap(initialScenario);
   
   let selectedTerrain = null;
   let selectedUnit = null;
   let riverMode = false;
+  let flagMode = false;
   
   const terrainPalette = document.getElementById('terrain-palette');
   for (const terrain in TerrainType) {
+    if (terrain === TerrainType.FLAG.toUpperCase())
+      continue;
+
     const button = document.createElement('button');
-    button.textContent = TerrainType[terrain];
+    button.textContent = capitalize(terrain);
     button.addEventListener('click', (e) => {
       selectedTerrain = TerrainType[terrain];
       selectedUnit = null;
       riverMode = false;
+      flagMode = false;
       updateSelectedPalette(e.target);
     });
     terrainPalette.appendChild(button);
   }
   
-  const removeTerrainButton = document.createElement('button');
-  removeTerrainButton.textContent = "Remove Terrain";
-  removeTerrainButton.addEventListener('click', (e) => {
-    selectedTerrain = TerrainType.CLEAR;
-    selectedUnit = null;
-    riverMode = false;
-    updateSelectedPalette(e.target);
-  });
-  terrainPalette.appendChild(removeTerrainButton);
-  
   const unitPalette = document.getElementById('unit-palette');
   for (const unit in UnitType) {
     const button = document.createElement('button');
-    button.textContent = UnitType[unit];
+    button.textContent = capitalize(unit);
     button.addEventListener('click', (e) => {
       selectedUnit = UnitType[unit];
       selectedTerrain = null;
       riverMode = false;
+      flagMode = false;
       updateSelectedPalette(e.target);
     });
     unitPalette.appendChild(button);
   }
   const removeUnitButton = document.createElement('button');
-  removeUnitButton.textContent = "Remove Unit";
+  removeUnitButton.textContent = capitalize("remove unit");
   removeUnitButton.addEventListener('click', (e) => {
     selectedUnit = 'remove';
     selectedTerrain = null;
     riverMode = false;
+    flagMode = false;
     updateSelectedPalette(e.target);
   });
   unitPalette.appendChild(removeUnitButton);
   
   const riverButton = document.createElement('button');
-  riverButton.textContent = "Edit Rivers";
+  riverButton.textContent = capitalize("river");
   riverButton.addEventListener('click', (e) => {
     riverMode = !riverMode;
     selectedTerrain = null;
     selectedUnit = null;
+    flagMode = false;
     updateSelectedPalette(e.target);
   });
   terrainPalette.appendChild(riverButton);
+
+  const flagButton = document.createElement('button');
+  flagButton.textContent = "Flag";
+  flagButton.addEventListener('click', (e) => {
+    selectedTerrain = null;
+    selectedUnit = null;
+    riverMode = false;
+    flagMode = true;
+    updateSelectedPalette(e.target);
+  });
+  terrainPalette.appendChild(flagButton);
   
   
   function updateSelectedPalette(selectedButton) {
@@ -276,15 +182,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     else if (selectedTerrain) {
       hex.setTerrain(selectedTerrain);
     }
-    else if (selectedUnit !== 'remove') {
-      if (hex.unit) {
-        hexGrid.removeUnit(hex.unit);
+    else if (flagMode) {
+        const player = document.getElementById('player-select').value === '0' ? PlayerType.GREY : PlayerType.GREEN;
+        if (hex.flag) {
+            hex.setFlag(false, null);
+        } else {
+            hex.setFlag(true, player);
+        }
+    }
+    else if (selectedUnit) {
+      const existingUnit = hex.unit;
+      if (existingUnit) {
+          hexGrid.removeUnit(existingUnit);
       }
-      const svgElement = svgService.svgElements[selectedUnit + ".svg"].cloneNode(true);
-      const player = document.getElementById('player-select').value === '0' ? PlayerType.GREY : PlayerType.GREEN;
-      const newUnit = new Unit(hex.x, hex.y, selectedUnit, svgElement, player, hexRadius, lineWidth, hexGrid, gameState, null);
-      newUnit.createUnit();
-      hexGrid.addUnit(newUnit);
+
+      if (selectedUnit !== 'remove') {
+          const svgElement = svgService.svgElements[selectedUnit + ".svg"].cloneNode(true);
+          const player = document.getElementById('player-select').value === '0' ? PlayerType.GREY : PlayerType.GREEN;
+          const newUnit = new Unit(hex.x, hex.y, selectedUnit, svgElement, player, hexRadius, lineWidth, hexGrid, gameState, null);
+          newUnit.createUnit();
+          hexGrid.addUnit(newUnit);
+      }
     }
   }
   
@@ -345,6 +263,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   const zoomButton = document.getElementById('zoom');
   zoomButton.addEventListener('click', () => {
-    zoom();
+    viewController.zoom();
   });
 });
