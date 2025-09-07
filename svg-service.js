@@ -20,6 +20,7 @@ export class SvgService {
     await this.loadSvgFromFile('triangle-flag.svg');
     await this.loadSvgFromFile('swamp.svg');
     await this.loadSvgFromFile('water.svg');
+    await this.loadSvgFromFile('city.svg');
 
     this.loaded = true;
   }

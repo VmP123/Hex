@@ -153,7 +153,7 @@ export class Hex {
 		this.terrainType = terrainType;
 		this.isEmpty = true;
 
-		if (terrainType === TerrainType.MOUNTAIN || terrainType === TerrainType.FOREST || terrainType === TerrainType.SWAMP || terrainType === TerrainType.WATER) {
+		if (terrainType === TerrainType.MOUNTAIN || terrainType === TerrainType.FOREST || terrainType === TerrainType.SWAMP || terrainType === TerrainType.WATER || terrainType === TerrainType.CITY) {
 			this.isEmpty = false;
 			const svgService = new SvgService();
 			const terrainSvgElement = svgService.svgElements[terrainType + '.svg'].cloneNode(true);
@@ -173,6 +173,7 @@ export class Hex {
 				case TerrainType.FOREST:
 				case TerrainType.SWAMP:
 				case TerrainType.WATER:
+				case TerrainType.CITY:
 					x = (hexWidth / 2) - 40 + margin;
 					y = (hexHeight / 2) - 45 + margin;
 					width = 80;

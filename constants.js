@@ -4,7 +4,8 @@ const TerrainType = {
 	WATER: 'water',
 	FOREST: 'forest',
 	FLAG: 'flag',
-  SWAMP: 'swamp'
+  SWAMP: 'swamp',
+  CITY: 'city'
 };
 
 const PlayerType = {
@@ -198,6 +199,11 @@ const TerrainProperties = {
 		movementPointCost: 2,
 		defenderCrtShift: 0,
 		attackModifier: 2/3
+	},
+	[TerrainType.CITY]: {
+		movementPointCost: 2,
+		defenderCrtShift: -1,
+		attackModifier: 1
 	},
 	[TerrainType.WATER]: {
 		movementPointCost: MaxMovementPointCost,
