@@ -179,6 +179,22 @@ export class HexGrid {
         return sideAHasRiver || sideBHasRiver;
     }
 
+    isHexInEnemyZoc(hex, player) {
+        const adjacentHexes = getAdjacentHexes(hex.x, hex.y, this.rows, this.cols);
+        const enemyPlayer = getAnotherPlayer(player);
+
+        for (const adjHex of adjacentHexes) {
+            const unit = this.units.find(u => u.x === adjHex.x && u.y === adjHex.y);
+            if (unit && unit.player === enemyPlayer) {
+                const targetHex = this.getHex(adjHex.x, adjHex.y);
+                if (!this.isRiverBetween(hex, targetHex)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     addUnit(unit) {
         this.units.push(unit);
 
@@ -255,8 +271,23 @@ export class HexGrid {
     }
 
     dfs(x, y, movementPoints, visited, reachableHexes, fromX, fromY, cameFrom, gScore) {
-        if (visited.find(v => v.x === x && v.y === y && v.movementPoints >= movementPoints) != null) {
-            return;
+        const currentHex = this.getHex(x, y);
+        const isEnteringZoc = this.isHexInEnemyZoc(currentHex, this.gameState.activePlayer);
+
+        const existingVisit = visited.find(v => v.x === x && v.y === y);
+        if (existingVisit) {
+            // If already visited by a path that also entered ZoC, and current path has less MP, return.
+            if (existingVisit.isEnteringZoc && isEnteringZoc && existingVisit.movementPoints >= movementPoints) {
+                return;
+            }
+            // If already visited by a non-ZoC path, and current path enters ZoC, process it.
+            if (!existingVisit.isEnteringZoc && isEnteringZoc) {
+                // Allow processing to mark it as a ZoC entry
+            }
+            // If already visited by a non-ZoC path, and current path is also non-ZoC, and current path has less MP, return.
+            else if (!isEnteringZoc && existingVisit.movementPoints >= movementPoints) {
+                return;
+            }
         }
 
         let cost = !this.units.some(unit => unit.x === x && unit.y === y)
@@ -265,36 +296,41 @@ export class HexGrid {
 
         if (fromX !== undefined && fromY !== undefined) {
             const fromHex = this.getHex(fromX, fromY);
-            const currentHex = this.getHex(x, y);
             if (this.isRiverBetween(fromHex, currentHex)) {
                 cost += 1;
             }
         }
 
         if (movementPoints < cost) {
-            visited.push({ x: x, y: y, movementPoints: movementPoints });
+            visited.push({ x: x, y: y, movementPoints: movementPoints, isEnteringZoc: isEnteringZoc });
             return;
         }
 
-        visited.push({ x: x, y: y, movementPoints: movementPoints });
+        // Remove existing visit if we are re-processing with a better (or ZoC-entering) path
+        if (existingVisit) {
+            visited = visited.filter(v => !(v.x === x && v.y === y));
+        }
+        visited.push({ x: x, y: y, movementPoints: movementPoints, isEnteringZoc: isEnteringZoc });
 
         if (!reachableHexes.some(rh => rh.x === x && rh.y === y)) {
             reachableHexes.push({ x: x, y: y });
         }
 
         if (fromX !== undefined && fromY !== undefined) {
-            const currentHex = this.getHex(x, y);
             const prevHex = this.getHex(fromX, fromY);
             cameFrom.set(currentHex, prevHex);
             gScore.set(currentHex, (gScore.get(prevHex) || 0) + cost);
         } else {
-            const currentHex = this.getHex(x, y);
             gScore.set(currentHex, 0);
         }
 
         const remainingPoints = movementPoints - cost;
-        const adjacentHexes = getAdjacentHexes(x, y, this.rows, this.cols);
-        adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, remainingPoints, visited, reachableHexes, x, y, cameFrom, gScore));
+
+        if (remainingPoints > 0 && !isEnteringZoc) {
+            const adjacentHexes = getAdjacentHexes(x, y, this.rows, this.cols);
+            adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, remainingPoints, visited, reachableHexes, x, y, cameFrom, gScore));
+        } else {
+        }
     }
 
     getReachableHex(x, y, movementPoints) {
