@@ -82,6 +82,14 @@ export class Unit {
 		
 		this.svg = svg;
 
+		if (this.hexGrid.isEditor) {
+			this.svg.style.pointerEvents = 'none';
+		}
+
+		if (this.hexGrid.isEditor) {
+			this.svg.style.pointerEvents = 'none';
+		}
+
 		this.updatePosition(this.x, this.y);
 
 		const handleClick = () => {

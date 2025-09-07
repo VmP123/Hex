@@ -1,9 +1,10 @@
 import { Hex } from './hex.js';
+import { Unit } from './unit.js';
 import { TerrainType, UnitProperties, MaxMovementPointCost, TerrainProperties, SpecialPhaseType, GameStatus, PlayerType } from './constants.js';
 import { getHexWidth, getHexHeight, getAnotherPlayer, getMargin, getAdjacentHexes } from './utils.js';
 
 export class HexGrid {
-    constructor(rows, cols, scenarioMap, hexRadius, lineWidth, gameState, isEditor = false) {
+    constructor(rows, cols, scenarioMap, hexRadius, lineWidth, gameState, isEditor = false, svgService) {
         this.hexes = [];
         this.units = [];
         this.svg = null;
@@ -15,6 +16,7 @@ export class HexGrid {
         this.selectedUnits = [];
         this.gameState = gameState;
         this.isEditor = isEditor;
+        this.svgService = svgService;
     }
 
     async drawHexGrid() {
@@ -22,6 +24,10 @@ export class HexGrid {
         const mapData = this._preprocessMapData();
 
         this.svg = hexGrid;
+
+        hexGrid.appendChild(hexLayer);
+        hexGrid.appendChild(riverLayer);
+        hexGrid.appendChild(unitLayer);
 
         for (let row = 0; row < this.rows; row++) {
             for (let col = 0; col < this.cols; col++) {
@@ -39,10 +45,6 @@ export class HexGrid {
                 hexLayer.appendChild(hex.svg);
             }
         }
-
-        hexGrid.appendChild(hexLayer);
-        hexGrid.appendChild(riverLayer);
-        hexGrid.appendChild(unitLayer);
 
         const hexWidth = getHexWidth(this.hexRadius);
         const hexHeight = getHexHeight(this.hexRadius);
@@ -94,6 +96,14 @@ export class HexGrid {
         hex.setTerrain(mapHexData.terrain || TerrainType.CLEAR);
         hex.setFlag(mapHexData.flag, mapHexData.player);
         hex.setRiverEdges(mapHexData.riverEdges || []);
+
+        if (mapHexData.unit) {
+            const svgElement = this.svgService.svgElements[mapHexData.unit + ".svg"].cloneNode(true);
+            const newUnit = new Unit(col, row, mapHexData.unit, svgElement, mapHexData.player, this.hexRadius, this.lineWidth, this, this.gameState, null);
+            newUnit.createUnit();
+            this.addUnit(newUnit);
+            hex.setUnit(newUnit);
+        }
 
         return hex;
     }
@@ -173,21 +183,6 @@ export class HexGrid {
 
         const unitLayer = this.svg.querySelector('#unitLayer');
         unitLayer.appendChild(unit.svg);
-
-        const hex = this.getHex(unit.x, unit.y);
-        if (hex) {
-            hex.setUnit(unit);
-        }
-
-        if (this.isEditor) {
-            unit.svg.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const hex = this.getHex(unit.x, unit.y);
-                if (hex) {
-                    hex.svg.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: e.clientX, clientY: e.clientY }));
-                }
-            });
-        }
     }
 
     isEmpty(x, y) {

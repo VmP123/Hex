@@ -25,7 +25,7 @@ async function initGame() {
     gameState.status = GameStatus.GAMEON;
     const animationService = new AnimationService();
 
-    const hexGrid = new HexGrid(scenarioMap.height, scenarioMap.width, scenarioMap, hexRadius, lineWidth, gameState);
+    const hexGrid = new HexGrid(scenarioMap.height, scenarioMap.width, scenarioMap, hexRadius, lineWidth, gameState, false, svgService);
     await hexGrid.drawHexGrid();
 
     svg.appendChild(hexGrid.svg);
@@ -39,12 +39,7 @@ async function initGame() {
         });
     });
 
-    scenarioMap.mapHexes.filter(mh => mh.unit !== null && mh.unit !== undefined).forEach(mh => {
-        const svgElement = svgService.svgElements[mh.unit + ".svg"];
-        const unit = new Unit(mh.x , mh.y, mh.unit, svgElement.cloneNode(true), mh.player, hexRadius, lineWidth, hexGrid, gameState, animationService);
-        unit.createUnit();
-        hexGrid.addUnit(unit);
-    });
+    
 
     const mapWidth = parseFloat(hexGrid.svg.getAttribute('width'));
     const mapHeight = parseFloat(hexGrid.svg.getAttribute('height'));
