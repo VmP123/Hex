@@ -272,29 +272,28 @@ export class HexGrid {
 
     dfs(x, y, movementPoints, visited, reachableHexes, fromX, fromY, cameFrom, gScore) {
         const currentHex = this.getHex(x, y);
-        const isEnteringZoc = this.isHexInEnemyZoc(currentHex, this.gameState.activePlayer);
+        const isCurrentHexInZoc = this.isHexInEnemyZoc(currentHex, this.gameState.activePlayer);
 
-        const existingVisit = visited.find(v => v.x === x && v.y === y);
+        const existingVisitIndex = visited.findIndex(v => v.x === x && v.y === y);
+        const existingVisit = existingVisitIndex !== -1 ? visited[existingVisitIndex] : null;
+
         if (existingVisit) {
-            // If already visited by a path that also entered ZoC, and current path has less MP, return.
-            if (existingVisit.isEnteringZoc && isEnteringZoc && existingVisit.movementPoints >= movementPoints) {
+            const isExistingPathInZoc = existingVisit.isCurrentHexInZoc;
+            
+            if (isExistingPathInZoc && isCurrentHexInZoc && existingVisit.movementPoints >= movementPoints) {
                 return;
             }
-            // If already visited by a non-ZoC path, and current path enters ZoC, process it.
-            if (!existingVisit.isEnteringZoc && isEnteringZoc) {
-                // Allow processing to mark it as a ZoC entry
-            }
-            // If already visited by a non-ZoC path, and current path is also non-ZoC, and current path has less MP, return.
-            else if (!isEnteringZoc && existingVisit.movementPoints >= movementPoints) {
+            else if (!isCurrentHexInZoc && !isExistingPathInZoc && existingVisit.movementPoints >= movementPoints) {
                 return;
             }
         }
 
         let cost = !this.units.some(unit => unit.x === x && unit.y === y)
-            ? TerrainProperties[this.getHex(x, y).terrainType].movementPointCost
+            ? TerrainProperties[currentHex.terrainType].movementPointCost
             : MaxMovementPointCost;
 
-        if (fromX !== undefined && fromY !== undefined) {
+        const hasPrevHex = fromX !== undefined && fromY !== undefined;
+        if (hasPrevHex) {
             const fromHex = this.getHex(fromX, fromY);
             if (this.isRiverBetween(fromHex, currentHex)) {
                 cost += 1;
@@ -302,21 +301,24 @@ export class HexGrid {
         }
 
         if (movementPoints < cost) {
-            visited.push({ x: x, y: y, movementPoints: movementPoints, isEnteringZoc: isEnteringZoc });
+            if (!existingVisit) {
+                visited.push({ x: x, y: y, movementPoints: movementPoints, isCurrentHexInZoc: isCurrentHexInZoc });
+            }
             return;
         }
 
-        // Remove existing visit if we are re-processing with a better (or ZoC-entering) path
+        const newVisitEntry = { x: x, y: y, movementPoints: movementPoints, isCurrentHexInZoc: isCurrentHexInZoc };
         if (existingVisit) {
-            visited = visited.filter(v => !(v.x === x && v.y === y));
+            visited[existingVisitIndex] = newVisitEntry;
+        } else {
+            visited.push(newVisitEntry);
         }
-        visited.push({ x: x, y: y, movementPoints: movementPoints, isEnteringZoc: isEnteringZoc });
 
         if (!reachableHexes.some(rh => rh.x === x && rh.y === y)) {
             reachableHexes.push({ x: x, y: y });
         }
 
-        if (fromX !== undefined && fromY !== undefined) {
+        if (hasPrevHex) {
             const prevHex = this.getHex(fromX, fromY);
             cameFrom.set(currentHex, prevHex);
             gScore.set(currentHex, (gScore.get(prevHex) || 0) + cost);
@@ -326,10 +328,9 @@ export class HexGrid {
 
         const remainingPoints = movementPoints - cost;
 
-        if (remainingPoints > 0 && !isEnteringZoc) {
+        if (remainingPoints > 0 && !isCurrentHexInZoc) {
             const adjacentHexes = getAdjacentHexes(x, y, this.rows, this.cols);
             adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, remainingPoints, visited, reachableHexes, x, y, cameFrom, gScore));
-        } else {
         }
     }
 
