@@ -4,7 +4,7 @@ import { TerrainType, UnitProperties, MaxMovementPointCost, TerrainProperties, S
 import { getHexWidth, getHexHeight, getAnotherPlayer, getMargin, getAdjacentHexes } from './utils.js';
 
 export class HexGrid {
-    constructor(rows, cols, scenarioMap, hexRadius, lineWidth, gameState, isEditor = false, svgService) {
+    constructor(rows, cols, scenarioMap, hexRadius, lineWidth, gameState, isEditor = false, svgService, animationService = null) {
         this.hexes = [];
         this.units = [];
         this.svg = null;
@@ -17,6 +17,7 @@ export class HexGrid {
         this.gameState = gameState;
         this.isEditor = isEditor;
         this.svgService = svgService;
+        this.animationService = animationService;
     }
 
     async drawHexGrid() {
@@ -99,7 +100,7 @@ export class HexGrid {
 
         if (mapHexData.unit) {
             const svgElement = this.svgService.svgElements[mapHexData.unit + ".svg"].cloneNode(true);
-            const newUnit = new Unit(col, row, mapHexData.unit, svgElement, mapHexData.player, this.hexRadius, this.lineWidth, this, this.gameState, null);
+            const newUnit = new Unit(col, row, mapHexData.unit, svgElement, mapHexData.player, this.hexRadius, this.lineWidth, this, this.gameState, this.animationService);
             newUnit.createUnit();
             this.addUnit(newUnit);
             hex.setUnit(newUnit);

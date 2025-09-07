@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function drawMap(scenario) {
     mainSvg.innerHTML = '';
-    hexGrid = new HexGrid(scenario.height, scenario.width, scenario, hexRadius, lineWidth, gameState, true, svgService);
+    hexGrid = new HexGrid(scenario.height, scenario.width, scenario, hexRadius, lineWidth, gameState, true, svgService, null);
     await hexGrid.drawHexGrid();
     mainSvg.appendChild(hexGrid.svg);
     

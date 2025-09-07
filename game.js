@@ -25,7 +25,7 @@ async function initGame() {
     gameState.status = GameStatus.GAMEON;
     const animationService = new AnimationService();
 
-    const hexGrid = new HexGrid(scenarioMap.height, scenarioMap.width, scenarioMap, hexRadius, lineWidth, gameState, false, svgService);
+    const hexGrid = new HexGrid(scenarioMap.height, scenarioMap.width, scenarioMap, hexRadius, lineWidth, gameState, false, svgService, animationService);
     await hexGrid.drawHexGrid();
 
     svg.appendChild(hexGrid.svg);
