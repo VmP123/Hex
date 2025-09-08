@@ -18,7 +18,6 @@ export class Hex {
 		this.svg = this.draxHexSvg();
 	}
 
-	// TODO: Siirretään tämä erilliseen SvgServiceen
 	draxHexSvg() {
 			const hexWidth = getHexWidth(this.hexRadius);
 			const hexHeight = getHexHeight(this.hexRadius);

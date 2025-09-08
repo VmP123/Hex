@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await svgService.load();
   
   const hexRadius = 50;
-  const lineWidth = 2; // Changed to match main application
+  const lineWidth = 2;
   const gameState = new GameState();
   let hexGrid;
   const mainSvg = document.getElementById('main');
@@ -54,7 +54,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     viewController.setViewBox(-100, -100, baseWidth, baseHeight);
   }
   
-  // --- Scaling Logic (similar to game.js) ---
   const editorMapWrapper = document.getElementById('editor-map-wrapper');
   const baseWidth = 1024; // Base width of the map area
   const baseHeight = 880; // Base height of the map area

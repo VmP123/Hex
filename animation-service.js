@@ -21,7 +21,7 @@ export class AnimationService {
         unit.y = finalHex.y;
         unit.updatePosition(unit.x, unit.y);
 
-        if (this.gameState.getCurrentSpecialPhase() === 'ADVANCE') { // Note: SpecialPhaseType enum might not be available
+        if (this.gameState.getCurrentSpecialPhase() === 'ADVANCE') {
             unit.advanced = true;
         }
 
