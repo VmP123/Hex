@@ -78,7 +78,7 @@ export class InfoArea {
     }
 
     endPhase() {
-        this.hexGrid.endCurrentPhase();
+        window.game.endCurrentPhase();
     }
 
     draw() {

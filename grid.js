@@ -1,5 +1,4 @@
 import { Hex } from './hex.js';
-import { trigger } from './state.js';
 import { Unit } from './unit.js';
 import { TerrainType, UnitProperties, MaxMovementPointCost, TerrainProperties, SpecialPhaseType, GameStatus, PlayerType, TurnPhase } from './constants.js';
 import { getHexWidth, getHexHeight, getAnotherPlayer, getMargin, getAdjacentHexes } from './utils.js';
@@ -517,37 +516,5 @@ export class HexGrid {
 
         this.refreshUnitDimmers();
         this.startSpecialPhase(this.gameState.getCurrentSpecialPhase());
-    }
-
-    endCurrentPhase() {
-        if (this.gameState.status !== GameStatus.GAMEON) {
-            return;
-        }
-
-        const currentSpecialPhase = this.gameState.getCurrentSpecialPhase();
-
-        if (currentSpecialPhase === SpecialPhaseType.ADVANCE) {
-            this.endSpecialPhase();
-        }
-        else if (currentSpecialPhase === null) {
-            if (this.gameState.currentTurnPhase == TurnPhase.MOVE) {
-                this.gameState.currentTurnPhase = TurnPhase.ATTACK;
-            }
-            else if (this.gameState.currentTurnPhase == TurnPhase.ATTACK) {
-                this.gameState.activePlayer = this.gameState.activePlayer == PlayerType.GREY
-                    ? PlayerType.GREEN
-                    : PlayerType.GREY;
-
-                this.gameState.currentTurnPhase = TurnPhase.MOVE;
-                this.gameState.setCombatResult(null, null);
-                this.clearUnitMovedAttacked();
-            }
-
-            trigger('phaseChanged');
-
-            this.clearHighlightedHexes();
-            this.clearSelections();
-            this.refreshUnitDimmers();
-        }
     }
 }
