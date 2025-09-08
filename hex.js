@@ -78,11 +78,11 @@ export class Hex {
 		const currentSpecialPhase = this.hexGrid.gameState.getCurrentSpecialPhase();
 
 		if ((this.hexGrid.gameState.currentTurnPhase == TurnPhase.MOVE || currentSpecialPhase === SpecialPhaseType.ADVANCE) && 
-			this.hexGrid.selectedUnits.length > 0 && 
-			this.hexGrid.selectedUnits[0].isValidMove(this.x, this.y)) {
-			const selectedUnit = this.hexGrid.selectedUnits[0];
-			selectedUnit.select();
+			this.hexGrid.gameState.selectedUnits.length > 0 && 
+			this.hexGrid.gameState.selectedUnits[0].isValidMove(this.x, this.y)) {
+			const selectedUnit = this.hexGrid.gameState.selectedUnits[0];
 			await selectedUnit.move(this.x, this.y);
+			this.hexGrid.gameState.selectUnit(null, false);
 
 			if (currentSpecialPhase === SpecialPhaseType.ADVANCE) {
 				this.hexGrid.endSpecialPhase();

@@ -1,4 +1,5 @@
 import { GameStatus, PlayerType, SpecialPhaseType, TurnPhase, CombatResultsTable } from './constants.js';
+import { on } from './state.js';
 
 export class InfoArea {
     constructor(gameState, hexGrid, zoomFunction) {
@@ -7,11 +8,11 @@ export class InfoArea {
         this.zoomFunction = zoomFunction;
         this.svg = null;
 
-        this.gameState.onCombatResultUpdated.push(this.refreshCombatResultText.bind(this));
-        this.gameState.onWinnerUpdated.push(this.refreshStatusText.bind(this));
-        this.gameState.onCurrentSpecialPhaseUpdated.push(this.updatePhaseText.bind(this));
-        this.gameState.onCurrentSpecialPhaseUpdated.push(this.refreshStatusText.bind(this));
-        this.gameState.onCurrentSpecialPhaseUpdated.push(this.refreshEndPhaseButton.bind(this));
+        on('combatResultUpdated', this.refreshCombatResultText.bind(this));
+        on('winnerUpdated', this.refreshStatusText.bind(this));
+        on('currentSpecialPhaseUpdated', this.updatePhaseText.bind(this));
+        on('currentSpecialPhaseUpdated', this.refreshStatusText.bind(this));
+        on('currentSpecialPhaseUpdated', this.refreshEndPhaseButton.bind(this));
     }
 
     updatePhaseText() {			

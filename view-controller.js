@@ -1,5 +1,9 @@
+import { on } from './state.js';
+import { TurnPhase } from './constants.js';
+
 export class ViewController {
-    constructor(svg, mapWidth, mapHeight) {
+    constructor(svg, mapWidth, mapHeight, gameState) {
+        this.gameState = gameState;
         this.svg = svg;
         this.mapWidth = mapWidth;
         this.mapHeight = mapHeight;
@@ -21,6 +25,8 @@ export class ViewController {
         this.svg.addEventListener('dblclick', this.onDoubleClick.bind(this));
         window.addEventListener('mouseup', this.endPan.bind(this));
         this.svg.addEventListener('mouseleave', this.endPan.bind(this));
+
+        on('selectionChanged', (data) => this.updateSelectionView(data.selectedUnits));
     }
 
     onMouseDown(e) {
@@ -147,67 +153,6 @@ export class ViewController {
         this.svg.setAttribute('viewBox', `${newX} ${newY} ${width} ${height}`);
     }
 
-    endPan() {
-        this.isPanning = false;
-        this.panStarted = false;
-        this.svg.style.cursor = 'pointer';
-    }
-
-    onDoubleClick(e) {
-        this.zoom(e.clientX, e.clientY);
-    }
-
-    zoom(clientX = null, clientY = null) {
-        const oldViewBoxString = this.svg.getAttribute('viewBox');
-        const oldViewBox = oldViewBoxString.split(' ').map(parseFloat);
-        if (oldViewBox.length < 4) return;
-        
-        const [oldX, oldY, oldWidth, oldHeight] = oldViewBox;
-        
-        let newWidth, newHeight;
-        let newX, newY;
-        
-        if (!this.isZoomedOut) { // If currently zoomed in (isZoomedOut is false), zoom out
-          this.isZoomedOut = true;
-          this.lastZoomInViewBox = oldViewBox; // Save current viewBox before zooming out
-          newWidth = this.mapWidth + this.margin * 2;
-          newHeight = this.mapHeight + this.margin * 2;
-          newX = oldX + oldWidth / 2 - newWidth / 2; // Center on current view
-          newY = oldY + oldHeight / 2 - newHeight / 2; // Center on current view
-        } else { // If currently zoomed out (isZoomedOut is true), zoom in
-          this.isZoomedOut = false;
-          newWidth = 1024; // Default zoom-in width
-          newHeight = 880; // Default zoom-in height
-          
-          if (clientX !== null && clientY !== null) { // Double-click zoom to point
-            const rect = this.svg.getBoundingClientRect();
-            const scaleX = oldWidth / rect.width;
-            const scaleY = oldHeight / rect.height;
-            
-            const svgX = oldX + (clientX - rect.left) * scaleX;
-            const svgY = oldY + (clientY - rect.top) * scaleY;
-            
-            newX = svgX - newWidth / 2;
-            newY = svgY - newHeight / 2;
-          } else if (this.lastZoomInViewBox) { // Button zoom to last saved location
-            [newX, newY, newWidth, newHeight] = this.lastZoomInViewBox;
-          } else { // Default zoom-in, center on current view
-            newX = oldX + oldWidth / 2 - newWidth / 2;
-            newY = oldY + oldHeight / 2 - newHeight / 2;
-          }
-        }
-        
-        const minX = -this.margin;
-        const minY = -this.margin;
-        const maxX = this.mapWidth - newWidth + this.margin;
-        const maxY = this.mapHeight - newHeight + this.margin;
-        
-        const clampedX = this.clamp(newX, minX, maxX);
-        const clampedY = this.clamp(newY, minY, maxY);
-        
-        this.svg.setAttribute('viewBox', `${clampedX} ${clampedY} ${newWidth} ${newHeight}`);
-    }
-
     clamp(value, min, max) {
         return Math.max(min, Math.min(value, max));
     }
@@ -215,5 +160,21 @@ export class ViewController {
     updateMapDimensions(width, height) {
         this.mapWidth = width;
         this.mapHeight = height;
+    }
+
+    updateSelectionView(selectedUnits) {
+        if (this.hexGrid) {
+            this.hexGrid.units.forEach(u => u.selected = selectedUnits.includes(u));
+            this.hexGrid.refreshUnitSelectRects();
+            this.hexGrid.clearHighlightedHexes();
+            if (selectedUnits.length > 0) {
+                if (this.gameState.currentTurnPhase === TurnPhase.MOVE) {
+                    const selectedUnit = selectedUnits[0];
+                    this.hexGrid.highlightReachableEmptyHexes(selectedUnit.x, selectedUnit.y, selectedUnit.unitType);
+                } else if (this.gameState.currentTurnPhase === TurnPhase.ATTACK) {
+                    this.hexGrid.highlightAdjacentEnemyHexes(selectedUnits);
+                }
+            }
+        }
     }
 }

@@ -116,7 +116,7 @@ export class Unit {
 		}
 
 		else if (currentSpecialPhase === SpecialPhaseType.ADVANCE && this.gameState.attackers.includes(this) && 
-			(this.hexGrid.selectedUnits.length === 0 || this.hexGrid.selectedUnits[0] === this)) {
+			(this.gameState.selectedUnits.length === 0 || this.gameState.selectedUnits[0] === this)) {
 				this.handleAdvanceSelection();
 		}
 
@@ -125,7 +125,7 @@ export class Unit {
 		}
 
 		else if (this.gameState.currentTurnPhase === TurnPhase.MOVE && currentSpecialPhase === null &&
-			(this.hexGrid.selectedUnits.length === 0 || this.hexGrid.selectedUnits[0] === this) && 
+			(this.gameState.selectedUnits.length === 0 || this.gameState.selectedUnits[0] === this) && 
 			this.player == this.gameState.activePlayer && !this.moved) {
 				this.handleMovePhaseSelection()
 		}
@@ -144,43 +144,23 @@ export class Unit {
 	}
 
 	handleAdvanceSelection() {
-		if (!this.hexGrid.selectedUnits.includes(this)) {
-			this.hexGrid.selectedUnits.push(this);
-		}
-		else {
-			this.hexGrid.selectedUnits = this.hexGrid.selectedUnits.filter(u => u !== this);
-		}
-
-		this.selected = !this.selected;
-		this.refreshSelectRect();
+		this.gameState.selectUnit(this.selected ? null : this);
 	}
 
 	handleAttackPhaseSelection() {
 		if (this.player === this.gameState.activePlayer && !this.attacked) {
-			if (!this.hexGrid.selectedUnits.includes(this)) {
-				this.hexGrid.selectedUnits.push(this);
-			}
-			else {
-				this.hexGrid.selectedUnits = this.hexGrid.selectedUnits.filter(u => u !== this);
-			}
-
-			this.selected = !this.selected;
-			this.refreshSelectRect();
-
-			this.hexGrid.highlightAdjacentEnemyHexes(this.hexGrid.selectedUnits);
+            this.gameState.selectUnit(this, true);
 		}
 		else if (this.hexGrid.getHex(this.x, this.y).highlighted){
-			const attackers = this.hexGrid.selectedUnits;
-			this.attack(attackers);
+			const attackers = this.gameState.selectedUnits;
+			if (attackers && attackers.length > 0) {
+				this.attack(attackers);
+			}
 		}
 	}
 
 	handleMovePhaseSelection() {
-		this.selected = !this.selected;
-		this.hexGrid.selectedUnits = this.selected ? [this] : [];
-		this.refreshSelectRect();
-
-		this.hexGrid.highlightReachableEmptyHexes(this.x, this.y, this.unitType);
+		this.gameState.selectUnit(this, false);
 	}
 
 	refreshSelectRect() {
@@ -347,8 +327,7 @@ export class Unit {
 		this.refreshStatusIndicator();
 		this.refreshStatusText();
 
-		this.hexGrid.selectedUnits.forEach(su => su.selected = false);
-		this.hexGrid.selectedUnits = [];
+		this.gameState.selectUnit(null, false); // Clear selection
 
 		this.hexGrid.clearHighlightedHexes();
 		this.hexGrid.removeDeadUnits();

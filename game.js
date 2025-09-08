@@ -39,11 +39,11 @@ async function initGame() {
         });
     });
 
-    
-
     const mapWidth = parseFloat(hexGrid.svg.getAttribute('width'));
     const mapHeight = parseFloat(hexGrid.svg.getAttribute('height'));
-    hexGrid.viewController = new ViewController(svg, mapWidth, mapHeight);
+    const viewController = new ViewController(svg, mapWidth, mapHeight, gameState);
+    hexGrid.viewController = viewController;
+    hexGrid.viewController.hexGrid = hexGrid;
 
     const infoArea = new InfoArea(gameState, hexGrid, hexGrid.viewController.zoom.bind(hexGrid.viewController));
     infoArea.draw();
@@ -73,7 +73,7 @@ async function initGame() {
         gameWrapper.style.transform = `scale(${scale})`;
     }
 
-        window.addEventListener('resize', resizeGame);
+    window.addEventListener('resize', resizeGame);
     resizeGame(); // Initial resize
 }
 

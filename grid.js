@@ -13,7 +13,6 @@ export class HexGrid {
         this.scenarioMap = scenarioMap;
         this.hexRadius = hexRadius;
         this.lineWidth = lineWidth;
-        this.selectedUnits = [];
         this.gameState = gameState;
         this.isEditor = isEditor;
         this.svgService = svgService;
@@ -212,20 +211,24 @@ export class HexGrid {
         }
     }
 
-    highlightAdjacentEnemyHexes(selectedUnits) {
+    	highlightAdjacentEnemyHexes(selectedUnits) {
         this.clearHighlightedHexes();
+
+        if (!selectedUnits || selectedUnits.length === 0) return;
 
         let adjacentEnemyHexes = [];
 
         selectedUnits.forEach((su, index) => {
             const hexes = getAdjacentHexes(su.x, su.y, this.rows, this.cols)
                 .filter(ah => this.units.some(unit => unit.x === ah.x && unit.y === ah.y && unit.player != this.gameState.activePlayer))
-                .map(ah => this.hexes.find(h => h.x === ah.x && h.y === ah.y))
+                .map(ah => this.hexes.find(h => h.x === ah.x && h.y === ah.y));
 
-                index == 0 ? 
-                    adjacentEnemyHexes.push(...hexes) : 
-                    adjacentEnemyHexes = adjacentEnemyHexes.filter(value => hexes.includes(value));
-        })
+            if (index === 0) {
+                adjacentEnemyHexes.push(...hexes);
+            } else {
+                adjacentEnemyHexes = adjacentEnemyHexes.filter(value => hexes.includes(value));
+            }
+        });
 
         for(const adjacentHex of adjacentEnemyHexes) {
             for(const hex of this.hexes) {
@@ -434,11 +437,8 @@ export class HexGrid {
         });
     }
 
-    clearSelections() {
-        this.selectedUnits.forEach(su => su.selected = false)
-        this.selectedUnits = [];
-
-        this.refreshUnitSelectRects();
+    	clearSelections() {
+        this.gameState.selectUnit(null);
     }
 
     refreshUnitDimmers() {
