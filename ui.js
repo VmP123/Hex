@@ -13,6 +13,11 @@ export class InfoArea {
         on('currentSpecialPhaseUpdated', this.updatePhaseText.bind(this));
         on('currentSpecialPhaseUpdated', this.refreshStatusText.bind(this));
         on('currentSpecialPhaseUpdated', this.refreshEndPhaseButton.bind(this));
+
+        on('phaseChanged', () => {
+            this.updatePhaseText();
+            this.updatePlayerText();
+        });
     }
 
     updatePhaseText() {			
@@ -73,37 +78,7 @@ export class InfoArea {
     }
 
     endPhase() {
-        if (this.hexGrid.gameState.status !== GameStatus.GAMEON) {
-            return;
-        }
-
-        const currentSpecialPhase = this.gameState.getCurrentSpecialPhase();
-
-        if (currentSpecialPhase === SpecialPhaseType.ADVANCE) {
-            this.hexGrid.endSpecialPhase();
-        }
-        else if (currentSpecialPhase === null) {
-            if (this.gameState.currentTurnPhase == TurnPhase.MOVE) {
-                this.gameState.currentTurnPhase = TurnPhase.ATTACK;
-                this.updatePhaseText();
-            }
-            else if (this.gameState.currentTurnPhase == TurnPhase.ATTACK) {
-                this.gameState.activePlayer = this.gameState.activePlayer == PlayerType.GREY
-                    ? this.gameState.activePlayer = PlayerType.GREEN
-                    : this.gameState.activePlayer = PlayerType.GREY;
-
-                this.gameState.currentTurnPhase = TurnPhase.MOVE;
-
-                this.gameState.setCombatResult(null, null);
-                this.updatePhaseText();
-                this.updatePlayerText();
-                this.hexGrid.clearUnitMovedAttacked();
-            }
-
-            this.hexGrid.clearHighlightedHexes();
-            this.hexGrid.clearSelections();
-            this.hexGrid.refreshUnitDimmers();
-        }
+        this.hexGrid.endCurrentPhase();
     }
 
     draw() {

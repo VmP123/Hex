@@ -1,14 +1,35 @@
-import { getHexWidth, getHexHeight, getMargin } from './utils.js';
+import { on } from './state.js';
 
 export class AnimationService {
-    constructor() {
+    constructor(gameState) {
+        this.gameState = gameState;
         if (!AnimationService.instance) {
             AnimationService.instance = this;
+            on('unitMoving', (data) => this.handleUnitMove(data));
         }
         return AnimationService.instance;
     }
 
-    animateUnit(unit, path, hexGrid) {
+    async handleUnitMove(data) {
+        const { unit, path } = data;
+        this.gameState.isAnimating = true;
+
+        await this.animateUnit(unit, path);
+
+        const finalHex = path[path.length - 1];
+        unit.x = finalHex.x;
+        unit.y = finalHex.y;
+        unit.updatePosition(unit.x, unit.y);
+
+        if (this.gameState.getCurrentSpecialPhase() === 'ADVANCE') { // Note: SpecialPhaseType enum might not be available
+            unit.advanced = true;
+        }
+
+        this.gameState.isAnimating = false;
+        unit.hexGrid.refreshUnitDimmers();
+    }
+
+    animateUnit(unit, path) {
         return new Promise(resolve => {
             const speed = 6; // pixels per frame
             let pathIndex = 1;
@@ -20,7 +41,7 @@ export class AnimationService {
                 }
 
                 const targetHex = path[pathIndex];
-                const targetPosition = hexGrid.getUnitPosition(targetHex);
+                const targetPosition = unit.hexGrid.getUnitPosition(targetHex);
                 
                 const unitSvg = unit.svg;
                 const currentX = parseFloat(unitSvg.getAttribute('x'));

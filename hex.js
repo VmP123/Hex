@@ -81,7 +81,7 @@ export class Hex {
 			this.hexGrid.gameState.selectedUnits.length > 0 && 
 			this.hexGrid.gameState.selectedUnits[0].isValidMove(this.x, this.y)) {
 			const selectedUnit = this.hexGrid.gameState.selectedUnits[0];
-			await selectedUnit.move(this.x, this.y);
+			selectedUnit.move(this.x, this.y);
 			this.hexGrid.gameState.selectUnit(null, false);
 
 			if (currentSpecialPhase === SpecialPhaseType.ADVANCE) {

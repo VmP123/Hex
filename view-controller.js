@@ -1,5 +1,5 @@
 import { on } from './state.js';
-import { TurnPhase } from './constants.js';
+import { TurnPhase, SpecialPhaseType } from './constants.js';
 
 export class ViewController {
     constructor(svg, mapWidth, mapHeight, gameState) {
@@ -27,6 +27,7 @@ export class ViewController {
         this.svg.addEventListener('mouseleave', this.endPan.bind(this));
 
         on('selectionChanged', (data) => this.updateSelectionView(data.selectedUnits));
+        on('combatResolved', (data) => this.handleCombatVisuals(data));
     }
 
     onMouseDown(e) {
@@ -167,6 +168,16 @@ export class ViewController {
             this.hexGrid.units.forEach(u => u.selected = selectedUnits.includes(u));
             this.hexGrid.refreshUnitSelectRects();
             this.hexGrid.clearHighlightedHexes();
+
+            const specialPhase = this.gameState.getCurrentSpecialPhase();
+
+            if (specialPhase === SpecialPhaseType.ADVANCE) {
+                if (this.gameState.vacatedHex) {
+                    this.gameState.vacatedHex.toggleInnerHex(true);
+                }
+                return; // Do not show other highlights during advance phase
+            }
+
             if (selectedUnits.length > 0) {
                 if (this.gameState.currentTurnPhase === TurnPhase.MOVE) {
                     const selectedUnit = selectedUnits[0];
@@ -176,5 +187,33 @@ export class ViewController {
                 }
             }
         }
+    }
+
+    handleCombatVisuals(data) {
+        const { attackers, defender, wasDefenderDestroyed } = data;
+
+        // TODO: Add attack animation (e.g., flash)
+
+        attackers.forEach(attacker => {
+            attacker.refreshStatusIndicator();
+            attacker.refreshStatusText();
+        });
+
+        defender.refreshStatusIndicator();
+        defender.refreshStatusText();
+
+        if (wasDefenderDestroyed) {
+            defender.remove();
+        }
+        // Handle attacker destroyed visual update if needed
+        attackers.forEach(attacker => {
+            if (attacker.isDead()) {
+                attacker.remove();
+            }
+        });
+
+        this.hexGrid.clearHighlightedHexes();
+        this.hexGrid.refreshUnitSelectRects();
+        this.hexGrid.refreshUnitDimmers();
     }
 }

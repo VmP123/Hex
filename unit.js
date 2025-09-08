@@ -10,6 +10,7 @@ import {
 	TerrainType,
 	TerrainProperties
 } from './constants.js';
+import { trigger } from './state.js';
 import { getHexWidth, getHexHeight, getMargin } from './utils.js';
 
 export class Unit {
@@ -144,7 +145,7 @@ export class Unit {
 	}
 
 	handleAdvanceSelection() {
-		this.gameState.selectUnit(this.selected ? null : this);
+		this.gameState.selectUnit(this, false);
 	}
 
 	handleAttackPhaseSelection() {
@@ -184,6 +185,10 @@ export class Unit {
 					 (currentSpecialPhase === SpecialPhaseType.ADVANCE && !this.gameState.attackers.includes(this));
 		}
 
+		if (this.gameState.isAnimating) {
+			dimm = false;
+		}
+
 		const dimmerRect = this.svg.querySelector('.dimmer');
 		dimmerRect.setAttribute('display', dimm ? 'block' : 'none');
 	}
@@ -205,30 +210,16 @@ export class Unit {
 		this.svg.setAttribute('y', y);
 	}
 
-	async move(gridX, gridY) {
-      this.gameState.isAnimating = true;
+	move(gridX, gridY) {
+      this.moved = true;
 
       const startHex = this.hexGrid.getHex(this.x, this.y);
       const endHex = this.hexGrid.getHex(gridX, gridY);
       const path = this.hexGrid.findPath(startHex, endHex, this);
 
       if (path) {
-          await this.animationService.animateUnit(this, path, this.hexGrid);
+          trigger('unitMoving', { unit: this, path: path });
       }
-
-      this.x = gridX;
-      this.y = gridY;
-      this.updatePosition(this.x, this.y);
-		
-      if (this.gameState.currentTurnPhase === TurnPhase.MOVE) {
-        this.moved = true;
-      }
-      else if (this.gameState.currentSpecialPhase === SpecialPhaseType.ADVANCE) {
-        this.advanced = true;
-      }
-      
-      this.refreshDimmer();
-          this.gameState.isAnimating = false;
 	}
 
 	attack(attackers) {
@@ -236,29 +227,28 @@ export class Unit {
 			a.attacked = true;
 		});
 
-		const defenderHex = this.hexGrid.getHex(this.x, this.y);
+		const defender = this;
+		const defenderHex = this.hexGrid.getHex(defender.x, defender.y);
 
-		const attackStrengthSum = attackers.reduce(
-			(total, su) => {
-				let strength = (su.healthStatus === HealthStatus.FULL 
-					? UnitProperties[su.unitType].attackStrength 
-					: UnitProperties[su.unitType].reducedAttackStrength);
-				
-				const attackerHex = this.hexGrid.getHex(su.x, su.y);
-				const attackerTerrain = attackerHex.terrainType;
-				const attackModifier = TerrainProperties[attackerTerrain]?.attackModifier || 1;
-				strength = Math.floor(strength * attackModifier);
+		const attackStrengthSum = attackers.reduce((total, su) => {
+			let strength = (su.healthStatus === HealthStatus.FULL 
+				? UnitProperties[su.unitType].attackStrength 
+				: UnitProperties[su.unitType].reducedAttackStrength);
+			
+			const attackerHex = this.hexGrid.getHex(su.x, su.y);
+			const attackerTerrain = attackerHex.terrainType;
+			const attackModifier = TerrainProperties[attackerTerrain]?.attackModifier || 1;
+			strength = Math.floor(strength * attackModifier);
 
-				if (this.hexGrid.isRiverBetween(attackerHex, defenderHex)) {
-          strength = Math.floor(strength * (2/3));
-				}
-				return total + strength;
-			}, 0
-		);
+			if (this.hexGrid.isRiverBetween(attackerHex, defenderHex)) {
+				strength = Math.floor(strength * (2/3));
+			}
+			return total + strength;
+		}, 0);
 
-		const defendStrength = this.healthStatus === HealthStatus.FULL 
-			? UnitProperties[this.unitType].defendStrength
-			: UnitProperties[this.unitType].reducedDefendStrength;
+		const defendStrength = defender.healthStatus === HealthStatus.FULL 
+			? UnitProperties[defender.unitType].defendStrength
+			: UnitProperties[defender.unitType].reducedDefendStrength;
 
 		let crtColumn = [...CombatResultsTable].reverse().find(crtv => crtv.ratio <= (attackStrengthSum/defendStrength)) || CombatResultsTable[0];
 
@@ -268,73 +258,53 @@ export class Unit {
 		if (crtShift !== 0) {
 			const currentIndex = CombatResultsTable.indexOf(crtColumn);
 			const newIndex = currentIndex + crtShift;
-
-			if (newIndex >= 0 && newIndex < CombatResultsTable.length) {
-				crtColumn = CombatResultsTable[newIndex];
-			} else if (newIndex < 0) {
-				crtColumn = CombatResultsTable[0];
-			} else {
-				crtColumn = CombatResultsTable[CombatResultsTable.length - 1];
-			}
+			const lastIndex = CombatResultsTable.length - 1;
+			crtColumn = newIndex < 0 ? CombatResultsTable[0] : (newIndex > lastIndex ? CombatResultsTable[lastIndex] : CombatResultsTable[newIndex]);
 		}
 
 		const d6Value = Math.floor(Math.random() * 6) + 1;
-					
 		this.gameState.setCombatResult(crtColumn, d6Value);
 		
 		const crtResult = crtColumn[d6Value];
 		const effect = CombatResultTableValueEffect[crtResult];
+
+		const originalAttackerHealth = attackers.map(a => a.healthStatus);
+		const originalDefenderHealth = defender.healthStatus;
 
 		if (effect.attacker === -1) {
 			if (attackers.length > 1) {
 				this.gameState.attackers = attackers;
 				this.gameState.unassignedDamagePoints = 1;
 				this.gameState.pushSpecialPhaseQueue(SpecialPhaseType.ATTACKER_DAMAGE);
-			}
-			else {
-				const attacker = attackers[0];
-
-				if (attacker.healthStatus === HealthStatus.FULL) {
-					attacker.healthStatus = HealthStatus.REDUCED;
-				}
-				else if (attacker.healthStatus === HealthStatus.REDUCED) {
-					attacker.healthStatus = HealthStatus.DEAD;
-				}	
-
-				attacker.refreshStatusIndicator();
-				attacker.refreshStatusText();
+			} else {
+				attackers[0].takeDamage();
 			}
 		}
 
 		if (effect.defender === -1) {
-			if (this.healthStatus === HealthStatus.FULL) {
-				this.healthStatus = HealthStatus.REDUCED;
-			}
-			else if (this.healthStatus === HealthStatus.REDUCED) {
-				this.healthStatus = HealthStatus.DEAD;
-			}
-		}
-		else if (effect.defender === -2) {
-			this.healthStatus = HealthStatus.DEAD;
+			defender.takeDamage();
+		} else if (effect.defender === -2) {
+			defender.takeDamage();
+			defender.takeDamage(); // Takes two hits
 		}
 
-		if (this.healthStatus === HealthStatus.DEAD) {
-			this.gameState.vacatedHex = this.hexGrid.getHex(this.x, this.y);
+		if (defender.isDead()) {
+			this.gameState.vacatedHex = defenderHex;
 			this.gameState.attackers = attackers;
 			this.gameState.pushSpecialPhaseQueue(SpecialPhaseType.ADVANCE);
 		}
 
-		this.refreshStatusIndicator();
-		this.refreshStatusText();
+		trigger('combatResolved', { 
+			attackers,
+			defender,
+			didAttackerTakeDamage: effect.attacker === -1 && attackers.length === 1,
+			wasDefenderDestroyed: defender.isDead(),
+			originalAttackerHealth,
+			originalDefenderHealth
+		});
 
 		this.gameState.selectUnit(null, false); // Clear selection
-
-		this.hexGrid.clearHighlightedHexes();
-		this.hexGrid.removeDeadUnits();
 		this.hexGrid.checkWinningConditions();
-		this.hexGrid.refreshUnitSelectRects();
-		this.hexGrid.refreshUnitDimmers();
-
 		this.hexGrid.startSpecialPhase(this.gameState.getCurrentSpecialPhase());
 	}
 
