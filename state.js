@@ -58,22 +58,5 @@ export class GameState {
         trigger('currentSpecialPhaseUpdated', this);
     }
 
-    selectUnit(unit, isMultiSelect) {
-        if (isMultiSelect) {
-            const index = this.selectedUnits.indexOf(unit);
-            if (index > -1) {
-                this.selectedUnits.splice(index, 1); // Deselect if already selected
-            } else {
-                this.selectedUnits.push(unit); // Select if not already selected
-            }
-        } else {
-            if (unit === null) {
-                this.selectedUnits = [];
-            } else {
-                // In single-select mode, deselect if clicking the same unit, otherwise select the new one.
-                this.selectedUnits = (this.selectedUnits.length === 1 && this.selectedUnits[0] === unit) ? [] : [unit];
-            }
-        }
-        trigger('selectionChanged', { selectedUnits: this.selectedUnits });
-    }
+    
 }

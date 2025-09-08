@@ -4,7 +4,7 @@ import { TerrainType, UnitProperties, MaxMovementPointCost, TerrainProperties, S
 import { getHexWidth, getHexHeight, getAnotherPlayer, getMargin, getAdjacentHexes } from './utils.js';
 
 export class HexGrid {
-    constructor(rows, cols, scenarioMap, hexRadius, lineWidth, gameState, isEditor = false, svgService, animationService = null) {
+    constructor(rows, cols, scenarioMap, hexRadius, lineWidth, gameState, isEditor = false, svgService, animationService = null, gameEngine = null) {
         this.hexes = [];
         this.units = [];
         this.svg = null;
@@ -17,6 +17,7 @@ export class HexGrid {
         this.isEditor = isEditor;
         this.svgService = svgService;
         this.animationService = animationService;
+        this.gameEngine = gameEngine;
     }
 
     async drawHexGrid() {
@@ -99,7 +100,7 @@ export class HexGrid {
 
         if (mapHexData.unit) {
             const svgElement = this.svgService.svgElements[mapHexData.unit + ".svg"].cloneNode(true);
-            const newUnit = new Unit(col, row, mapHexData.unit, svgElement, mapHexData.player, this.hexRadius, this.lineWidth, this, this.gameState, this.animationService);
+            const newUnit = new Unit(col, row, mapHexData.unit, svgElement, mapHexData.player, this.hexRadius, this.lineWidth, this, this.gameState, this.animationService, this.gameEngine);
             newUnit.createUnit();
             this.addUnit(newUnit);
             hex.setUnit(newUnit);
@@ -458,30 +459,9 @@ export class HexGrid {
         });
     }
 
-    checkWinningConditions() {
-        const winner = this.getWinner();
+    
 
-        if (winner != null) {
-            this.gameState.status = GameStatus.ENDED;
-            this.gameState.setWinner(winner);
-        }
-    }
-
-    getWinner() {
-        for (const player of Object.values(PlayerType)) {
-            if (!this.units.some(u => u.player == getAnotherPlayer(player)))
-            {
-                return player;
-            }
-
-            const flagHex = this.hexes.find(h => h.flag != null && h.player == getAnotherPlayer(player));
-            if (flagHex && this.units.some(u => u.x === flagHex.x && u.y === flagHex.y && u.player === player)) {
-                return player;
-            }
-        }
-
-        return null;
-    }
+    
 
     removeDeadUnits() {
         [...this.units]
@@ -489,32 +469,7 @@ export class HexGrid {
                 .forEach(u => u.remove());
     }
 
-    startSpecialPhase(specialPhase) {
-        if (this.gameState.status === GameStatus.ENDED) {
-            return;
-        }
-        if (specialPhase === SpecialPhaseType.ADVANCE) {
-            if (this.gameState.attackers.every(a => a.isDead())) {
-                this.endSpecialPhase();
-            }
-            else {
-                this.clearHighlightedHexes();
-                this.gameState.vacatedHex.toggleInnerHex(true);
-                this.refreshUnitDimmers();
-            }
-        }
-    }
+    
 
-    endSpecialPhase() {
-        const currentPhase = this.gameState.getCurrentSpecialPhase();
-        this.gameState.shiftSpecialPhaseQueue();
-
-        if(currentPhase === SpecialPhaseType.ADVANCE) {
-            this.clearHighlightedHexes();
-            this.clearSelections();
-        }
-
-        this.refreshUnitDimmers();
-        this.startSpecialPhase(this.gameState.getCurrentSpecialPhase());
-    }
+    
 }

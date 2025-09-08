@@ -3,7 +3,7 @@ import { SvgService } from './svg-service.js';
 import { getHexWidth, getHexHeight, getMargin, getAdjacentHexes } from './utils.js';
 
 export class Hex {
-	constructor(x, y, hexRadius, lineWidth, hexGrid, isEditor = false) {
+	constructor(x, y, hexRadius, lineWidth, hexGrid, isEditor = false, gameEngine = null) {
 		this.x = x;
 		this.y = y;
 		this.hexRadius = hexRadius;
@@ -16,6 +16,7 @@ export class Hex {
 		this.flag = null;
 		this.isEditor = isEditor;
 		this.svg = this.draxHexSvg();
+		this.gameEngine = gameEngine;
 	}
 
 	draxHexSvg() {
@@ -70,25 +71,7 @@ export class Hex {
 	}
 
 	async clickHandler() {
-		if (this.hexGrid.gameState.status !== GameStatus.GAMEON || this.hexGrid.gameState.isAnimating) {
-			return;
-		}
-
-		const currentSpecialPhase = this.hexGrid.gameState.getCurrentSpecialPhase();
-
-		if ((this.hexGrid.gameState.currentTurnPhase == TurnPhase.MOVE || currentSpecialPhase === SpecialPhaseType.ADVANCE) && 
-			this.hexGrid.gameState.selectedUnits.length > 0 && 
-			this.hexGrid.gameState.selectedUnits[0].isValidMove(this.x, this.y)) {
-			const selectedUnit = this.hexGrid.gameState.selectedUnits[0];
-			selectedUnit.move(this.x, this.y);
-			this.hexGrid.gameState.selectUnit(null, false);
-
-			if (currentSpecialPhase === SpecialPhaseType.ADVANCE) {
-				this.hexGrid.endSpecialPhase();
-			}
-
-			this.hexGrid.checkWinningConditions();
-		}
+		this.gameEngine.handleHexClick(this.x, this.y);
 	}
 
 		getClosestSide(clickX, clickY) {
