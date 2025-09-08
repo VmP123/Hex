@@ -78,7 +78,7 @@ export class InfoArea {
     }
 
     endPhase() {
-        window.game.gameEngine.endCurrentPhase();
+        window.game.endCurrentPhase();
     }
 
     draw() {

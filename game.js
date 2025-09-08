@@ -7,7 +7,6 @@ import { AnimationService } from './animation-service.js';
 import { GameStatus, TurnPhase, PlayerType, SpecialPhaseType } from './constants.js';
 import { trigger } from './state.js';
 import { ViewController } from './view-controller.js';
-import { GameEngine } from './game-engine.js'; // Import GameEngine
 
 class Game {
     constructor() {
@@ -23,7 +22,6 @@ class Game {
         this.hexGrid = null;
         this.viewController = null;
         this.infoArea = null;
-        this.gameEngine = null; // Add gameEngine property
     }
 
     async init() {
@@ -42,18 +40,12 @@ class Game {
 
         this.svg.appendChild(this.hexGrid.svg);
 
-        // Pass gameEngine to hexes' clickHandler
-        this.gameEngine = new GameEngine(this.hexGrid); // Instantiate GameEngine
-        this.hexGrid.gameEngine = this.gameEngine; // Provide grid with a reference to gameEngine
-
         this.hexGrid.hexes.forEach(hex => {
             hex.svg.addEventListener('click', () => {
                 if (this.viewController.panned) {
                     return;
                 }
-                // Hex click handler will now call gameEngine
-                // For now, hex.clickHandler() will be modified later to call gameEngine
-                hex.clickHandler(); 
+                hex.clickHandler()
             });
         });
 
@@ -72,8 +64,37 @@ class Game {
         this.setupResizeListener();
     }
 
-    // endCurrentPhase method will be removed from here and called on gameEngine
-    // selectUnit method will be removed from here and called on gameEngine
+    endCurrentPhase() {
+        if (this.gameState.status !== GameStatus.GAMEON) {
+            return;
+        }
+
+        const currentSpecialPhase = this.gameState.getCurrentSpecialPhase();
+
+        if (currentSpecialPhase === SpecialPhaseType.ADVANCE) {
+            this.hexGrid.endSpecialPhase();
+        }
+        else if (currentSpecialPhase === null) {
+            if (this.gameState.currentTurnPhase == TurnPhase.MOVE) {
+                this.gameState.currentTurnPhase = TurnPhase.ATTACK;
+            }
+            else if (this.gameState.currentTurnPhase == TurnPhase.ATTACK) {
+                this.gameState.activePlayer = this.gameState.activePlayer == PlayerType.GREY
+                    ? PlayerType.GREEN
+                    : PlayerType.GREY;
+
+                this.gameState.currentTurnPhase = TurnPhase.MOVE;
+                this.gameState.setCombatResult(null, null);
+                this.hexGrid.clearUnitMovedAttacked();
+            }
+
+            trigger('phaseChanged');
+
+            this.hexGrid.clearHighlightedHexes();
+            this.hexGrid.clearSelections();
+            this.hexGrid.refreshUnitDimmers();
+        }
+    }
 
     setupResizeListener() {
         const gameWrapper = document.getElementById('game-wrapper');
