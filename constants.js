@@ -154,6 +154,10 @@ const CombatResultTableValueEffect = {
 		attacker: -1,
 		defender: 0
 	},
+	'A2': {
+		attacker: -2,
+		defender: 0
+	},
 	'D1': {
 		attacker: 0,
 		defender: -1

@@ -195,20 +195,26 @@ export class ViewController {
         // TODO: Add attack animation (e.g., flash)
 
         attackers.forEach(attacker => {
-            attacker.refreshStatusIndicator();
-            attacker.refreshStatusText();
+            const attackerView = this.hexGrid.getViewForUnit(attacker);
+            if (attackerView) {
+                attackerView.refreshStatusIndicator();
+                attackerView.refreshStatusText();
+            }
         });
 
-        defender.refreshStatusIndicator();
-        defender.refreshStatusText();
+        const defenderView = this.hexGrid.getViewForUnit(defender);
+        if (defenderView) {
+            defenderView.refreshStatusIndicator();
+            defenderView.refreshStatusText();
+        }
 
         if (wasDefenderDestroyed) {
-            defender.remove();
+            this.hexGrid.removeUnit(defender);
         }
         // Handle attacker destroyed visual update if needed
         attackers.forEach(attacker => {
             if (attacker.isDead()) {
-                attacker.remove();
+                this.hexGrid.removeUnit(attacker);
             }
         });
 

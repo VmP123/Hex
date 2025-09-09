@@ -69,27 +69,7 @@ export class Hex {
 			return points.join(" ");
 	}
 
-	async clickHandler() {
-		if (this.hexGrid.gameState.status !== GameStatus.GAMEON || this.hexGrid.gameState.isAnimating) {
-			return;
-		}
-
-		const currentSpecialPhase = this.hexGrid.gameState.getCurrentSpecialPhase();
-
-		if ((this.hexGrid.gameState.currentTurnPhase == TurnPhase.MOVE || currentSpecialPhase === SpecialPhaseType.ADVANCE) && 
-			this.hexGrid.gameState.selectedUnits.length > 0 && 
-			this.hexGrid.gameState.selectedUnits[0].isValidMove(this.x, this.y)) {
-			const selectedUnit = this.hexGrid.gameState.selectedUnits[0];
-			selectedUnit.move(this.x, this.y);
-			this.hexGrid.gameState.selectUnit(null, false);
-
-			if (currentSpecialPhase === SpecialPhaseType.ADVANCE) {
-				this.hexGrid.endSpecialPhase();
-			}
-
-			this.hexGrid.checkWinningConditions();
-		}
-	}
+	
 
 		getClosestSide(clickX, clickY) {
 		const hexWidth = getHexWidth(this.hexRadius);

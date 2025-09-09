@@ -8,6 +8,8 @@ import { GameStatus, TurnPhase, PlayerType, SpecialPhaseType } from './constants
 import { trigger } from './state.js';
 import { ViewController } from './view-controller.js';
 
+import { GameEngine } from './engine.js';
+
 class Game {
     constructor() {
         this.svg = document.getElementById('main');
@@ -22,6 +24,7 @@ class Game {
         this.hexGrid = null;
         this.viewController = null;
         this.infoArea = null;
+        this.gameEngine = null;
     }
 
     async init() {
@@ -33,10 +36,14 @@ class Game {
 
         this.gameState = new GameState();
         this.gameState.status = GameStatus.GAMEON;
-        this.animationService = new AnimationService(this.gameState);
 
-        this.hexGrid = new HexGrid(this.scenarioMap.height, this.scenarioMap.width, this.scenarioMap, this.hexRadius, this.lineWidth, this.gameState, false, this.svgService, this.animationService);
+        this.hexGrid = new HexGrid(this.scenarioMap.height, this.scenarioMap.width, this.scenarioMap, this.hexRadius, this.lineWidth, this.gameState, false, this.svgService);
         await this.hexGrid.drawHexGrid();
+
+        this.animationService = new AnimationService(this.gameState, this.hexGrid);
+        this.hexGrid.animationService = this.animationService; // Pass animationService to hexGrid
+
+        this.gameEngine = new GameEngine(this.gameState, this.hexGrid);
 
         this.svg.appendChild(this.hexGrid.svg);
 
@@ -45,7 +52,7 @@ class Game {
                 if (this.viewController.panned) {
                     return;
                 }
-                hex.clickHandler()
+                this.gameEngine.handleHexClick(hex);
             });
         });
 
@@ -62,38 +69,6 @@ class Game {
         this.viewController.setViewBox(0, 0, 1024, 880);
 
         this.setupResizeListener();
-    }
-
-    endCurrentPhase() {
-        if (this.gameState.status !== GameStatus.GAMEON) {
-            return;
-        }
-
-        const currentSpecialPhase = this.gameState.getCurrentSpecialPhase();
-
-        if (currentSpecialPhase === SpecialPhaseType.ADVANCE) {
-            this.hexGrid.endSpecialPhase();
-        }
-        else if (currentSpecialPhase === null) {
-            if (this.gameState.currentTurnPhase == TurnPhase.MOVE) {
-                this.gameState.currentTurnPhase = TurnPhase.ATTACK;
-            }
-            else if (this.gameState.currentTurnPhase == TurnPhase.ATTACK) {
-                this.gameState.activePlayer = this.gameState.activePlayer == PlayerType.GREY
-                    ? PlayerType.GREEN
-                    : PlayerType.GREY;
-
-                this.gameState.currentTurnPhase = TurnPhase.MOVE;
-                this.gameState.setCombatResult(null, null);
-                this.hexGrid.clearUnitMovedAttacked();
-            }
-
-            trigger('phaseChanged');
-
-            this.hexGrid.clearHighlightedHexes();
-            this.hexGrid.clearSelections();
-            this.hexGrid.refreshUnitDimmers();
-        }
     }
 
     setupResizeListener() {

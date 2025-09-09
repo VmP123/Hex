@@ -28,6 +28,7 @@ export class GameState {
         this.d6Value = null;
         this.isAnimating = false;
         this.selectedUnits = [];
+        this.attackers = [];
     }
 
     setCombatResult(crtColumn, d6Value) {

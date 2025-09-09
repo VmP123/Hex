@@ -1,5 +1,6 @@
 import { Hex } from './hex.js';
 import { Unit } from './unit.js';
+import { UnitView } from './unit-view.js';
 import { TerrainType, UnitProperties, MaxMovementPointCost, TerrainProperties, SpecialPhaseType, GameStatus, PlayerType, TurnPhase } from './constants.js';
 import { getHexWidth, getHexHeight, getAnotherPlayer, getMargin, getAdjacentHexes } from './utils.js';
 
@@ -7,6 +8,7 @@ export class HexGrid {
     constructor(rows, cols, scenarioMap, hexRadius, lineWidth, gameState, isEditor = false, svgService, animationService = null) {
         this.hexes = [];
         this.units = [];
+        this.unitViews = []; // New array for views
         this.svg = null;
         this.rows = rows;
         this.cols = cols;
@@ -98,10 +100,13 @@ export class HexGrid {
         hex.setRiverEdges(mapHexData.riverEdges || []);
 
         if (mapHexData.unit) {
-            const svgElement = this.svgService.svgElements[mapHexData.unit + ".svg"].cloneNode(true);
-            const newUnit = new Unit(col, row, mapHexData.unit, svgElement, mapHexData.player, this.hexRadius, this.lineWidth, this, this.gameState, this.animationService);
-            newUnit.createUnit();
-            this.addUnit(newUnit);
+            const baseRect = this.svgService.svgElements[mapHexData.unit + ".svg"].cloneNode(true);
+            const newUnit = new Unit(col, row, mapHexData.unit, mapHexData.player, baseRect);
+            const newUnitView = new UnitView(newUnit, this, this.gameState);
+            newUnitView.createUnit();
+            newUnitView.setBackgroundColor();
+            newUnitView.refreshStatusText();
+            this.addUnit(newUnit, newUnitView);
             hex.setUnit(newUnit);
         }
 
@@ -194,11 +199,12 @@ export class HexGrid {
         return false;
     }
 
-    addUnit(unit) {
+    addUnit(unit, unitView) {
         this.units.push(unit);
+        this.unitViews.push(unitView);
 
         const unitLayer = this.svg.querySelector('#unitLayer');
-        unitLayer.appendChild(unit.svg);
+        unitLayer.appendChild(unitView.svg);
     }
 
     isEmpty(x, y) {
@@ -376,10 +382,16 @@ export class HexGrid {
         if (index > -1) {
             this.units.splice(index, 1);
         }
-        const unitLayer = this.svg.querySelector('#unitLayer');
-        if (unit.svg && unitLayer.contains(unit.svg)) {
-            unitLayer.removeChild(unit.svg);
+
+        const unitView = this.unitViews.find(uv => uv.unit === unit);
+        if (unitView) {
+            unitView.remove();
+            const viewIndex = this.unitViews.indexOf(unitView);
+            if (viewIndex > -1) {
+                this.unitViews.splice(viewIndex, 1);
+            }
         }
+
         const hex = this.getHex(unit.x, unit.y);
         if (hex) {
             hex.removeUnit();
@@ -413,6 +425,10 @@ export class HexGrid {
         return { x, y };
     }
 
+    getViewForUnit(unit) {
+        return this.unitViews.find(uv => uv.unit === unit);
+    }
+
     redrawAllRivers() {
         const riverLayer = this.svg.querySelector('#riverLayer');
         if (!riverLayer) return;
@@ -442,11 +458,11 @@ export class HexGrid {
     }
 
     refreshUnitDimmers() {
-        this.units.forEach(u => u.refreshDimmer());
+        this.unitViews.forEach(uv => uv.refreshDimmer());
     }
 
     refreshUnitSelectRects() {
-        this.units.forEach(u => u.refreshSelectRect());
+        this.unitViews.forEach(uv => uv.refreshSelectRect());
     }
 
     clearUnitMovedAttacked() {
@@ -454,8 +470,8 @@ export class HexGrid {
             u.moved = false;
             u.attacked = false;
             u.advanced = false;
-            u.refreshDimmer();
         });
+        this.refreshUnitDimmers();
     }
 
     checkWinningConditions() {
@@ -486,7 +502,7 @@ export class HexGrid {
     removeDeadUnits() {
         [...this.units]
                 .filter(u => u.isDead())
-                .forEach(u => u.remove());
+                .forEach(u => this.removeUnit(u));
     }
 
     startSpecialPhase(specialPhase) {
