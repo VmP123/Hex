@@ -152,22 +152,36 @@ export class GameEngine {
             }
         }
 
-        if (effect.defender === -1) {
-            this.applyDamage(defender);
-        } else if (effect.defender === -2) {
-            this.applyDamage(defender);
-            this.applyDamage(defender);
-        }
-
-        if (defender.isDead()) {
-            this.gameState.vacatedHex = defenderHex;
-            this.gameState.attackers = attackers;
-            this.gameState.pushSpecialPhaseQueue(SpecialPhaseType.ADVANCE);
+        if (effect.defender < 0) {
+            const damage = Math.abs(effect.defender);
+            for (let i = 0; i < damage; i++) {
+                this.applyDamage(defender);
+            }
         }
 
         trigger('combatResolved', { 
             attackers,
             defender,
+        });
+
+        const deadUnits = [];
+        if (defender.isDead()) {
+            this.gameState.vacatedHex = this.hexGrid.getHex(defender.x, defender.y);
+            this.gameState.attackers = attackers.filter(a => !a.isDead());
+            if (this.gameState.attackers.length > 0) {
+                this.gameState.pushSpecialPhaseQueue(SpecialPhaseType.ADVANCE);
+            }
+            deadUnits.push(defender);
+        }
+        attackers.forEach(attacker => {
+            if (attacker.isDead()) {
+                deadUnits.push(attacker);
+            }
+        });
+
+        deadUnits.forEach(deadUnit => {
+            this.hexGrid.removeUnit(deadUnit);
+            trigger('unitRemoved', { unit: deadUnit });
         });
 
         this.gameState.selectUnit(null, false);

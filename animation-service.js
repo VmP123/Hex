@@ -2,11 +2,15 @@ import { on } from './state.js';
 
 export class AnimationService {
     constructor(gameState, hexGridView) {
-        this.gameState = gameState;
-        this.hexGridView = hexGridView; // Store the hexGridView reference
         if (!AnimationService.instance) {
-            AnimationService.instance = this;
+            this.gameState = gameState;
+            this.hexGridView = hexGridView;
             on('unitMoving', (data) => this.handleUnitMove(data));
+            AnimationService.instance = this;
+        } else {
+            // Update references on the existing singleton instance
+            AnimationService.instance.gameState = gameState;
+            AnimationService.instance.hexGridView = hexGridView;
         }
         return AnimationService.instance;
     }
