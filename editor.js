@@ -1,9 +1,11 @@
 import { HexGrid } from './grid.js';
+import { HexGridView } from './grid-view.js';
 import { GameState } from './state.js';
 import { TerrainType, UnitType, PlayerType } from './constants.js';
 import { SvgService } from './svg-service.js';
 import { ScenarioMap } from './scenario.js';
 import { Unit } from './unit.js';
+import { UnitView } from './unit-view.js';
 import { ViewController } from './view-controller.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -18,6 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const lineWidth = 2;
   const gameState = new GameState();
   let hexGrid;
+  let hexGridView;
   const mainSvg = document.getElementById('main');
   
   let mapWidth;
@@ -27,27 +30,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   async function drawMap(scenario) {
     mainSvg.innerHTML = '';
-    hexGrid = new HexGrid(scenario.height, scenario.width, scenario, hexRadius, lineWidth, gameState, true, svgService, null);
-    await hexGrid.drawHexGrid();
-    mainSvg.appendChild(hexGrid.svg);
+    hexGrid = new HexGrid(scenario.height, scenario.width, scenario, gameState, true);
+    hexGridView = new HexGridView(hexGrid, hexRadius, lineWidth, gameState, true, svgService, null);
+    await hexGridView.drawHexGrid();
+    mainSvg.appendChild(hexGridView.svg);
     
-    mapWidth = parseFloat(hexGrid.svg.getAttribute('width'));
-    mapHeight = parseFloat(hexGrid.svg.getAttribute('height'));
+    mapWidth = parseFloat(hexGridView.svg.getAttribute('width'));
+    mapHeight = parseFloat(hexGridView.svg.getAttribute('height'));
 
     if (!viewController) {
       viewController = new ViewController(mainSvg, mapWidth, mapHeight);
+      hexGridView.viewController = viewController;
     }
     else {
       viewController.updateMapDimensions(mapWidth, mapHeight);
     }
-    hexGrid.viewController = viewController;
 
-    hexGrid.hexes.forEach(hex => {
-      hex.svg.addEventListener('click', (e) => {
-        if (hexGrid.viewController.panned) {
+    hexGridView.hexViews.forEach(hexView => {
+      hexView.svg.addEventListener('click', (e) => {
+        if (viewController.panned) {
             return;
         }
-        onHexClick(hex, e)
+        onHexClick(hexView, e)
       });
     });
     
@@ -55,15 +59,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   const editorMapWrapper = document.getElementById('editor-map-wrapper');
-  const baseWidth = 1024; // Base width of the map area
-  const baseHeight = 880; // Base height of the map area
-  const outerMargin = 25; // Margin around the scaled content
+  const baseWidth = 1024;
+  const baseHeight = 880;
+  const outerMargin = 25;
   
   function resizeEditor() {
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     
-    // Account for the sidebar width
     const sidebarWidth = document.getElementById('editor-controls').offsetWidth;
     const availableWidth = viewportWidth - sidebarWidth - outerMargin * 2;
     const availableHeight = viewportHeight - outerMargin * 2;
@@ -77,7 +80,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   window.addEventListener('resize', resizeEditor);
-  resizeEditor(); // Initial resize
+  resizeEditor();
   
   const initialScenario = new ScenarioMap();
   initialScenario.createEmptyMap(10, 10);
@@ -159,7 +162,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectedButton.classList.add('selected');
   }
   
-  function onHexClick(hex, event) {
+  function onHexClick(hexView, event) {
+    const hex = hexView.hex;
     const mainSvg = document.getElementById('main');
     const screenPoint = new DOMPoint(event.clientX, event.clientY);
     const inverseMatrix = mainSvg.getScreenCTM().inverse();
@@ -168,18 +172,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const svgX = svgPoint.x;
     const svgY = svgPoint.y;
 
-    const hexX = parseFloat(hex.svg.getAttribute('x'));
-    const hexY = parseFloat(hex.svg.getAttribute('y'));
+    const hexX = parseFloat(hexView.svg.getAttribute('x'));
+    const hexY = parseFloat(hexView.svg.getAttribute('y'));
 
     const clickXInHex = svgX - hexX;
     const clickYInHex = svgY - hexY;
 
     if (riverMode) {
-      const edgeIndex = hex.getClosestSide(clickXInHex, clickYInHex);
+      const edgeIndex = hexView.getClosestSide(clickXInHex, clickYInHex);
       hex.toggleRiver(edgeIndex);
+      hexGridView.redrawAllRivers();
     }
     else if (selectedTerrain) {
       hex.setTerrain(selectedTerrain);
+      hexView.setTerrain(selectedTerrain);
     }
     else if (flagMode) {
         const player = document.getElementById('player-select').value === '0' ? PlayerType.GREY : PlayerType.GREEN;
@@ -188,20 +194,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             hex.setFlag(true, player);
         }
+        hexView.setFlag(hex.flag, hex.player);
     }
     else if (selectedUnit) {
       const existingUnit = hex.unit;
       if (existingUnit) {
           hexGrid.removeUnit(existingUnit);
+          hexGridView.removeUnit(existingUnit);
       }
 
       if (selectedUnit !== 'remove') {
-          const svgElement = svgService.svgElements[selectedUnit + ".svg"].cloneNode(true);
           const player = document.getElementById('player-select').value === '0' ? PlayerType.GREY : PlayerType.GREEN;
-          const newUnit = new Unit(hex.x, hex.y, selectedUnit, svgElement, player, hexRadius, lineWidth, hexGrid, gameState, null);
-          newUnit.createUnit();
+          const newUnit = new Unit(hex.x, hex.y, selectedUnit, player);
           hexGrid.addUnit(newUnit);
           hex.setUnit(newUnit);
+          
+          const baseRect = svgService.svgElements[newUnit.unitType + ".svg"].cloneNode(true);
+          const newUnitView = new UnitView(newUnit, hexGridView, gameState);
+          newUnitView.createUnit(baseRect);
+          newUnitView.setBackgroundColor();
+          newUnitView.refreshStatusText();
+          hexGridView.addUnitView(newUnitView);
       }
     }
   }
@@ -216,7 +229,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         y: hex.y,
         terrain: hex.terrainType,
         unit: hex.unit ? hex.unit.unitType : null,
-        player: hex.unit ? hex.unit.player : null,
+        player: hex.unit ? hex.unit.player : (hex.player ? hex.player : null),
         riverEdges: hex.riverEdges,
         flag: hex.flag
       }))

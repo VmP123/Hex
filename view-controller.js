@@ -7,6 +7,7 @@ export class ViewController {
         this.svg = svg;
         this.mapWidth = mapWidth;
         this.mapHeight = mapHeight;
+        this.hexGridView = null; // Will be set by game.js
 
         this.isPanning = false;
         this.panStarted = false;
@@ -164,26 +165,28 @@ export class ViewController {
     }
 
     updateSelectionView(selectedUnits) {
-        if (this.hexGrid) {
-            this.hexGrid.units.forEach(u => u.selected = selectedUnits.includes(u));
-            this.hexGrid.refreshUnitSelectRects();
-            this.hexGrid.clearHighlightedHexes();
+        if (this.hexGridView) {
+            this.hexGridView.hexGrid.units.forEach(u => u.selected = selectedUnits.includes(u));
+            this.hexGridView.refreshUnitSelectRects();
+            this.hexGridView.clearHighlightedHexes();
 
             const specialPhase = this.gameState.getCurrentSpecialPhase();
 
             if (specialPhase === SpecialPhaseType.ADVANCE) {
                 if (this.gameState.vacatedHex) {
+                    const hexView = this.hexGridView.getViewForHex(this.gameState.vacatedHex);
                     this.gameState.vacatedHex.toggleInnerHex(true);
+                    hexView.toggleInnerHex();
                 }
-                return; // Do not show other highlights during advance phase
+                return;
             }
 
             if (selectedUnits.length > 0) {
                 if (this.gameState.currentTurnPhase === TurnPhase.MOVE) {
                     const selectedUnit = selectedUnits[0];
-                    this.hexGrid.highlightReachableEmptyHexes(selectedUnit.x, selectedUnit.y, selectedUnit.unitType);
+                    this.hexGridView.highlightReachableEmptyHexes(selectedUnit.x, selectedUnit.y, selectedUnit.unitType);
                 } else if (this.gameState.currentTurnPhase === TurnPhase.ATTACK) {
-                    this.hexGrid.highlightAdjacentEnemyHexes(selectedUnits);
+                    this.hexGridView.highlightAdjacentEnemyHexes(selectedUnits);
                 }
             }
         }
@@ -195,31 +198,31 @@ export class ViewController {
         // TODO: Add attack animation (e.g., flash)
 
         attackers.forEach(attacker => {
-            const attackerView = this.hexGrid.getViewForUnit(attacker);
+            const attackerView = this.hexGridView.getViewForUnit(attacker);
             if (attackerView) {
                 attackerView.refreshStatusIndicator();
                 attackerView.refreshStatusText();
             }
         });
 
-        const defenderView = this.hexGrid.getViewForUnit(defender);
+        const defenderView = this.hexGridView.getViewForUnit(defender);
         if (defenderView) {
             defenderView.refreshStatusIndicator();
             defenderView.refreshStatusText();
         }
 
         if (wasDefenderDestroyed) {
-            this.hexGrid.removeUnit(defender);
+            this.hexGridView.removeUnit(defender);
         }
         // Handle attacker destroyed visual update if needed
         attackers.forEach(attacker => {
             if (attacker.isDead()) {
-                this.hexGrid.removeUnit(attacker);
+                this.hexGridView.removeUnit(attacker);
             }
         });
 
-        this.hexGrid.clearHighlightedHexes();
-        this.hexGrid.refreshUnitSelectRects();
-        this.hexGrid.refreshUnitDimmers();
+        this.hexGridView.clearHighlightedHexes();
+        this.hexGridView.refreshUnitSelectRects();
+        this.hexGridView.refreshUnitDimmers();
     }
 }

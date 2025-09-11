@@ -2,6 +2,7 @@ import { SvgService } from './svg-service.js';
 import { ScenarioMap } from './scenario.js';
 import { InfoArea } from './ui.js';
 import { HexGrid } from './grid.js';
+import { HexGridView } from './grid-view.js';
 import { GameState } from './state.js';
 import { AnimationService } from './animation-service.js';
 import { GameStatus, TurnPhase, PlayerType, SpecialPhaseType } from './constants.js';
@@ -22,6 +23,7 @@ class Game {
         this.gameState = null;
         this.animationService = null;
         this.hexGrid = null;
+        this.hexGridView = null;
         this.viewController = null;
         this.infoArea = null;
         this.gameEngine = null;
@@ -37,32 +39,38 @@ class Game {
         this.gameState = new GameState();
         this.gameState.status = GameStatus.GAMEON;
 
-        this.hexGrid = new HexGrid(this.scenarioMap.height, this.scenarioMap.width, this.scenarioMap, this.hexRadius, this.lineWidth, this.gameState, false, this.svgService);
-        await this.hexGrid.drawHexGrid();
+        this.hexGrid = new HexGrid(this.scenarioMap.height, this.scenarioMap.width, this.scenarioMap, this.gameState, false);
+        this.hexGridView = new HexGridView(this.hexGrid, this.hexRadius, this.lineWidth, this.gameState, false, this.svgService);
+        await this.hexGridView.drawHexGrid();
 
-        this.animationService = new AnimationService(this.gameState, this.hexGrid);
-        this.hexGrid.animationService = this.animationService; // Pass animationService to hexGrid
+        this.animationService = new AnimationService(this.gameState, this.hexGridView);
+        this.hexGridView.animationService = this.animationService;
 
-        this.gameEngine = new GameEngine(this.gameState, this.hexGrid);
+        this.gameEngine = new GameEngine(this.gameState, this.hexGrid, this.hexGridView);
 
-        this.svg.appendChild(this.hexGrid.svg);
+        this.svg.appendChild(this.hexGridView.svg);
 
-        this.hexGrid.hexes.forEach(hex => {
-            hex.svg.addEventListener('click', () => {
+        const mapWidth = parseFloat(this.hexGridView.svg.getAttribute('width'));
+        const mapHeight = parseFloat(this.hexGridView.svg.getAttribute('height'));
+        this.viewController = new ViewController(this.svg, mapWidth, mapHeight, this.gameState);
+        this.gameEngine.viewController = this.viewController;
+        this.viewController.hexGridView = this.hexGridView;
+        this.hexGridView.viewController = this.viewController;
+
+        this.hexGridView.hexViews.forEach(hexView => {
+            hexView.svg.addEventListener('click', () => {
                 if (this.viewController.panned) {
                     return;
                 }
-                this.gameEngine.handleHexClick(hex);
+                this.gameEngine.handleHexClick(hexView.hex);
             });
         });
 
-        const mapWidth = parseFloat(this.hexGrid.svg.getAttribute('width'));
-        const mapHeight = parseFloat(this.hexGrid.svg.getAttribute('height'));
-        this.viewController = new ViewController(this.svg, mapWidth, mapHeight, this.gameState);
-        this.hexGrid.viewController = this.viewController; // Provide grid with a reference to viewController
-        this.viewController.hexGrid = this.hexGrid; // Provide viewController with a reference to grid
+        this.hexGridView.unitViews.forEach(unitView => {
+            unitView.addClickHandler();
+        });
 
-        this.infoArea = new InfoArea(this.gameState, this.hexGrid, this.viewController.zoom.bind(this.viewController));
+        this.infoArea = new InfoArea(this.gameState, this.hexGridView, this.viewController.zoom.bind(this.viewController));
         this.infoArea.draw();
         this.infoAreaSvg.appendChild(this.infoArea.svg);
 

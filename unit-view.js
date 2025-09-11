@@ -2,19 +2,20 @@ import { ColorByPlayer, TurnPhase, SpecialPhaseType, HealthStatus, UnitPropertie
 import { getHexWidth, getHexHeight, getMargin } from './utils.js';
 
 export class UnitView {
-    constructor(unit, hexGrid, gameState) {
+    constructor(unit, hexGridView, gameState) {
         this.unit = unit; // Reference to the model
-        this.hexGrid = hexGrid;
+        this.hexGridView = hexGridView;
         this.gameState = gameState;
         this.svg = null; // The main SVG element for this view
     }
 
-    createUnit() {
+    createUnit(baseRect) {
+        this.unit.baseRect = baseRect;
 		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 
-		const margin = getMargin(this.hexGrid.lineWidth);
-		const hexWidth = getHexWidth(this.hexGrid.hexRadius);
-		const hexHeight = getHexHeight(this.hexGrid.hexRadius);
+		const margin = getMargin(this.hexGridView.lineWidth);
+		const hexWidth = getHexWidth(this.hexGridView.hexRadius);
+		const hexHeight = getHexHeight(this.hexGridView.hexRadius);
 
 		const dimmerRect = document.createElementNS('http://www.w3.org/2000/svg', "rect");
 		dimmerRect.setAttribute("x", 3);
@@ -46,25 +47,26 @@ export class UnitView {
 		svg.appendChild(selectRect);
 		
 		this.svg = svg;
-        this.unit.svg = svg;
 
-		if (this.hexGrid.isEditor) {
+		if (this.hexGridView.isEditor) {
 			this.svg.style.pointerEvents = 'none';
 		}
 
 		this.updatePosition(this.unit.x, this.unit.y);
-
-		const handleClick = () => {
-			if (this.hexGrid.viewController.panned) {
-				return;
-			}
-			window.game.gameEngine.handleUnitClick(this.unit);
-		};
-
-		if (!this.hexGrid.isEditor) {
-			this.svg.addEventListener('click', handleClick);
-		}
 	}
+
+    addClickHandler() {
+        if (this.hexGridView.isEditor) {
+            return;
+        }
+        const handleClick = () => {
+            if (this.hexGridView.viewController && this.hexGridView.viewController.panned) {
+                return;
+            }
+            window.game.gameEngine.handleUnitClick(this.unit);
+        };
+        this.svg.addEventListener('click', handleClick);
+    }
 
     setBackgroundColor() {
 		const color = ColorByPlayer[this.unit.player];
@@ -106,9 +108,9 @@ export class UnitView {
 		this.unit.x = gridX;
 		this.unit.y = gridY;
 
-		const hexWidth = getHexWidth(this.hexGrid.hexRadius);
-		const hexHeight = getHexHeight(this.hexGrid.hexRadius);
-		const margin = getMargin(this.hexGrid.lineWidth);
+		const hexWidth = getHexWidth(this.hexGridView.hexRadius);
+		const hexHeight = getHexHeight(this.hexGridView.hexRadius);
+		const margin = getMargin(this.hexGridView.lineWidth);
 
 		const xOffset = hexWidth * 0.75;
 		const yOffset = hexHeight * 0.5;
@@ -140,7 +142,7 @@ export class UnitView {
 	}
 
 	remove() {
-		const unitLayer = this.hexGrid.svg.querySelector('#unitLayer');
+		const unitLayer = this.hexGridView.svg.querySelector('#unitLayer');
 		unitLayer.removeChild(this.svg);
 	}
 }

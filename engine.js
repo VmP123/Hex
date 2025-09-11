@@ -2,9 +2,10 @@ import { GameStatus, TurnPhase, PlayerType, SpecialPhaseType, HealthStatus, Comb
 import { trigger } from './state.js';
 
 export class GameEngine {
-    constructor(gameState, hexGrid) {
+    constructor(gameState, hexGrid, hexGridView) {
         this.gameState = gameState;
         this.hexGrid = hexGrid;
+        this.hexGridView = hexGridView;
     }
 
     handleUnitClick(unit) {
@@ -38,16 +39,17 @@ export class GameEngine {
         this.applyDamage(unit);
         this.gameState.unassignedDamagePoints--;
 
-        const unitView = this.hexGrid.getViewForUnit(unit);
+        const unitView = this.hexGridView.getViewForUnit(unit);
         if (unitView) {
             unitView.refreshStatusIndicator();
             unitView.refreshStatusText();
         }
 
         this.hexGrid.removeDeadUnits();
+        this.hexGridView.removeDeadUnits();
 
         if (this.gameState.unassignedDamagePoints === 0) {
-            this.hexGrid.endSpecialPhase();
+            this.endSpecialPhase();
         }
     }
 
@@ -59,7 +61,7 @@ export class GameEngine {
         if (unit.player === this.gameState.activePlayer && !unit.attacked) {
             this.gameState.selectUnit(unit, true);
         }
-        else if (this.hexGrid.getHex(unit.x, unit.y).highlighted){
+        else if (this.hexGridView.getViewForHex(this.hexGrid.getHex(unit.x, unit.y)).hex.highlighted){
             const attackers = this.gameState.selectedUnits;
             if (attackers && attackers.length > 0) {
                 this.attack(attackers, unit);
@@ -177,7 +179,7 @@ export class GameEngine {
 
         this.gameState.selectUnit(null, false); // Clear selection
         this.hexGrid.checkWinningConditions();
-        this.hexGrid.startSpecialPhase(this.gameState.getCurrentSpecialPhase());
+        this.startSpecialPhase(this.gameState.getCurrentSpecialPhase());
     }
 
     handleHexClick(hex) {
@@ -188,13 +190,13 @@ export class GameEngine {
         const currentSpecialPhase = this.gameState.getCurrentSpecialPhase();
 
         if (this.gameState.currentTurnPhase == TurnPhase.MOVE || currentSpecialPhase === SpecialPhaseType.ADVANCE) {
-            if (this.gameState.selectedUnits.length > 0 && this.gameState.selectedUnits[0].isValidMove(hex.x, hex.y)) {
+            if (this.gameState.selectedUnits.length > 0 && this.gameState.selectedUnits[0].isValidMove(hex.x, hex.y, this.hexGrid)) {
                 const selectedUnit = this.gameState.selectedUnits[0];
                 this.moveUnit(selectedUnit, hex.x, hex.y);
                 this.gameState.selectUnit(null, false);
 
                 if (currentSpecialPhase === SpecialPhaseType.ADVANCE) {
-                    this.hexGrid.endSpecialPhase();
+                    this.endSpecialPhase();
                 }
 
                 this.hexGrid.checkWinningConditions();
@@ -218,7 +220,7 @@ export class GameEngine {
         const currentSpecialPhase = this.gameState.getCurrentSpecialPhase();
 
         if (currentSpecialPhase === SpecialPhaseType.ADVANCE) {
-            this.hexGrid.endSpecialPhase();
+            this.endSpecialPhase();
         }
         else if (currentSpecialPhase === null) {
             if (this.gameState.currentTurnPhase == TurnPhase.MOVE) {
@@ -236,9 +238,20 @@ export class GameEngine {
 
             trigger('phaseChanged');
 
-            this.hexGrid.clearHighlightedHexes();
+            this.hexGridView.clearHighlightedHexes();
             this.hexGrid.clearSelections();
-            this.hexGrid.refreshUnitDimmers();
+            this.hexGridView.refreshUnitDimmers();
         }
+    }
+    
+    startSpecialPhase(specialPhase) {
+        this.hexGrid.startSpecialPhase(specialPhase);
+        this.hexGridView.startSpecialPhase(specialPhase);
+    }
+
+    endSpecialPhase() {
+        const currentPhase = this.gameState.getCurrentSpecialPhase();
+        this.hexGrid.endSpecialPhase();
+        this.hexGridView.endSpecialPhase(currentPhase);
     }
 }

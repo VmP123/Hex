@@ -1,9 +1,9 @@
 import { on } from './state.js';
 
 export class AnimationService {
-    constructor(gameState, hexGrid) {
+    constructor(gameState, hexGridView) {
         this.gameState = gameState;
-        this.hexGrid = hexGrid; // Store the hexGrid reference
+        this.hexGridView = hexGridView; // Store the hexGridView reference
         if (!AnimationService.instance) {
             AnimationService.instance = this;
             on('unitMoving', (data) => this.handleUnitMove(data));
@@ -18,7 +18,7 @@ export class AnimationService {
         await this.animateUnit(unit, path);
 
         const finalHex = path[path.length - 1];
-        const unitView = this.hexGrid.unitViews.find(uv => uv.unit === unit);
+        const unitView = this.hexGridView.unitViews.find(uv => uv.unit === unit);
         unitView.updatePosition(finalHex.x, finalHex.y);
 
         if (this.gameState.getCurrentSpecialPhase() === 'ADVANCE') {
@@ -26,7 +26,7 @@ export class AnimationService {
         }
 
         this.gameState.isAnimating = false;
-        this.hexGrid.refreshUnitDimmers();
+        this.hexGridView.refreshUnitDimmers();
     }
 
     animateUnit(unit, path) {
@@ -41,9 +41,10 @@ export class AnimationService {
                 }
 
                 const targetHex = path[pathIndex];
-                const targetPosition = this.hexGrid.getUnitPosition(targetHex);
+                const targetPosition = this.hexGridView.getUnitPosition(targetHex);
                 
-                const unitSvg = unit.svg;
+                const unitView = this.hexGridView.getViewForUnit(unit);
+                const unitSvg = unitView.svg;
                 const currentX = parseFloat(unitSvg.getAttribute('x'));
                 const currentY = parseFloat(unitSvg.getAttribute('y'));
 
