@@ -1,5 +1,5 @@
 import { GameStatus, PlayerType, SpecialPhaseType, TurnPhase, CombatResultsTable } from './constants.js';
-import { on } from './state.js';
+import { on, trigger } from './state.js';
 
 export class InfoArea {
     constructor(gameState, hexGrid, zoomFunction) {
@@ -78,7 +78,7 @@ export class InfoArea {
     }
 
     endPhase() {
-        window.game.gameEngine.endCurrentPhase();
+        trigger('endPhaseRequested');
     }
 
     draw() {
