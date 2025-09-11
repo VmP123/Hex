@@ -46,7 +46,7 @@ class Game {
         this.animationService = new AnimationService(this.gameState, this.hexGridView);
         this.hexGridView.animationService = this.animationService;
 
-        this.gameEngine = new GameEngine(this.gameState, this.hexGrid, this.hexGridView);
+        this.gameEngine = new GameEngine(this.gameState, this.hexGrid);
 
         this.svg.appendChild(this.hexGridView.svg);
 

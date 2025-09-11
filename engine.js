@@ -1,11 +1,11 @@
 import { GameStatus, TurnPhase, PlayerType, SpecialPhaseType, HealthStatus, CombatResultsTable, CombatResultTableValueEffect, UnitProperties, TerrainProperties } from './constants.js';
 import { trigger } from './state.js';
+import { getAdjacentHexes } from './utils.js';
 
 export class GameEngine {
-    constructor(gameState, hexGrid, hexGridView) {
+    constructor(gameState, hexGrid) {
         this.gameState = gameState;
         this.hexGrid = hexGrid;
-        this.hexGridView = hexGridView;
     }
 
     handleUnitClick(unit) {
@@ -38,15 +38,10 @@ export class GameEngine {
     handleAttackerDamageSelection(unit) {
         this.applyDamage(unit);
         this.gameState.unassignedDamagePoints--;
+        trigger('unitUpdated', { unit: unit });
 
-        const unitView = this.hexGridView.getViewForUnit(unit);
-        if (unitView) {
-            unitView.refreshStatusIndicator();
-            unitView.refreshStatusText();
-        }
-
-        this.hexGrid.removeDeadUnits();
-        this.hexGridView.removeDeadUnits();
+        const deadUnits = this.hexGrid.removeDeadUnits();
+        deadUnits.forEach(deadUnit => trigger('unitRemoved', { unit: deadUnit }));
 
         if (this.gameState.unassignedDamagePoints === 0) {
             this.endSpecialPhase();
@@ -60,11 +55,17 @@ export class GameEngine {
     handleAttackPhaseSelection(unit) {
         if (unit.player === this.gameState.activePlayer && !unit.attacked) {
             this.gameState.selectUnit(unit, true);
-        }
-        else if (this.hexGridView.getViewForHex(this.hexGrid.getHex(unit.x, unit.y)).hex.highlighted){
+        } else {
             const attackers = this.gameState.selectedUnits;
             if (attackers && attackers.length > 0) {
-                this.attack(attackers, unit);
+                // Check if the target is adjacent to any of the attackers
+                const isAdjacent = attackers.some(attacker => {
+                    const adjacentHexes = getAdjacentHexes(attacker.x, attacker.y, this.hexGrid.rows, this.hexGrid.cols);
+                    return adjacentHexes.some(h => h.x === unit.x && h.y === unit.y);
+                });
+                if (isAdjacent) {
+                    this.attack(attackers, unit);
+                }
             }
         }
     }
@@ -83,13 +84,12 @@ export class GameEngine {
     }
 
     moveUnit(unit, gridX, gridY) {
-        unit.moved = true;
-  
         const startHex = this.hexGrid.getHex(unit.x, unit.y);
         const endHex = this.hexGrid.getHex(gridX, gridY);
         const path = this.hexGrid.findPath(startHex, endHex, unit);
   
         if (path) {
+            unit.moved = true;
             trigger('unitMoving', { unit: unit, path: path });
         }
     }
@@ -139,9 +139,6 @@ export class GameEngine {
         const crtResult = crtColumn[d6Value];
         const effect = CombatResultTableValueEffect[crtResult];
 
-        const originalAttackerHealth = attackers.map(a => a.healthStatus);
-        const originalDefenderHealth = defender.healthStatus;
-
         if (effect.attacker < 0) {
             const damagePoints = Math.abs(effect.attacker);
             if (attackers.length > 1) {
@@ -171,13 +168,9 @@ export class GameEngine {
         trigger('combatResolved', { 
             attackers,
             defender,
-            didAttackerTakeDamage: effect.attacker === -1 && attackers.length === 1,
-            wasDefenderDestroyed: defender.isDead(),
-            originalAttackerHealth,
-            originalDefenderHealth
         });
 
-        this.gameState.selectUnit(null, false); // Clear selection
+        this.gameState.selectUnit(null, false);
         this.hexGrid.checkWinningConditions();
         this.startSpecialPhase(this.gameState.getCurrentSpecialPhase());
     }
@@ -238,20 +231,15 @@ export class GameEngine {
 
             trigger('phaseChanged');
 
-            this.hexGridView.clearHighlightedHexes();
             this.hexGrid.clearSelections();
-            this.hexGridView.refreshUnitDimmers();
         }
     }
     
     startSpecialPhase(specialPhase) {
         this.hexGrid.startSpecialPhase(specialPhase);
-        this.hexGridView.startSpecialPhase(specialPhase);
     }
 
     endSpecialPhase() {
-        const currentPhase = this.gameState.getCurrentSpecialPhase();
         this.hexGrid.endSpecialPhase();
-        this.hexGridView.endSpecialPhase(currentPhase);
     }
 }

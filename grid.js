@@ -261,7 +261,9 @@ export class HexGrid {
     }
 
     removeDeadUnits() {
-        [...this.units].filter(u => u.isDead()).forEach(u => this.removeUnit(u));
+        const deadUnits = this.units.filter(u => u.isDead());
+        deadUnits.forEach(u => this.removeUnit(u));
+        return deadUnits;
     }
 
     startSpecialPhase(specialPhase) {

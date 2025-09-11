@@ -29,6 +29,10 @@ export class ViewController {
 
         on('selectionChanged', (data) => this.updateSelectionView(data.selectedUnits));
         on('combatResolved', (data) => this.handleCombatVisuals(data));
+        on('unitUpdated', (data) => this.handleUnitUpdated(data.unit));
+        on('unitRemoved', (data) => this.handleUnitRemoved(data.unit));
+        on('phaseChanged', () => this.handlePhaseChanged());
+        on('currentSpecialPhaseUpdated', () => this.handleSpecialPhaseUpdate());
     }
 
     onMouseDown(e) {
@@ -193,36 +197,47 @@ export class ViewController {
     }
 
     handleCombatVisuals(data) {
-        const { attackers, defender, wasDefenderDestroyed } = data;
-
-        // TODO: Add attack animation (e.g., flash)
+        const { attackers, defender } = data;
 
         attackers.forEach(attacker => {
-            const attackerView = this.hexGridView.getViewForUnit(attacker);
-            if (attackerView) {
-                attackerView.refreshStatusIndicator();
-                attackerView.refreshStatusText();
-            }
+            this.handleUnitUpdated(attacker);
         });
-
-        const defenderView = this.hexGridView.getViewForUnit(defender);
-        if (defenderView) {
-            defenderView.refreshStatusIndicator();
-            defenderView.refreshStatusText();
-        }
-
-        if (wasDefenderDestroyed) {
-            this.hexGridView.removeUnit(defender);
-        }
-        // Handle attacker destroyed visual update if needed
-        attackers.forEach(attacker => {
-            if (attacker.isDead()) {
-                this.hexGridView.removeUnit(attacker);
-            }
-        });
+        this.handleUnitUpdated(defender);
 
         this.hexGridView.clearHighlightedHexes();
         this.hexGridView.refreshUnitSelectRects();
         this.hexGridView.refreshUnitDimmers();
+    }
+
+    handleUnitUpdated(unit) {
+        const unitView = this.hexGridView.getViewForUnit(unit);
+        if (unitView) {
+            unitView.refreshStatusIndicator();
+            unitView.refreshStatusText();
+        }
+    }
+
+    handleUnitRemoved(unit) {
+        this.hexGridView.removeUnit(unit);
+    }
+
+    handlePhaseChanged() {
+        this.hexGridView.clearHighlightedHexes();
+        this.hexGridView.refreshUnitDimmers();
+    }
+
+    handleSpecialPhaseUpdate() {
+        const specialPhase = this.gameState.getCurrentSpecialPhase();
+        this.hexGridView.clearHighlightedHexes();
+        this.hexGridView.refreshUnitDimmers();
+        if (specialPhase === SpecialPhaseType.ADVANCE) {
+            if (this.gameState.vacatedHex) {
+                const hexView = this.hexGridView.getViewForHex(this.gameState.vacatedHex);
+                this.gameState.vacatedHex.toggleInnerHex(true);
+                if (hexView) {
+                    hexView.toggleInnerHex();
+                }
+            }
+        }
     }
 }
