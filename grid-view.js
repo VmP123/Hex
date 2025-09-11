@@ -39,6 +39,7 @@ export class HexGridView {
                 newUnitView.createUnit(baseRect);
                 newUnitView.setBackgroundColor();
                 newUnitView.refreshStatusText();
+                newUnitView.refreshStatusIndicator();
                 this.addUnitView(newUnitView);
             }
         }
