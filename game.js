@@ -65,7 +65,7 @@ class Game {
         } else {
             // Load from scenario file
             this.scenarioMap = new ScenarioMap();
-            await this.scenarioMap.load("map01.json");
+            await this.scenarioMap.load("./maps/map01.json");
             scenario = this.scenarioMap;
             this.gameState = new GameState();
             this.gameState.status = GameStatus.GAMEON;

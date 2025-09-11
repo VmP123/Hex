@@ -4,6 +4,8 @@ export class SvgService {
       SvgService.instance = this;
       this.svgElements = {};
       this.parser = new DOMParser();
+      this.basePath = './assets/';
+      this.loaded = false;
     }
     return SvgService.instance;
   }
@@ -26,7 +28,11 @@ export class SvgService {
   }
 
   async loadSvgFromFile(filename) {
-    const svgResource = await fetch(filename);
+    const fullpath = this.basePath.endsWith('/')
+      ? this.basePath + filename
+      : this.basePath + '/' + filename;
+
+    const svgResource = await fetch(fullpath);
     const svgData = await svgResource.text();
     const svgElement = this.parser.parseFromString(svgData, 'image/svg+xml').documentElement;
 
