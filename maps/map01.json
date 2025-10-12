@@ -205,7 +205,8 @@
       "unit": null,
       "player": null,
       "riverEdges": [],
-      "flag": null
+      "flag": null,
+      "owner": "grey"
     },
     {
       "x": 1,
@@ -594,7 +595,8 @@
       "unit": null,
       "player": null,
       "riverEdges": [],
-      "flag": null
+      "flag": null,
+      "owner": "green"
     },
     {
       "x": 2,

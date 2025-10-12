@@ -38,6 +38,7 @@ export class ScenarioMap {
                 mapHex.player = hexData.player;
                 mapHex.riverEdges = hexData.riverEdges;
                 mapHex.flag = hexData.flag;
+                mapHex.owner = hexData.owner;
                 return mapHex;
             });
             this.width = jsonData.width;
@@ -60,5 +61,6 @@ class MapHex {
         this.unit = null;
         this.player = null;
         this.riverEdges = null;
+        this.owner = null;
     }
 }

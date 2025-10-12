@@ -116,6 +116,12 @@ export class HexView {
             const terrainSvgElement = svgService.svgElements[terrainType + '.svg'].cloneNode(true);
             terrainSvgElement.setAttribute('data-terrain', terrainType);
 
+            if (terrainType === TerrainType.CITY && this.hex.owner) {
+                const cityColor = ColorByPlayer[this.hex.owner];
+                const paths = terrainSvgElement.querySelectorAll('rect');
+                paths.forEach(p => p.setAttribute('fill', cityColor));
+            }
+
             const hexWidth = getHexWidth(this.hexRadius);
             const hexHeight = getHexHeight(this.hexRadius);
             const margin = getMargin(this.lineWidth);

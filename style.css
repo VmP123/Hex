@@ -113,4 +113,5 @@ html, body {
     cursor: pointer;
     border: 1px solid #ccc;
     background-color: #f0f0f0;
+    user-select: none;
 }

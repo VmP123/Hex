@@ -12,6 +12,7 @@ export class Hex {
 		this.flag = null;
 		this.isEditor = isEditor;
         this.unit = null;
+        this.owner = null;
 	}
 
 	toggleInnerHex(value) {

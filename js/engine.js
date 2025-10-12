@@ -209,6 +209,11 @@ export class GameEngine {
                     this.endSpecialPhase();
                 }
 
+                if (hex.terrainType === 'city') {
+                    hex.owner = selectedUnit.player;
+                    trigger('hexUpdated', { hex: hex });
+                }
+
                 this.hexGrid.checkWinningConditions();
             }
         }

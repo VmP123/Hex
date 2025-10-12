@@ -46,6 +46,7 @@ export class HexGrid {
         const mapHexData = mapData.get(`${col},${row}`) || {};
 
         hex.setTerrain(mapHexData.terrain || TerrainType.CLEAR);
+        hex.owner = mapHexData.owner;
         hex.setFlag(mapHexData.flag, mapHexData.player);
         hex.setRiverEdges(mapHexData.riverEdges || []);
 

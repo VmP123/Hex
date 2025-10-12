@@ -2,6 +2,7 @@ import { HexView } from './hex-view.js';
 import { UnitView } from './unit-view.js';
 import { SpecialPhaseType, UnitProperties } from './constants.js';
 import { getHexWidth, getHexHeight, getMargin, getAdjacentHexes } from './utils.js';
+import { on } from './state.js';
 
 export class HexGridView {
     constructor(hexGrid, hexRadius, lineWidth, gameState, isEditor = false, svgService, animationService = null) {
@@ -15,6 +16,8 @@ export class HexGridView {
         this.isEditor = isEditor;
         this.svgService = svgService;
         this.animationService = animationService;
+
+        on('hexUpdated', (data) => this.handleHexUpdated(data.hex));
     }
 
     async drawHexGrid() {
@@ -236,5 +239,12 @@ export class HexGridView {
             this.clearHighlightedHexes();
         }
         this.refreshUnitDimmers();
+    }
+
+    handleHexUpdated(hex) {
+        const hexView = this.getViewForHex(hex);
+        if (hexView) {
+            hexView.setTerrain(hex.terrainType);
+        }
     }
 }
