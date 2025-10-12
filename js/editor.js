@@ -89,20 +89,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   let selectedTerrain = null;
   let selectedUnit = null;
   let riverMode = false;
-  let flagMode = false;
   
   const terrainPalette = document.getElementById('terrain-palette');
   for (const terrain in TerrainType) {
-    if (terrain === TerrainType.FLAG.toUpperCase())
-      continue;
-
     const button = document.createElement('button');
     button.textContent = capitalize(terrain);
     button.addEventListener('click', (e) => {
       selectedTerrain = TerrainType[terrain];
       selectedUnit = null;
       riverMode = false;
-      flagMode = false;
       updateSelectedPalette(e.target);
     });
     terrainPalette.appendChild(button);
@@ -116,7 +111,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       selectedUnit = UnitType[unit];
       selectedTerrain = null;
       riverMode = false;
-      flagMode = false;
       updateSelectedPalette(e.target);
     });
     unitPalette.appendChild(button);
@@ -127,7 +121,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectedUnit = 'remove';
     selectedTerrain = null;
     riverMode = false;
-    flagMode = false;
     updateSelectedPalette(e.target);
   });
   unitPalette.appendChild(removeUnitButton);
@@ -138,22 +131,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     riverMode = !riverMode;
     selectedTerrain = null;
     selectedUnit = null;
-    flagMode = false;
     updateSelectedPalette(e.target);
   });
   terrainPalette.appendChild(riverButton);
-
-  const flagButton = document.createElement('button');
-  flagButton.textContent = "Flag";
-  flagButton.addEventListener('click', (e) => {
-    selectedTerrain = null;
-    selectedUnit = null;
-    riverMode = false;
-    flagMode = true;
-    updateSelectedPalette(e.target);
-  });
-  terrainPalette.appendChild(flagButton);
-  
   
   function updateSelectedPalette(selectedButton) {
     document.querySelectorAll('#terrain-palette button, #unit-palette button').forEach(button => {
@@ -184,17 +164,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       hexGridView.redrawAllRivers();
     }
     else if (selectedTerrain) {
-      hex.setTerrain(selectedTerrain);
-      hexView.setTerrain(selectedTerrain);
-    }
-    else if (flagMode) {
-        const player = document.getElementById('player-select').value === '0' ? PlayerType.GREY : PlayerType.GREEN;
-        if (hex.flag) {
-            hex.setFlag(false, null);
+        hex.setTerrain(selectedTerrain);
+        if (selectedTerrain === TerrainType.CITY || selectedTerrain === TerrainType.FLAG) {
+            const player = document.getElementById('player-select').value === '0' ? PlayerType.GREY : PlayerType.GREEN;
+            hex.owner = player;
         } else {
-            hex.setFlag(true, player);
+            hex.owner = null;
         }
-        hexView.setFlag(hex.flag, hex.player);
+        hexView.setTerrain(selectedTerrain);
     }
     else if (selectedUnit) {
       const existingUnit = hex.unit;
@@ -228,10 +205,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         x: hex.x,
         y: hex.y,
         terrain: hex.terrainType,
-        unit: hex.unit ? hex.unit.unitType : null,
-        player: hex.unit ? hex.unit.player : (hex.player ? hex.player : null),
-        riverEdges: hex.riverEdges,
-        flag: hex.flag
+        unit: hex.unit ? { unitType: hex.unit.unitType, player: hex.unit.player } : null,
+        owner: hex.owner,
+        riverEdges: hex.riverEdges
       }))
     };
     const json = JSON.stringify(mapData, null, 2);
@@ -261,6 +237,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
       reader.readAsText(file);
     }
+    event.target.value = null;
   });
   
   const setSizeButton = document.getElementById('set-size');

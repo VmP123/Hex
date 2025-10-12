@@ -9,7 +9,6 @@ export class Hex {
 		this.terrainType = null;
 		this.isEmpty = true;
 		this.riverEdges = [];
-		this.flag = null;
 		this.isEditor = isEditor;
         this.unit = null;
         this.owner = null;
@@ -28,21 +27,9 @@ export class Hex {
 		this.terrainType = terrainType;
 		this.isEmpty = true;
 
-		if (terrainType === TerrainType.MOUNTAIN || terrainType === TerrainType.FOREST || terrainType === TerrainType.SWAMP || terrainType === TerrainType.WATER || terrainType === TerrainType.CITY) {
+		if (terrainType === TerrainType.MOUNTAIN || terrainType === TerrainType.FOREST || terrainType === TerrainType.SWAMP || terrainType === TerrainType.WATER || terrainType === TerrainType.CITY || terrainType === TerrainType.FLAG) {
 			this.isEmpty = false;
 		}
-	}
-
-    setFlag(value, player) {
-		if (value === undefined || value === null || player === undefined || player === null || value === false) {
-            this.flag = null;
-            this.player = null;
-			return;
-        }
-
-		this.isEmpty = true;
-		this.flag = value;
-		this.player = player;
 	}
 
 	setRiverEdges(riverEdges) {

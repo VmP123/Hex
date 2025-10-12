@@ -5,7 +5,7 @@ export class AnimationService {
         if (!AnimationService.instance) {
             this.gameState = gameState;
             this.hexGridView = hexGridView;
-            on('unitMoving', (data) => this.handleUnitMove(data));
+            on('unitMoved', (data) => this.handleUnitMove(data));
             AnimationService.instance = this;
         } else {
             // Update references on the existing singleton instance
@@ -21,9 +21,10 @@ export class AnimationService {
 
         await this.animateUnit(unit, path);
 
-        const finalHex = path[path.length - 1];
-        const unitView = this.hexGridView.unitViews.find(uv => uv.unit === unit);
-        unitView.updatePosition(finalHex.x, finalHex.y);
+        const unitView = this.hexGridView.getViewForUnit(unit);
+        if (unitView) {
+            unitView.updatePosition();
+        }
 
         if (this.gameState.getCurrentSpecialPhase() === 'ADVANCE') {
             unit.advanced = true;

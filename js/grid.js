@@ -47,11 +47,18 @@ export class HexGrid {
 
         hex.setTerrain(mapHexData.terrain || TerrainType.CLEAR);
         hex.owner = mapHexData.owner;
-        hex.setFlag(mapHexData.flag, mapHexData.player);
+
+        // Handle old format
+        if (mapHexData.flag) {
+            hex.setTerrain(TerrainType.FLAG);
+            hex.owner = mapHexData.player;
+        }
+
         hex.setRiverEdges(mapHexData.riverEdges || []);
 
         if (mapHexData.unit) {
-            const newUnit = new Unit(col, row, mapHexData.unit, mapHexData.player);
+            const unitInfo = typeof mapHexData.unit === 'string' ? { unitType: mapHexData.unit, player: mapHexData.player } : mapHexData.unit;
+            const newUnit = new Unit(col, row, unitInfo.unitType, unitInfo.player);
             this.addUnit(newUnit);
             hex.setUnit(newUnit);
         }
@@ -252,7 +259,7 @@ export class HexGrid {
                 return player;
             }
 
-            const flagHex = this.hexes.find(h => h.flag != null && h.player == getAnotherPlayer(player));
+            const flagHex = this.hexes.find(h => h.terrainType === TerrainType.FLAG && h.owner == getAnotherPlayer(player));
             if (flagHex && this.units.some(u => u.x === flagHex.x && u.y === flagHex.y && u.player === player)) {
                 return player;
             }

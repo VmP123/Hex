@@ -29,7 +29,7 @@ export class HexGridView {
         hexGrid.appendChild(unitLayer);
 
         for (const hex of this.hexGrid.hexes) {
-            const hexView = new HexView(hex, this.hexRadius, this.lineWidth);
+            const hexView = new HexView(hex, this.hexRadius, this.lineWidth, this.svgService);
             const position = this._calculateHexPosition(hex.x, hex.y);
             hexView.svg.setAttribute('x', position.x);
             hexView.svg.setAttribute('y', position.y);

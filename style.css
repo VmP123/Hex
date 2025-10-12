@@ -85,6 +85,20 @@ html, body {
     border-color: #a2ba79;
 }
 
+#import-export button,
+#import-export .custom-file-upload {
+    display: block;
+    width: 100%;
+    margin-bottom: 5px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+
 #hex-grid,
 #main { /* Apply styles to both SVGs */
     background-color: #eee;

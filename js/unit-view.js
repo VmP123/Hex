@@ -14,10 +14,6 @@ export class UnitView {
         this.unit.baseRect = baseRect;
 		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 
-		const margin = getMargin(this.hexGridView.lineWidth);
-		const hexWidth = getHexWidth(this.hexGridView.hexRadius);
-		const hexHeight = getHexHeight(this.hexGridView.hexRadius);
-
 		const dimmerRect = document.createElementNS('http://www.w3.org/2000/svg', "rect");
 		dimmerRect.setAttribute("x", 3);
 		dimmerRect.setAttribute("y", 3);
@@ -53,7 +49,7 @@ export class UnitView {
 			this.svg.style.pointerEvents = 'none';
 		}
 
-		this.updatePosition(this.unit.x, this.unit.y);
+		this.updatePosition();
 	}
 
     addClickHandler() {
@@ -105,10 +101,7 @@ export class UnitView {
 		dimmerRect.setAttribute('display', dimm ? 'block' : 'none');
 	}
 
-	updatePosition(gridX, gridY) {
-		this.unit.x = gridX;
-		this.unit.y = gridY;
-
+	updatePosition() {
 		const hexWidth = getHexWidth(this.hexGridView.hexRadius);
 		const hexHeight = getHexHeight(this.hexGridView.hexRadius);
 		const margin = getMargin(this.hexGridView.lineWidth);

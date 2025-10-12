@@ -3,13 +3,13 @@ import { SvgService } from './svg-service.js';
 import { getHexWidth, getHexHeight, getMargin } from './utils.js';
 
 export class HexView {
-    constructor(hex, hexRadius, lineWidth) {
+    constructor(hex, hexRadius, lineWidth, svgService) {
         this.hex = hex;
         this.hexRadius = hexRadius;
         this.lineWidth = lineWidth;
+        this.svgService = svgService;
         this.svg = this.draxHexSvg();
         this.setTerrain(hex.terrainType);
-        this.setFlag(hex.flag, hex.player);
     }
 
     draxHexSvg() {
@@ -111,15 +111,14 @@ export class HexView {
             this.svg.removeChild(existingTerrain);
         }
 
-        if (terrainType === TerrainType.MOUNTAIN || terrainType === TerrainType.FOREST || terrainType === TerrainType.SWAMP || terrainType === TerrainType.WATER || terrainType === TerrainType.CITY) {
-            const svgService = new SvgService();
-            const terrainSvgElement = svgService.svgElements[terrainType + '.svg'].cloneNode(true);
+        if (terrainType === TerrainType.MOUNTAIN || terrainType === TerrainType.FOREST || terrainType === TerrainType.SWAMP || terrainType === TerrainType.WATER || terrainType === TerrainType.CITY || terrainType === TerrainType.FLAG) {
+            const terrainSvgElement = this.svgService.svgElements[terrainType + '.svg'].cloneNode(true);
             terrainSvgElement.setAttribute('data-terrain', terrainType);
 
-            if (terrainType === TerrainType.CITY && this.hex.owner) {
-                const cityColor = ColorByPlayer[this.hex.owner];
-                const paths = terrainSvgElement.querySelectorAll('rect');
-                paths.forEach(p => p.setAttribute('fill', cityColor));
+            if ((terrainType === TerrainType.CITY || terrainType === TerrainType.FLAG) && this.hex.owner) {
+                const color = ColorByPlayer[this.hex.owner];
+                const paths = terrainSvgElement.querySelectorAll('rect, .flagColor');
+                paths.forEach(p => p.setAttribute('fill', color));
             }
 
             const hexWidth = getHexWidth(this.hexRadius);
@@ -142,6 +141,10 @@ export class HexView {
                     width = 80;
                     height = 80;
                     break;
+                case TerrainType.FLAG:
+                    x = (hexWidth / 2) - 37 + margin - 10;
+                    y = (hexHeight / 2) - 35 + margin;
+                    break;
             }
 
             terrainSvgElement.setAttribute('x', x);
@@ -154,34 +157,4 @@ export class HexView {
             this.svg.appendChild(terrainSvgElement);
         }
     }
-
-    setFlag(value, player) {
-        const existingFlag = this.svg.querySelector('[data-flag]');
-        if (existingFlag) {
-            this.svg.removeChild(existingFlag);
-        }
-
-        if (value === undefined || value === null || player === undefined || player === null || value === false) {
-			return;
-        }
-
-		const svgService = new SvgService();
-		const flagSvgElement = svgService.svgElements['flag.svg'].cloneNode(true);
-		flagSvgElement.setAttribute('data-flag', 'true');
-
-		const flagColor = flagSvgElement.querySelector('.flagColor');
-		flagColor.setAttribute('fill', ColorByPlayer[player]);
-
-		const hexWidth = getHexWidth(this.hexRadius);
-		const hexHeight = getHexHeight(this.hexRadius);
-		const margin = getMargin(this.lineWidth);
-
-		const x = (hexWidth / 2) - 37 + margin - 10;
-		const y = (hexHeight / 2) - 35 + margin;
-
-		flagSvgElement.setAttribute('x', x);
-		flagSvgElement.setAttribute('y', y);
-
-		this.svg.appendChild(flagSvgElement);
-	}
 }

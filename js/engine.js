@@ -90,10 +90,22 @@ export class GameEngine {
         const startHex = this.hexGrid.getHex(unit.x, unit.y);
         const endHex = this.hexGrid.getHex(gridX, gridY);
         const path = this.hexGrid.findPath(startHex, endHex, unit);
-  
+
         if (path) {
+            startHex.removeUnit();
+            unit.x = gridX;
+            unit.y = gridY;
             unit.moved = true;
-            trigger('unitMoving', { unit: unit, path: path });
+            endHex.setUnit(unit);
+
+            trigger('unitMoved', { unit: unit, path: path });
+
+            this.hexGrid.checkWinningConditions();
+
+            if (this.gameState.status !== GameStatus.ENDED && endHex.terrainType === 'city') {
+                endHex.owner = unit.player;
+                trigger('hexUpdated', { hex: endHex });
+            }
         }
     }
 
@@ -208,13 +220,6 @@ export class GameEngine {
                 if (currentSpecialPhase === SpecialPhaseType.ADVANCE) {
                     this.endSpecialPhase();
                 }
-
-                if (hex.terrainType === 'city') {
-                    hex.owner = selectedUnit.player;
-                    trigger('hexUpdated', { hex: hex });
-                }
-
-                this.hexGrid.checkWinningConditions();
             }
         }
         else if (this.gameState.currentTurnPhase == TurnPhase.ATTACK) {
