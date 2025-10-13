@@ -9,6 +9,7 @@ import { GameStatus } from './constants.js';
 import { ViewController } from './view-controller.js';
 import { GameEngine } from './engine.js';
 import { Unit } from './unit.js';
+import { Supply } from './supply.js';
 
 class Game {
     constructor() {
@@ -26,6 +27,7 @@ class Game {
         this.viewController = null;
         this.infoArea = null;
         this.gameEngine = null;
+        this.supply = null;
         this.listenersAdded = false;
     }
 
@@ -46,6 +48,7 @@ class Game {
             scenario = {
                 width: Math.max(...saveData.hexes.map(h => h.x)) + 1,
                 height: Math.max(...saveData.hexes.map(h => h.y)) + 1,
+                supplyCities: saveData.supplyCities || {},
                 mapHexes: saveData.hexes.map(h => ({
                     ...h,
                     terrain: h.terrainType // Align property name
@@ -98,12 +101,13 @@ class Game {
         }
 
         // Common initialization logic for the view
-        this.hexGridView = new HexGridView(this.hexGrid, this.hexRadius, this.lineWidth, this.gameState, false, this.svgService);
+        this.supply = new Supply(this.hexGrid);
+        this.hexGridView = new HexGridView(this.hexGrid, this.hexRadius, this.lineWidth, this.gameState, false, this.svgService, this.supply);
         await this.hexGridView.drawHexGrid();
 
         this.animationService = new AnimationService(this.gameState, this.hexGridView);
 
-        this.gameEngine = new GameEngine(this.gameState, this.hexGrid);
+        this.gameEngine = new GameEngine(this.gameState, this.hexGrid, this.supply, scenario);
 
         this.svg.appendChild(this.hexGridView.svg);
 
@@ -112,6 +116,11 @@ class Game {
         this.viewController = new ViewController(this.svg, mapWidth, mapHeight, this.gameState);
         this.viewController.hexGridView = this.hexGridView;
         this.hexGridView.viewController = this.viewController;
+
+        document.getElementById('toggle-supply-button').addEventListener('click', () => {
+            this.gameState.showSupply = !this.gameState.showSupply;
+            this.hexGridView.refreshSupplyView();
+        });
 
         this.hexGridView.hexViews.forEach(hexView => {
             hexView.svg.addEventListener('click', () => {
@@ -146,6 +155,8 @@ class Game {
             this.viewController.updateSelectionView(this.gameState.selectedUnits);
             this.hexGridView.refreshUnitDimmers();
         }
+
+        this.gameEngine.updateSupply();
     }
 
     setupSaveLoadListeners() {
@@ -159,6 +170,7 @@ class Game {
         const getUnitId = (unit) => `${unit.x},${unit.y}`;
 
         const saveData = {
+            supplyCities: this.scenarioMap.supplyCities,
             gameState: {
                 status: this.gameState.status,
                 winner: this.gameState.winner,
@@ -188,7 +200,8 @@ class Game {
                 healthStatus: unit.healthStatus,
                 moved: unit.moved,
                 attacked: unit.attacked,
-                advanced: unit.advanced
+                advanced: unit.advanced,
+                isSupplied: unit.isSupplied
             }))
         };
 

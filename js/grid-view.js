@@ -1,11 +1,11 @@
 import { HexView } from './hex-view.js';
 import { UnitView } from './unit-view.js';
-import { SpecialPhaseType, UnitProperties } from './constants.js';
+import { SpecialPhaseType, UnitProperties, PlayerType } from './constants.js';
 import { getHexWidth, getHexHeight, getMargin, getAdjacentHexes } from './utils.js';
 import { on } from './state.js';
 
 export class HexGridView {
-    constructor(hexGrid, hexRadius, lineWidth, gameState, isEditor = false, svgService, animationService = null) {
+    constructor(hexGrid, hexRadius, lineWidth, gameState, isEditor = false, svgService, supply) {
         this.hexGrid = hexGrid;
         this.hexViews = [];
         this.unitViews = [];
@@ -15,17 +15,21 @@ export class HexGridView {
         this.gameState = gameState;
         this.isEditor = isEditor;
         this.svgService = svgService;
-        this.animationService = animationService;
+        this.supply = supply;
 
         on('hexUpdated', (data) => this.handleHexUpdated(data.hex));
+        on('phaseChanged', this.refreshSupplyView.bind(this));
+        on('unitMoved', this.refreshSupplyView.bind(this));
+        on('unitRemoved', this.refreshSupplyView.bind(this));
     }
 
     async drawHexGrid() {
-        const { hexGrid, hexLayer, riverLayer, unitLayer } = this._createLayers();
+        const { hexGrid, hexLayer, riverLayer, supplyLayer, unitLayer } = this._createLayers();
         this.svg = hexGrid;
 
         hexGrid.appendChild(hexLayer);
         hexGrid.appendChild(riverLayer);
+        hexGrid.appendChild(supplyLayer);
         hexGrid.appendChild(unitLayer);
 
         for (const hex of this.hexGrid.hexes) {
@@ -56,18 +60,138 @@ export class HexGridView {
 
         hexGrid.setAttribute('width', totalWidth);
         hexGrid.setAttribute('height', totalHeight);
+        this.refreshSupplyView();
     }
 
     _createLayers() {
         const hexGrid = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         hexGrid.setAttribute('id', 'hexGrid');
+
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        hexGrid.appendChild(defs);
+
         const hexLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         hexLayer.setAttribute('id', 'hexLayer');
         const riverLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         riverLayer.setAttribute('id', 'riverLayer');
+        const supplyLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        supplyLayer.setAttribute('id', 'supplyLayer');
         const unitLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         unitLayer.setAttribute('id', 'unitLayer');
-        return { hexGrid, hexLayer, riverLayer, unitLayer };
+        return { hexGrid, hexLayer, riverLayer, supplyLayer, unitLayer };
+    }
+
+    refreshSupplyView() {
+        const supplyLayer = this.svg.querySelector('#supplyLayer');
+        if (!supplyLayer) return;
+        supplyLayer.innerHTML = ''; // Clear previous overlays
+
+        if (!this.gameState.showSupply) {
+            return;
+        }
+
+        const suppliedHexesP1 = this.supply.getSuppliedHexes(PlayerType.GREY, this.hexGrid.scenarioMap);
+        const suppliedHexesP2 = this.supply.getSuppliedHexes(PlayerType.GREEN, this.hexGrid.scenarioMap);
+
+        this.hexViews.forEach(hexView => {
+            const hex = hexView.hex;
+            const unit = hex.unit;
+            const inP1Supply = suppliedHexesP1.has(hex);
+            const inP2Supply = suppliedHexesP2.has(hex);
+            let overlayType = null;
+
+            if (unit) {
+                if (unit.player === PlayerType.GREY && inP1Supply) {
+                    overlayType = 'rgba(180, 180, 180, 0.4)';
+                } else if (unit.player === PlayerType.GREEN && inP2Supply) {
+                    overlayType = 'rgba(181, 197, 153, 0.6)';
+                }
+            } else {
+                if (inP1Supply && inP2Supply) {
+                    overlayType = 'half-and-half';
+                } else if (inP1Supply) {
+                    overlayType = 'rgba(180, 180, 180, 0.4)';
+                } else if (inP2Supply) {
+                    overlayType = 'rgba(181, 197, 153, 0.6)';
+                }
+            }
+
+            if (overlayType) {
+                const overlay = this.createSupplyOverlay(hexView, overlayType);
+                supplyLayer.appendChild(overlay);
+            }
+        });
+    }
+
+    _getHexVertices(cx, cy, r) {
+        const points = [];
+        for (let i = 0; i < 6; i++) {
+            // Start at 0 degrees for flat-topped hex
+            const angle_deg = i * 60 + 180;
+            const angle_rad = Math.PI / 180 * angle_deg;
+            points.push({
+                x: cx + r * Math.cos(angle_rad),
+                y: cy + r * Math.sin(angle_rad)
+            });
+        }
+        return points;
+    }
+
+    createSupplyOverlay(hexView, overlayType) {
+        const hexWidth = getHexWidth(this.hexRadius);
+        const hexHeight = getHexHeight(this.hexRadius);
+        const margin = getMargin(this.lineWidth);
+        const hexCenterX = (hexWidth * 0.5) + margin;
+        const hexCenterY = (hexHeight * 0.5) + margin;
+        const radius = this.hexRadius - this.lineWidth / 2;
+
+        const overlaySvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        const svgWidth = hexWidth + margin * 2;
+        const svgHeight = hexHeight + margin * 2;
+        overlaySvg.setAttribute('width', svgWidth);
+        overlaySvg.setAttribute('height', svgHeight);
+
+        if (overlayType === 'half-and-half') {
+            const vertices = this._getHexVertices(hexCenterX, hexCenterY, radius);
+            const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+            // Vertices for pointy-topped hex, starting from top-right
+            const v_tr = vertices[0];
+            const v_t = vertices[1];
+            const v_tl = vertices[2];
+            const v_bl = vertices[3];
+            const v_b = vertices[4];
+            const v_br = vertices[5];
+
+            const greyPoints = [v_tl, v_t, v_tr, v_br].map(p => `${p.x},${p.y}`).join(' ');
+            const greenPoints = [v_br, v_b, v_bl, v_tl].map(p => `${p.x},${p.y}`).join(' ');
+
+            const greyHalf = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            greyHalf.setAttribute('points', greyPoints);
+            greyHalf.setAttribute('fill', 'rgba(180, 180, 180, 0.4)');
+            g.appendChild(greyHalf);
+
+            const greenHalf = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            greenHalf.setAttribute('points', greenPoints);
+            greenHalf.setAttribute('fill', 'rgba(181, 197, 153, 0.6)');
+            g.appendChild(greenHalf);
+
+            overlaySvg.appendChild(g);
+
+        } else {
+            const overlay = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+            overlay.setAttribute('points', hexView.calculateHexPoints(hexCenterX, hexCenterY, radius));
+            overlay.setAttribute('fill', overlayType);
+            overlay.setAttribute('stroke', 'none');
+            overlay.style.pointerEvents = 'none';
+            overlaySvg.appendChild(overlay);
+        }
+        
+        const position = this._calculateHexPosition(hexView.hex.x, hexView.hex.y);
+        overlaySvg.setAttribute('x', position.x);
+        overlaySvg.setAttribute('y', position.y);
+
+        return overlaySvg;
     }
 
     _calculateHexPosition(col, row) {
@@ -154,8 +278,8 @@ export class HexGridView {
         }
     }
 
-    highlightReachableEmptyHexes(x, y, unitType) {
-        const { reachableHexes } = this.hexGrid.getReachableHex(x, y, UnitProperties[unitType].movementAllowance); 
+    highlightReachableHexes(unit) {
+        const { reachableHexes } = this.hexGrid.getReachableHex(unit.x, unit.y, unit.getEffectiveMovement()); 
         for(const adjacentHex of reachableHexes) {
             for(const hex of this.hexGrid.hexes) {
                 if (adjacentHex.x == hex.x && adjacentHex.y == hex.y) {

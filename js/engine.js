@@ -3,12 +3,34 @@ import { trigger, on } from './state.js';
 import { getAdjacentHexes } from './utils.js';
 
 export class GameEngine {
-    constructor(gameState, hexGrid) {
+    constructor(gameState, hexGrid, supply, scenario) {
         this.gameState = gameState;
         this.hexGrid = hexGrid;
+        this.supply = supply;
+        this.scenario = scenario;
 
         on('unitClicked', (data) => this.handleUnitClick(data.unit));
         on('endPhaseRequested', () => this.endCurrentPhase());
+    }
+
+    updateSupply() {
+        const suppliedHexesP1 = this.supply.getSuppliedHexes(PlayerType.GREY, this.scenario);
+        const suppliedHexesP2 = this.supply.getSuppliedHexes(PlayerType.GREEN, this.scenario);
+
+        this.hexGrid.units.forEach(unit => {
+            const unitHex = this.hexGrid.getHex(unit.x, unit.y);
+            let isSupplied = false;
+            if (unit.player === PlayerType.GREY) {
+                isSupplied = suppliedHexesP1.has(unitHex);
+            } else {
+                isSupplied = suppliedHexesP2.has(unitHex);
+            }
+
+            if (unit.isSupplied !== isSupplied) {
+                unit.isSupplied = isSupplied;
+                trigger('unitUpdated', { unit: unit }); // To refresh visuals if any
+            }
+        });
     }
 
     handleUnitClick(unit) {
@@ -117,9 +139,7 @@ export class GameEngine {
         const defenderHex = this.hexGrid.getHex(defender.x, defender.y);
 
         const attackStrengthSum = attackers.reduce((total, su) => {
-            let strength = (su.healthStatus === HealthStatus.FULL 
-                ? UnitProperties[su.unitType].attackStrength 
-                : UnitProperties[su.unitType].reducedAttackStrength);
+            let strength = su.getEffectiveAttack();
             
             const attackerHex = this.hexGrid.getHex(su.x, su.y);
             const attackerTerrain = attackerHex.terrainType;
@@ -132,9 +152,7 @@ export class GameEngine {
             return total + strength;
         }, 0);
 
-        const defendStrength = defender.healthStatus === HealthStatus.FULL 
-            ? UnitProperties[defender.unitType].defendStrength
-            : UnitProperties[defender.unitType].reducedDefendStrength;
+        const defendStrength = defender.getEffectiveDefense();
 
         let crtColumn = [...CombatResultsTable].reverse().find(crtv => crtv.ratio <= (attackStrengthSum/defendStrength)) || CombatResultsTable[0];
 
@@ -254,6 +272,7 @@ export class GameEngine {
                 this.gameState.currentTurnPhase = TurnPhase.MOVE;
                 this.gameState.setCombatResult(null, null);
                 this.hexGrid.clearUnitMovedAttacked();
+                this.updateSupply();
             }
 
             trigger('phaseChanged');

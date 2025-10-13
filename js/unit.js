@@ -15,6 +15,37 @@ export class Unit {
 		this.attacked = false;
 		this.advanced = false;
 		this.healthStatus = HealthStatus.FULL;
+		this.isSupplied = true;
+	}
+
+	getEffectiveMovement() {
+		const baseMovement = UnitProperties[this.unitType].movementAllowance;
+		if (this.isSupplied) {
+			return baseMovement;
+		}
+		return Math.max(1, Math.floor(baseMovement * 2 / 3));
+	}
+
+	getEffectiveAttack() {
+		let baseAttack = (this.healthStatus === HealthStatus.FULL)
+			? UnitProperties[this.unitType].attackStrength
+			: UnitProperties[this.unitType].reducedAttackStrength;
+
+		if (!this.isSupplied) {
+			baseAttack = Math.max(1, Math.floor(baseAttack * 2 / 3));
+		}
+		return baseAttack;
+	}
+
+	getEffectiveDefense() {
+		let baseDefense = (this.healthStatus === HealthStatus.FULL)
+			? UnitProperties[this.unitType].defendStrength
+			: UnitProperties[this.unitType].reducedDefendStrength;
+
+		if (!this.isSupplied) {
+			baseDefense = Math.max(1, Math.floor(baseDefense * 2 / 3));
+		}
+		return baseDefense;
 	}
 
 	isDead() {
@@ -22,7 +53,7 @@ export class Unit {
 	}
 
 	isValidMove(gridX, gridY, hexGrid) {
-        const { reachableHexes } = hexGrid.getReachableHex(this.x, this.y, UnitProperties[this.unitType].movementAllowance);
+        const { reachableHexes } = hexGrid.getReachableHex(this.x, this.y, this.getEffectiveMovement());
         return reachableHexes.some(h => h.x === gridX && h.y === gridY);
 	}
 }

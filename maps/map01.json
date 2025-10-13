@@ -1,6 +1,12 @@
 {
   "width": 10,
   "height": 10,
+  "supplyCities": {
+    "grey": [
+        {"x": 0, "y": 2}
+    ],
+    "green": []
+  },
   "hexList": [
     {
       "x": 0,

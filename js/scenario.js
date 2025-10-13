@@ -3,6 +3,7 @@ export class ScenarioMap {
         this.mapHexes = [];
         this.width = 0;
         this.height = 0;
+        this.supplyCities = {};
     }
 
     createEmptyMap(rows, cols) {
@@ -43,6 +44,7 @@ export class ScenarioMap {
             });
             this.width = jsonData.width;
             this.height = jsonData.height;
+            this.supplyCities = jsonData.supplyCities || {};
 
             return this;
 

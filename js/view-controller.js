@@ -188,7 +188,7 @@ export class ViewController {
             if (selectedUnits.length > 0) {
                 if (this.gameState.currentTurnPhase === TurnPhase.MOVE) {
                     const selectedUnit = selectedUnits[0];
-                    this.hexGridView.highlightReachableEmptyHexes(selectedUnit.x, selectedUnit.y, selectedUnit.unitType);
+                    this.hexGridView.highlightReachableHexes(selectedUnit);
                 } else if (this.gameState.currentTurnPhase === TurnPhase.ATTACK) {
                     this.hexGridView.highlightAdjacentEnemyHexes(selectedUnits);
                 }
