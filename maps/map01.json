@@ -5,7 +5,9 @@
     "grey": [
         {"x": 0, "y": 2}
     ],
-    "green": []
+    "green": [
+        {"x": 1, "y": 6}
+    ]
   },
   "hexList": [
     {
@@ -111,7 +113,6 @@
       "y": 1,
       "terrain": "clear",
       "unit": null,
-      "owner": null,
       "riverEdges": [
         5
       ]

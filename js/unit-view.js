@@ -121,18 +121,46 @@ export class UnitView {
 	}
 
 	refreshStatusText() {
-		const attack = this.unit.healthStatus === HealthStatus.FULL 
-			? UnitProperties[this.unit.unitType].attackStrength
-			: UnitProperties[this.unit.unitType].reducedAttackStrength
+		const effectiveAttack = this.unit.getEffectiveAttack();
+		const baseAttack = this.unit.getBaseAttack();
+		const effectiveDefense = this.unit.getEffectiveDefense();
+		const baseDefense = this.unit.getBaseDefense();
+		const effectiveMovement = this.unit.getEffectiveMovement();
+		const baseMovement = this.unit.getBaseMovement();
 
-		const defend = this.unit.healthStatus === HealthStatus.FULL 
-			? UnitProperties[this.unit.unitType].defendStrength
-			: UnitProperties[this.unit.unitType].reducedDefendStrength
+		const healthElement = this.unit.baseRect.querySelector('.health');
+		healthElement.textContent = ''; // Clear existing content
 
-		this.unit.baseRect.querySelector('.health').textContent = 
-			attack + "-" +
-			defend + "-" +
-			UnitProperties[this.unit.unitType].movementAllowance;
+		const attackColor = effectiveAttack < baseAttack ? 'darkred' : 'black';
+		const defenseColor = effectiveDefense < baseDefense ? 'darkred' : 'black';
+		const movementColor = effectiveMovement < baseMovement ? 'darkred' : 'black';
+		const dashColor = 'black';
+
+		const attackTspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+		attackTspan.textContent = effectiveAttack;
+		attackTspan.setAttribute('fill', attackColor);
+
+		const dash1Tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+		dash1Tspan.textContent = '-';
+		dash1Tspan.setAttribute('fill', dashColor);
+
+		const defendTspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+		defendTspan.textContent = effectiveDefense;
+		defendTspan.setAttribute('fill', defenseColor);
+
+		const dash2Tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+		dash2Tspan.textContent = '-';
+		dash2Tspan.setAttribute('fill', dashColor);
+
+		const movementTspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+		movementTspan.textContent = effectiveMovement;
+		movementTspan.setAttribute('fill', movementColor);
+
+		healthElement.appendChild(attackTspan);
+		healthElement.appendChild(dash1Tspan);
+		healthElement.appendChild(defendTspan);
+		healthElement.appendChild(dash2Tspan);
+		healthElement.appendChild(movementTspan);
 	}
 
 	remove() {

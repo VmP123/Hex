@@ -1,6 +1,7 @@
 import { 
 	HealthStatus,
-	UnitProperties
+	UnitProperties,
+  UnitType
 } from './constants.js';
 
 export class Unit {
@@ -19,17 +20,19 @@ export class Unit {
 	}
 
 	getEffectiveMovement() {
-		const baseMovement = UnitProperties[this.unitType].movementAllowance;
-		if (this.isSupplied) {
+		const baseMovement = this.getBaseMovement();
+		if (this.isSupplied || this.unitType === UnitType.INFANTRY) {
 			return baseMovement;
 		}
 		return Math.max(1, Math.floor(baseMovement * 2 / 3));
 	}
 
+	getBaseMovement() {
+		return UnitProperties[this.unitType].movementAllowance;
+	}
+
 	getEffectiveAttack() {
-		let baseAttack = (this.healthStatus === HealthStatus.FULL)
-			? UnitProperties[this.unitType].attackStrength
-			: UnitProperties[this.unitType].reducedAttackStrength;
+		let baseAttack = this.getBaseAttack();
 
 		if (!this.isSupplied) {
 			baseAttack = Math.max(1, Math.floor(baseAttack * 2 / 3));
@@ -37,15 +40,25 @@ export class Unit {
 		return baseAttack;
 	}
 
+	getBaseAttack() {
+		return (this.healthStatus === HealthStatus.FULL)
+			? UnitProperties[this.unitType].attackStrength
+			: UnitProperties[this.unitType].reducedAttackStrength;
+	}
+
 	getEffectiveDefense() {
-		let baseDefense = (this.healthStatus === HealthStatus.FULL)
-			? UnitProperties[this.unitType].defendStrength
-			: UnitProperties[this.unitType].reducedDefendStrength;
+		let baseDefense = this.getBaseDefense();
 
 		if (!this.isSupplied) {
 			baseDefense = Math.max(1, Math.floor(baseDefense * 2 / 3));
 		}
 		return baseDefense;
+	}
+
+	getBaseDefense() {
+		return (this.healthStatus === HealthStatus.FULL)
+			? UnitProperties[this.unitType].defendStrength
+			: UnitProperties[this.unitType].reducedDefendStrength;
 	}
 
 	isDead() {
