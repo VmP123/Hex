@@ -5,6 +5,7 @@ import { TerrainType, UnitType, PlayerType } from './constants.js';
 import { SvgService } from './svg-service.js';
 import { ScenarioMap } from './scenario.js';
 import { Unit } from './unit.js';
+import { Supply } from './supply.js';
 import { UnitView } from './unit-view.js';
 import { ViewController } from './view-controller.js';
 
@@ -31,7 +32,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function drawMap(scenario) {
     mainSvg.innerHTML = '';
     hexGrid = new HexGrid(scenario.height, scenario.width, scenario, gameState, true);
-    hexGridView = new HexGridView(hexGrid, hexRadius, lineWidth, gameState, true, svgService, null);
+    const supply = new Supply(hexGrid);
+    hexGridView = new HexGridView(hexGrid, hexRadius, lineWidth, gameState, true, svgService, supply);
     await hexGridView.drawHexGrid();
     mainSvg.appendChild(hexGridView.svg);
     
@@ -254,5 +256,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const zoomButton = document.getElementById('zoom');
   zoomButton.addEventListener('click', () => {
     viewController.zoom();
+  });
+
+
+
+  document.getElementById('toggle-supply-button').addEventListener('click', () => {
+    gameState.showSupply = !gameState.showSupply;
+    hexGridView.refreshSupplyView();
   });
 });

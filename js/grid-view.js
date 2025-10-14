@@ -82,6 +82,8 @@ export class HexGridView {
     }
 
     refreshSupplyView() {
+        if (!this.supply) return; // Editor doesn't have supply
+
         const supplyLayer = this.svg.querySelector('#supplyLayer');
         if (!supplyLayer) return;
         supplyLayer.innerHTML = ''; // Clear previous overlays
@@ -102,7 +104,7 @@ export class HexGridView {
 
             if (unit) {
                 if (unit.player === PlayerType.GREY && inP1Supply) {
-                    overlayType = 'rgba(180, 180, 180, 0.4)';
+                    overlayType = 'rgba(180, 180, 180, 0.3)';
                 } else if (unit.player === PlayerType.GREEN && inP2Supply) {
                     overlayType = 'rgba(181, 197, 153, 0.6)';
                 }
@@ -110,7 +112,7 @@ export class HexGridView {
                 if (inP1Supply && inP2Supply) {
                     overlayType = 'half-and-half';
                 } else if (inP1Supply) {
-                    overlayType = 'rgba(180, 180, 180, 0.4)';
+                    overlayType = 'rgba(180, 180, 180, 0.3)';
                 } else if (inP2Supply) {
                     overlayType = 'rgba(181, 197, 153, 0.6)';
                 }
@@ -154,6 +156,7 @@ export class HexGridView {
         if (overlayType === 'half-and-half') {
             const vertices = this._getHexVertices(hexCenterX, hexCenterY, radius);
             const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            g.style.pointerEvents = 'none';
 
             // Vertices for pointy-topped hex, starting from top-right
             const v_tr = vertices[0];
@@ -168,7 +171,7 @@ export class HexGridView {
 
             const greyHalf = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
             greyHalf.setAttribute('points', greyPoints);
-            greyHalf.setAttribute('fill', 'rgba(180, 180, 180, 0.4)');
+            greyHalf.setAttribute('fill', 'rgba(180, 180, 180, 0.3)');
             g.appendChild(greyHalf);
 
             const greenHalf = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');

@@ -109,22 +109,22 @@ export class Supply {
     _getSupplySources(player, scenario) {
         const sources = [];
         const { width, supplyCities } = scenario;
-
+    
         // 1. Player's home edge
-        const homeEdgeX = (player === PlayerType.GREY) ? 0 : width -1;
+        const homeEdgeX = (player === PlayerType.GREY) ? 0 : width - 1;
         for (let y = 0; y < this.hexGrid.rows; y++) {
             const edgeHex = this.hexGrid.getHex(homeEdgeX, y);
-            if (edgeHex && TerrainProperties[edgeHex.terrainType].movementPointCost < MaxMovementPointCost) {
-                 sources.push(edgeHex);
+            if (edgeHex && !this._isSupplyPathBlocked(edgeHex, player)) {
+                sources.push(edgeHex);
             }
         }
-
+    
         // 2. Map-specific supply cities
         if (supplyCities && supplyCities[player]) {
             for (const cityCoord of supplyCities[player]) {
                 const cityHex = this.hexGrid.getHex(cityCoord.x, cityCoord.y);
-                // A city is a supply source only if it's owned by the player
-                if (cityHex && cityHex.owner === player) {
+                // A city is a supply source only if it's owned by the player and not blocked
+                if (cityHex && cityHex.owner === player && !this._isSupplyPathBlocked(cityHex, player)) {
                     sources.push(cityHex);
                 }
             }
