@@ -123,8 +123,7 @@ export class Supply {
         if (supplyCities && supplyCities[player]) {
             for (const cityCoord of supplyCities[player]) {
                 const cityHex = this.hexGrid.getHex(cityCoord.x, cityCoord.y);
-                // A city is a supply source only if it's owned by the player and not blocked
-                if (cityHex && cityHex.owner === player && !this._isSupplyPathBlocked(cityHex, player)) {
+                if (cityHex && cityHex.owner === player) {
                     sources.push(cityHex);
                 }
             }

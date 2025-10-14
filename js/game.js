@@ -190,7 +190,7 @@ class Game {
                 terrainType: hex.terrainType,
                 riverEdges: hex.riverEdges,
                 flag: hex.flag,
-                player: hex.player
+                owner: hex.owner
             })),
             units: this.hexGrid.units.map(unit => ({
                 x: unit.x,
