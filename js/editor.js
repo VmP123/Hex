@@ -91,6 +91,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let selectedTerrain = null;
   let selectedUnit = null;
   let riverMode = false;
+  let roadMode = false;
+  let firstHex = null;
   
   const terrainPalette = document.getElementById('terrain-palette');
   for (const terrain in TerrainType) {
@@ -100,6 +102,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       selectedTerrain = TerrainType[terrain];
       selectedUnit = null;
       riverMode = false;
+      roadMode = false;
+      if (firstHex) {
+        hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
+        firstHex = null;
+      }
       updateSelectedPalette(e.target);
     });
     terrainPalette.appendChild(button);
@@ -113,6 +120,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       selectedUnit = UnitType[unit];
       selectedTerrain = null;
       riverMode = false;
+      roadMode = false;
+      if (firstHex) {
+        hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
+        firstHex = null;
+      }
       updateSelectedPalette(e.target);
     });
     unitPalette.appendChild(button);
@@ -123,6 +135,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectedUnit = 'remove';
     selectedTerrain = null;
     riverMode = false;
+    roadMode = false;
+    if (firstHex) {
+        hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
+        firstHex = null;
+    }
     updateSelectedPalette(e.target);
   });
   unitPalette.appendChild(removeUnitButton);
@@ -131,11 +148,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   riverButton.textContent = capitalize("river");
   riverButton.addEventListener('click', (e) => {
     riverMode = !riverMode;
+    roadMode = false;
     selectedTerrain = null;
     selectedUnit = null;
+    if (firstHex) {
+        hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
+        firstHex = null;
+    }
     updateSelectedPalette(e.target);
   });
   terrainPalette.appendChild(riverButton);
+
+  const roadButton = document.createElement('button');
+  roadButton.textContent = capitalize("road");
+  roadButton.addEventListener('click', (e) => {
+    roadMode = !roadMode;
+    riverMode = false;
+    selectedTerrain = null;
+    selectedUnit = null;
+    if (!roadMode && firstHex) { // If turning off road mode and a hex was selected
+        hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
+        firstHex = null;
+    }
+    updateSelectedPalette(e.target);
+  });
+  terrainPalette.appendChild(roadButton);
   
   function updateSelectedPalette(selectedButton) {
     document.querySelectorAll('#terrain-palette button, #unit-palette button').forEach(button => {
@@ -164,6 +201,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       const edgeIndex = hexView.getClosestSide(clickXInHex, clickYInHex);
       hex.toggleRiver(edgeIndex);
       hexGridView.redrawAllRivers();
+    }
+    else if (roadMode) {
+      if (!firstHex) {
+        firstHex = hex;
+        hexView.toggleInnerHex(true); // Highlight first hex
+      } else {
+        const secondHex = hex;
+        const firstHexView = hexGridView.getViewForHex(firstHex);
+        if (firstHexView) {
+          firstHexView.toggleInnerHex(false); // Unhighlight first hex
+        }
+
+        const neighborIndex = hexGrid.getNeighborIndex(firstHex, secondHex);
+        if (neighborIndex !== -1) {
+          const oppositeIndex = (neighborIndex + 3) % 6;
+          firstHex.roads[neighborIndex] = !firstHex.roads[neighborIndex];
+          secondHex.roads[oppositeIndex] = !secondHex.roads[oppositeIndex];
+          hexGridView.redrawAllRoads();
+        }
+        firstHex = null;
+      }
     }
     else if (selectedTerrain) {
         hex.setTerrain(selectedTerrain);
@@ -209,7 +267,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         terrain: hex.terrainType,
         unit: hex.unit ? { unitType: hex.unit.unitType, player: hex.unit.player } : null,
         owner: hex.owner,
-        riverEdges: hex.riverEdges
+        riverEdges: hex.riverEdges,
+        roads: hex.roads
       }))
     };
     const json = JSON.stringify(mapData, null, 2);

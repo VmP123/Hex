@@ -1,6 +1,6 @@
 import { HexView } from './hex-view.js';
 import { UnitView } from './unit-view.js';
-import { SpecialPhaseType, UnitProperties, PlayerType } from './constants.js';
+import { SpecialPhaseType, UnitProperties, PlayerType, TerrainType } from './constants.js';
 import { getHexWidth, getHexHeight, getMargin, getAdjacentHexes } from './utils.js';
 import { on } from './state.js';
 
@@ -24,11 +24,12 @@ export class HexGridView {
     }
 
     async drawHexGrid() {
-        const { hexGrid, hexLayer, riverLayer, supplyLayer, unitLayer } = this._createLayers();
+        const { hexGrid, hexLayer, riverLayer, roadLayer, supplyLayer, unitLayer } = this._createLayers();
         this.svg = hexGrid;
 
         hexGrid.appendChild(hexLayer);
         hexGrid.appendChild(riverLayer);
+        hexGrid.appendChild(roadLayer);
         hexGrid.appendChild(supplyLayer);
         hexGrid.appendChild(unitLayer);
 
@@ -57,6 +58,7 @@ export class HexGridView {
         const totalHeight = (this.hexGrid.rows * hexHeight) + (hexHeight * 0.5);
 
         this.redrawAllRivers();
+        this.redrawAllRoads();
 
         hexGrid.setAttribute('width', totalWidth);
         hexGrid.setAttribute('height', totalHeight);
@@ -74,11 +76,13 @@ export class HexGridView {
         hexLayer.setAttribute('id', 'hexLayer');
         const riverLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         riverLayer.setAttribute('id', 'riverLayer');
+        const roadLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        roadLayer.setAttribute('id', 'roadLayer');
         const supplyLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         supplyLayer.setAttribute('id', 'supplyLayer');
         const unitLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         unitLayer.setAttribute('id', 'unitLayer');
-        return { hexGrid, hexLayer, riverLayer, supplyLayer, unitLayer };
+        return { hexGrid, hexLayer, riverLayer, roadLayer, supplyLayer, unitLayer };
     }
 
     refreshSupplyView() {
@@ -338,6 +342,99 @@ export class HexGridView {
                 });
             }
         });
+    }
+
+    redrawAllRoads() {
+        const roadLayer = this.svg.querySelector('#roadLayer');
+        if (!roadLayer) return;
+        roadLayer.innerHTML = '';
+
+        this.hexGrid.hexes.forEach(hex => {
+            const connections = hex.roads.map((r, i) => r ? i : -1).filter(i => i !== -1);
+            const roadCount = connections.length;
+
+            if (roadCount === 0) {
+                return;
+            }
+
+            const pathGroup = this._drawInternalRoadPath(hex, connections, roadCount);
+            roadLayer.appendChild(pathGroup);
+        });
+    }
+
+    _drawInternalRoadPath(hex, connections, roadCount) {
+        const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        const hexCenter = this._getHexCenter(hex);
+        const edgeMidpoints = connections.map(dir => this._getEdgeMidpoint(hex, (dir + 3) % 6));
+
+        let pathData = '';
+        let linecap = 'butt';
+
+        if (hex.terrainType === TerrainType.CITY) {
+            console.log('city');
+            linecap = 'butt';
+            edgeMidpoints.forEach(p1 => {
+                const p2x = p1.x * 0.70 + hexCenter.x * 0.30;
+                const p2y = p1.y * 0.70 + hexCenter.y * 0.30;
+                pathData += `M ${p1.x} ${p1.y} L ${p2x} ${p2y} `;
+            });
+        } else {
+            if (roadCount === 1) { // Dead end
+                pathData = `M ${hexCenter.x} ${hexCenter.y} L ${edgeMidpoints[0].x} ${edgeMidpoints[0].y}`;
+            } else if (roadCount === 2) { // Straight or curve
+                const [start, end] = edgeMidpoints;
+                const isStraight = Math.abs(connections[0] - connections[1]) === 3;
+                if (isStraight) {
+                    pathData = `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
+                } else { // Curve
+                    const controlX = hexCenter.x;
+                    const controlY = hexCenter.y;
+                    pathData = `M ${start.x} ${start.y} Q ${controlX} ${controlY} ${end.x} ${end.y}`;
+                }
+            } else { // Junction
+                linecap = 'butt';
+                edgeMidpoints.forEach(point => {
+                    pathData += `M ${hexCenter.x} ${hexCenter.y} L ${point.x} ${point.y} `;
+                });
+            }
+        }
+
+        const roadBase = this._createRoadPath(pathData, 'white', 10, linecap);
+        // const centerLine = this._createRoadPath(pathData, 'black', 2, linecap, '4, 6');
+        const centerLine = this._createRoadPath(pathData, 'black', 2, linecap, '2, 4');
+
+        group.appendChild(roadBase);
+        group.appendChild(centerLine);
+        return group;
+    }
+
+    _createRoadPath(pathData, stroke, strokeWidth, linecap = 'round', dasharray = 'none') {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', pathData);
+        path.setAttribute('stroke', stroke);
+        path.setAttribute('stroke-width', strokeWidth);
+        path.setAttribute('stroke-linecap', linecap);
+        path.setAttribute('stroke-linejoin', 'round');
+        // path.setAttribute('stroke-dasharray', dasharray);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('pointer-events', 'none');
+        return path;
+    }
+
+    _getHexCenter(hex) {
+        const margin = getMargin(this.lineWidth);
+        const { x, y } = this.getHexPosition(hex);
+        const hexCenterX = getHexWidth(this.hexRadius) / 2 + x + margin;
+        const hexCenterY = getHexHeight(this.hexRadius) / 2 + y + margin;
+        return { x: hexCenterX, y: hexCenterY };
+    }
+
+    _getEdgeMidpoint(hex, edgeIndex) {
+        const center = this._getHexCenter(hex);
+        const vertices = this._getHexVertices(center.x, center.y, this.hexRadius);
+        const p1 = vertices[edgeIndex];
+        const p2 = vertices[(edgeIndex + 1) % 6];
+        return { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
     }
 
     refreshUnitDimmers() {

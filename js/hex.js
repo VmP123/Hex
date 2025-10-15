@@ -12,6 +12,11 @@ export class Hex {
 		this.isEditor = isEditor;
         this.unit = null;
         this.owner = null;
+        this.roads = [false, false, false, false, false, false];
+	}
+
+	setRoads(roads) {
+		this.roads = roads;
 	}
 
 	toggleInnerHex(value) {

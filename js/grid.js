@@ -55,6 +55,7 @@ export class HexGrid {
         }
 
         hex.setRiverEdges(mapHexData.riverEdges || []);
+        hex.setRoads(mapHexData.roads || [false, false, false, false, false, false]);
 
         if (mapHexData.unit) {
             const unitInfo = typeof mapHexData.unit === 'string' ? { unitType: mapHexData.unit, player: mapHexData.player } : mapHexData.unit;
@@ -81,6 +82,20 @@ export class HexGrid {
         const edgeIndexB = oppositeEdgeMap[edgeIndexA];
 
         return hexA.riverEdges.includes(edgeIndexA) || hexB.riverEdges.includes(edgeIndexB);
+    }
+
+    isRoadBetween(hexA, hexB) {
+        const dx = hexB.x - hexA.x;
+        const dy = hexB.y - hexA.y;
+
+        const offsetsOddRow = [ [1, 1], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, 0] ];
+        const offsetsEvenRow = [ [1, 0], [0, 1], [-1, 0], [-1, -1], [0, -1], [1, -1] ];
+        const offsets = hexA.x % 2 === 0 ? offsetsEvenRow : offsetsOddRow;
+
+        const edgeIndexA = offsets.findIndex(offset => offset[0] === dx && offset[1] === dy);
+        if (edgeIndexA === -1) return false;
+
+        return hexA.roads[edgeIndexA];
     }
 
     isHexInEnemyZoc(hex, player) {
@@ -128,6 +143,7 @@ export class HexGrid {
     dfs(x, y, movementPoints, visited, reachableHexes, fromX, fromY, cameFrom, gScore) {
         const currentHex = this.getHex(x, y);
         const isCurrentHexInZoc = this.isHexInEnemyZoc(currentHex, this.gameState.activePlayer);
+        const hasPrevHex = fromX !== undefined && fromY !== undefined;
 
         const existingVisitIndex = visited.findIndex(v => v.x === x && v.y === y);
         const existingVisit = existingVisitIndex !== -1 ? visited[existingVisitIndex] : null;
@@ -138,12 +154,16 @@ export class HexGrid {
             else if (!isCurrentHexInZoc && !isExistingPathInZoc && existingVisit.movementPoints >= movementPoints) return;
         }
 
-        let cost = !this.units.some(unit => unit.x === x && unit.y === y) ? TerrainProperties[currentHex.terrainType].movementPointCost : MaxMovementPointCost;
+        const isOccupied = this.units.some(unit => unit.x === x && unit.y === y);
+        let cost;
 
-        const hasPrevHex = fromX !== undefined && fromY !== undefined;
-        if (hasPrevHex) {
-            const fromHex = this.getHex(fromX, fromY);
-            if (this.isRiverBetween(fromHex, currentHex)) {
+        if (isOccupied) {
+            cost = MaxMovementPointCost;
+        } else if (hasPrevHex && this.isRoadBetween(this.getHex(fromX, fromY), currentHex)) {
+            cost = 0.5;
+        } else {
+            cost = TerrainProperties[currentHex.terrainType].movementPointCost;
+            if (hasPrevHex && this.isRiverBetween(this.getHex(fromX, fromY), currentHex)) {
                 cost += 1;
             }
         }
@@ -230,6 +250,29 @@ export class HexGrid {
 
     getHex(x, y) {
         return this.hexes.find(h => h.x === x && h.y === y);
+    }
+
+    getNeighborIndex(hexA, hexB) {
+        const dx = hexB.x - hexA.x;
+        const dy = hexB.y - hexA.y;
+
+        const offsetsOddRow = [ [1, 1], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, 0] ];
+        const offsetsEvenRow = [ [1, 0], [0, 1], [-1, 0], [-1, -1], [0, -1], [1, -1] ];
+        const offsets = hexA.x % 2 === 0 ? offsetsEvenRow : offsetsOddRow;
+
+        return offsets.findIndex(offset => offset[0] === dx && offset[1] === dy);
+    }
+
+    getNeighbor(hex, direction) {
+        const offsetsOddRow = [ [1, 1], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, 0] ];
+        const offsetsEvenRow = [ [1, 0], [0, 1], [-1, 0], [-1, -1], [0, -1], [1, -1] ];
+        const offsets = hex.x % 2 === 0 ? offsetsEvenRow : offsetsOddRow;
+
+        const [dx, dy] = offsets[direction];
+        const neighborX = hex.x + dx;
+        const neighborY = hex.y + dy;
+
+        return this.getHex(neighborX, neighborY);
     }
 
     clearSelections() {

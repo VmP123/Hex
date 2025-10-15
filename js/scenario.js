@@ -40,6 +40,7 @@ export class ScenarioMap {
                 mapHex.riverEdges = hexData.riverEdges;
                 mapHex.flag = hexData.flag;
                 mapHex.owner = hexData.owner;
+                mapHex.roads = hexData.roads || [false, false, false, false, false, false];
                 return mapHex;
             });
             this.width = jsonData.width;
@@ -64,5 +65,6 @@ class MapHex {
         this.player = null;
         this.riverEdges = null;
         this.owner = null;
+        this.roads = null;
     }
 }

@@ -29,7 +29,7 @@ export class GameState {
         this.isAnimating = false;
         this.selectedUnits = [];
         this.attackers = [];
-        this.showSupply = true;
+        this.showSupply = false;
     }
 
     setCombatResult(crtColumn, d6Value) {
