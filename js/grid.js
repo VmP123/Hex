@@ -12,6 +12,7 @@ export class HexGrid {
         this.scenarioMap = scenarioMap;
         this.gameState = gameState;
         this.isEditor = isEditor;
+        this.hexMap = new Map();
 
         this.initialize();
     }
@@ -29,6 +30,7 @@ export class HexGrid {
                 this.hexes.push(hex);
             }
         }
+        this.hexes.forEach(hex => this.hexMap.set(`${hex.x},${hex.y}`, hex));
     }
 
     _preprocessMapData() {
@@ -146,85 +148,90 @@ export class HexGrid {
         return allAdjacentHexes;
     }
 
-        dfs(x, y, movementPoints, visited, reachableHexes, fromX, fromY, cameFrom, gScore) {
-            const currentHex = this.getHex(x, y);
-            const isCurrentHexInZoc = this.isHexInEnemyZoc(currentHex, this.gameState.activePlayer);
-            const hasPrevHex = fromX !== undefined && fromY !== undefined;
-    
-            const existingVisitIndex = visited.findIndex(v => v.x === x && v.y === y);
-            const existingVisit = existingVisitIndex !== -1 ? visited[existingVisitIndex] : null;
-    
-            if (existingVisit) {
-                if (!existingVisit.isCurrentHexInZoc && isCurrentHexInZoc) return;
-                if (existingVisit.isCurrentHexInZoc === isCurrentHexInZoc && existingVisit.movementPoints > movementPoints) return;
-            }
-    
+    dfs(x, y, movementPoints, visited, reachableHexes, fromX, fromY, cameFrom, gScore, startX, startY) {
+        const currentHex = this.getHex(x, y);
+        if (!currentHex) {
+            return;
+        }
+
+        const hasPrevHex = fromX !== undefined && fromY !== undefined;
+
+        let cost;
+        if (hasPrevHex) {
+            const prevHex = this.getHex(fromX, fromY);
             const isOccupied = this.units.some(unit => unit.x === x && unit.y === y);
-            let cost;
-    
             if (isOccupied) {
                 cost = MaxMovementPointCost;
             } else {
-                const roadCondition = hasPrevHex && this.isRoadBetween(this.getHex(fromX, fromY), currentHex);
+                const roadCondition = this.isRoadBetween(prevHex, currentHex);
                 if (roadCondition) {
                     cost = 0.5;
                 } else {
                     cost = TerrainProperties[currentHex.terrainType].movementPointCost;
-                    if (hasPrevHex && this.isRiverBetween(this.getHex(fromX, fromY), currentHex)) {
+                    if (this.isRiverBetween(prevHex, currentHex)) {
                         cost += 1;
                     }
                 }
             }
-    
-            if (movementPoints < cost) {
-                if (!existingVisit) {
-                    visited.push({ x: x, y: y, movementPoints: movementPoints, isCurrentHexInZoc: isCurrentHexInZoc });
-                }
-                return;
-            }
-    
-            const newVisitEntry = { x: x, y: y, movementPoints: movementPoints, isCurrentHexInZoc: isCurrentHexInZoc };
-            if (existingVisit) {
-                visited[existingVisitIndex] = newVisitEntry;
-            } else {
-                visited.push(newVisitEntry);
-            }
-    
+        } else {
+            cost = 0; // Start node
+        }
+
+        if (movementPoints < cost) {
+            return;
+        }
+
+        const remainingPoints = movementPoints - cost;
+
+        const existingVisit = visited.find(v => v.x === x && v.y === y);
+        if (existingVisit && existingVisit.movementPoints >= remainingPoints) {
+            return; // Found a worse or same-cost path, prune.
+        }
+
+        if (existingVisit) {
+            existingVisit.movementPoints = remainingPoints;
+        } else {
+            visited.push({ x: x, y: y, movementPoints: remainingPoints });
+        }
+
+        if (hasPrevHex) {
+            cameFrom.set(currentHex, this.getHex(fromX, fromY));
+        }
+
+        if (hasPrevHex) {
+            gScore.set(currentHex, (gScore.get(this.getHex(fromX, fromY)) || 0) + cost);
+        } else {
+            gScore.set(currentHex, 0);
+        }
+
+        if (x !== startX || y !== startY) {
             if (!reachableHexes.some(rh => rh.x === x && rh.y === y)) {
                 reachableHexes.push({ x: x, y: y });
             }
-    
-            if (hasPrevHex) {
-                const prevHex = this.getHex(fromX, fromY);
-                cameFrom.set(currentHex, prevHex);
-                gScore.set(currentHex, (gScore.get(prevHex) || 0) + cost);
-            } else {
-                gScore.set(currentHex, 0);
-            }
-    
-            const remainingPoints = movementPoints - cost;
-    
-            if (remainingPoints > 0 && !isCurrentHexInZoc) {
+        }
+
+        if (remainingPoints > 0) {
+            const isCurrentHexInZoc = this.isHexInEnemyZoc(currentHex, this.gameState.activePlayer);
+            if (!hasPrevHex || !isCurrentHexInZoc) {
                 const adjacentHexes = getAdjacentHexes(x, y, this.rows, this.cols);
-                adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, remainingPoints, visited, reachableHexes, x, y, cameFrom, gScore));
+                adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, remainingPoints, visited, reachableHexes, x, y, cameFrom, gScore, startX, startY));
             }
         }
+    }
+
     getReachableHex(x, y, movementPoints) {
         const reachableHexes = [];
         const visited = [];
         const cameFrom = new Map();
         const gScore = new Map();
       
-        visited.push({x: x, y: y, movementPoints: movementPoints});
-      
-        const adjacentHexes = getAdjacentHexes(x, y, this.rows, this.cols);
-        adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, movementPoints, visited, reachableHexes, x, y, cameFrom, gScore));
+        this.dfs(x, y, movementPoints, visited, reachableHexes, undefined, undefined, cameFrom, gScore, x, y);
                 
         return { reachableHexes, cameFrom, gScore };
     }
 
     findPath(start, end, movingUnit) {
-        const movementAllowance = UnitProperties[movingUnit.unitType].movementAllowance;
+        const movementAllowance = movingUnit.getEffectiveMovement();
         const { cameFrom, gScore } = this.getReachableHex(start.x, start.y, movementAllowance);
 
         if (Array.from(cameFrom.keys()).some(key => key.x === end.x && key.y === end.y)) {
@@ -256,7 +263,7 @@ export class HexGrid {
     }
 
     getHex(x, y) {
-        return this.hexes.find(h => h.x === x && h.y === y);
+        return this.hexMap.get(`${x},${y}`);
     }
 
     getNeighborIndex(hexA, hexB) {
