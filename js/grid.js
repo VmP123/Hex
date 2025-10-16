@@ -93,9 +93,15 @@ export class HexGrid {
         const offsets = hexA.x % 2 === 0 ? offsetsEvenRow : offsetsOddRow;
 
         const edgeIndexA = offsets.findIndex(offset => offset[0] === dx && offset[1] === dy);
-        if (edgeIndexA === -1) return false;
+        if (edgeIndexA === -1) {
+            return false;
+        }
 
-        return hexA.roads[edgeIndexA];
+        const oppositeEdgeMap = { 0: 3, 1: 4, 2: 5, 3: 0, 4: 1, 5: 2 };
+        const edgeIndexB = oppositeEdgeMap[edgeIndexA];
+
+        const result = hexA.roads[edgeIndexA] || hexB.roads[edgeIndexB];
+        return result;
     }
 
     isHexInEnemyZoc(hex, player) {
@@ -140,68 +146,69 @@ export class HexGrid {
         return allAdjacentHexes;
     }
 
-    dfs(x, y, movementPoints, visited, reachableHexes, fromX, fromY, cameFrom, gScore) {
-        const currentHex = this.getHex(x, y);
-        const isCurrentHexInZoc = this.isHexInEnemyZoc(currentHex, this.gameState.activePlayer);
-        const hasPrevHex = fromX !== undefined && fromY !== undefined;
-
-        const existingVisitIndex = visited.findIndex(v => v.x === x && v.y === y);
-        const existingVisit = existingVisitIndex !== -1 ? visited[existingVisitIndex] : null;
-
-        if (existingVisit) {
-            const isExistingPathInZoc = existingVisit.isCurrentHexInZoc;
-            if (isExistingPathInZoc && isCurrentHexInZoc && existingVisit.movementPoints >= movementPoints) return;
-            else if (!isCurrentHexInZoc && !isExistingPathInZoc && existingVisit.movementPoints >= movementPoints) return;
-        }
-
-        const isOccupied = this.units.some(unit => unit.x === x && unit.y === y);
-        let cost;
-
-        if (isOccupied) {
-            cost = MaxMovementPointCost;
-        } else if (hasPrevHex && this.isRoadBetween(this.getHex(fromX, fromY), currentHex)) {
-            cost = 0.5;
-        } else {
-            cost = TerrainProperties[currentHex.terrainType].movementPointCost;
-            if (hasPrevHex && this.isRiverBetween(this.getHex(fromX, fromY), currentHex)) {
-                cost += 1;
+        dfs(x, y, movementPoints, visited, reachableHexes, fromX, fromY, cameFrom, gScore) {
+            const currentHex = this.getHex(x, y);
+            const isCurrentHexInZoc = this.isHexInEnemyZoc(currentHex, this.gameState.activePlayer);
+            const hasPrevHex = fromX !== undefined && fromY !== undefined;
+    
+            const existingVisitIndex = visited.findIndex(v => v.x === x && v.y === y);
+            const existingVisit = existingVisitIndex !== -1 ? visited[existingVisitIndex] : null;
+    
+            if (existingVisit) {
+                if (!existingVisit.isCurrentHexInZoc && isCurrentHexInZoc) return;
+                if (existingVisit.isCurrentHexInZoc === isCurrentHexInZoc && existingVisit.movementPoints > movementPoints) return;
+            }
+    
+            const isOccupied = this.units.some(unit => unit.x === x && unit.y === y);
+            let cost;
+    
+            if (isOccupied) {
+                cost = MaxMovementPointCost;
+            } else {
+                const roadCondition = hasPrevHex && this.isRoadBetween(this.getHex(fromX, fromY), currentHex);
+                if (roadCondition) {
+                    cost = 0.5;
+                } else {
+                    cost = TerrainProperties[currentHex.terrainType].movementPointCost;
+                    if (hasPrevHex && this.isRiverBetween(this.getHex(fromX, fromY), currentHex)) {
+                        cost += 1;
+                    }
+                }
+            }
+    
+            if (movementPoints < cost) {
+                if (!existingVisit) {
+                    visited.push({ x: x, y: y, movementPoints: movementPoints, isCurrentHexInZoc: isCurrentHexInZoc });
+                }
+                return;
+            }
+    
+            const newVisitEntry = { x: x, y: y, movementPoints: movementPoints, isCurrentHexInZoc: isCurrentHexInZoc };
+            if (existingVisit) {
+                visited[existingVisitIndex] = newVisitEntry;
+            } else {
+                visited.push(newVisitEntry);
+            }
+    
+            if (!reachableHexes.some(rh => rh.x === x && rh.y === y)) {
+                reachableHexes.push({ x: x, y: y });
+            }
+    
+            if (hasPrevHex) {
+                const prevHex = this.getHex(fromX, fromY);
+                cameFrom.set(currentHex, prevHex);
+                gScore.set(currentHex, (gScore.get(prevHex) || 0) + cost);
+            } else {
+                gScore.set(currentHex, 0);
+            }
+    
+            const remainingPoints = movementPoints - cost;
+    
+            if (remainingPoints > 0 && !isCurrentHexInZoc) {
+                const adjacentHexes = getAdjacentHexes(x, y, this.rows, this.cols);
+                adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, remainingPoints, visited, reachableHexes, x, y, cameFrom, gScore));
             }
         }
-
-        if (movementPoints < cost) {
-            if (!existingVisit) {
-                visited.push({ x: x, y: y, movementPoints: movementPoints, isCurrentHexInZoc: isCurrentHexInZoc });
-            }
-            return;
-        }
-
-        const newVisitEntry = { x: x, y: y, movementPoints: movementPoints, isCurrentHexInZoc: isCurrentHexInZoc };
-        if (existingVisit) {
-            visited[existingVisitIndex] = newVisitEntry;
-        } else {
-            visited.push(newVisitEntry);
-        }
-
-        if (!reachableHexes.some(rh => rh.x === x && rh.y === y)) {
-            reachableHexes.push({ x: x, y: y });
-        }
-
-        if (hasPrevHex) {
-            const prevHex = this.getHex(fromX, fromY);
-            cameFrom.set(currentHex, prevHex);
-            gScore.set(currentHex, (gScore.get(prevHex) || 0) + cost);
-        } else {
-            gScore.set(currentHex, 0);
-        }
-
-        const remainingPoints = movementPoints - cost;
-
-        if (remainingPoints > 0 && !isCurrentHexInZoc) {
-            const adjacentHexes = getAdjacentHexes(x, y, this.rows, this.cols);
-            adjacentHexes.forEach(ah => this.dfs(ah.x, ah.y, remainingPoints, visited, reachableHexes, x, y, cameFrom, gScore));
-        }
-    }
-
     getReachableHex(x, y, movementPoints) {
         const reachableHexes = [];
         const visited = [];
@@ -220,7 +227,7 @@ export class HexGrid {
         const movementAllowance = UnitProperties[movingUnit.unitType].movementAllowance;
         const { cameFrom, gScore } = this.getReachableHex(start.x, start.y, movementAllowance);
 
-        if (cameFrom.has(end)) {
+        if (Array.from(cameFrom.keys()).some(key => key.x === end.x && key.y === end.y)) {
             return this.reconstructPath(cameFrom, end);
         }
 
