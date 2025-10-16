@@ -1,0 +1,1544 @@
+{
+  "width": 10,
+  "height": 10,
+  "hexList": [
+    {
+      "x": 0,
+      "y": 0,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 1,
+      "y": 0,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 2,
+      "y": 0,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 3,
+      "y": 0,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 4,
+      "y": 0,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 5,
+      "y": 0,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        true,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 6,
+      "y": 0,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 7,
+      "y": 0,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 8,
+      "y": 0,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 9,
+      "y": 0,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 0,
+      "y": 1,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 1,
+      "y": 1,
+      "terrain": "clear",
+      "unit": {
+        "unitType": "infantry",
+        "player": "grey"
+      },
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 2,
+      "y": 1,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 3,
+      "y": 1,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 4,
+      "y": 1,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 5,
+      "y": 1,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        true,
+        false,
+        false,
+        true,
+        false
+      ]
+    },
+    {
+      "x": 6,
+      "y": 1,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 7,
+      "y": 1,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 8,
+      "y": 1,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 9,
+      "y": 1,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 0,
+      "y": 2,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 1,
+      "y": 2,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 2,
+      "y": 2,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 3,
+      "y": 2,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 4,
+      "y": 2,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 5,
+      "y": 2,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        true,
+        false,
+        false,
+        false,
+        true,
+        false
+      ]
+    },
+    {
+      "x": 6,
+      "y": 2,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 7,
+      "y": 2,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 8,
+      "y": 2,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 9,
+      "y": 2,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 0,
+      "y": 3,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 1,
+      "y": 3,
+      "terrain": "clear",
+      "unit": {
+        "unitType": "infantry",
+        "player": "grey"
+      },
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 2,
+      "y": 3,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 3,
+      "y": 3,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 4,
+      "y": 3,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 5,
+      "y": 3,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 6,
+      "y": 3,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        true,
+        false,
+        true,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 7,
+      "y": 3,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 8,
+      "y": 3,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 9,
+      "y": 3,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 0,
+      "y": 4,
+      "terrain": "clear",
+      "unit": {
+        "unitType": "infantry",
+        "player": "grey"
+      },
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 1,
+      "y": 4,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 2,
+      "y": 4,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 3,
+      "y": 4,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 4,
+      "y": 4,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 5,
+      "y": 4,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        true,
+        false,
+        false,
+        false,
+        true
+      ]
+    },
+    {
+      "x": 6,
+      "y": 4,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        true,
+        false,
+        true,
+        false
+      ]
+    },
+    {
+      "x": 7,
+      "y": 4,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 8,
+      "y": 4,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 9,
+      "y": 4,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 0,
+      "y": 5,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 1,
+      "y": 5,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 2,
+      "y": 5,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 3,
+      "y": 5,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 4,
+      "y": 5,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 5,
+      "y": 5,
+      "terrain": "clear",
+      "unit": {
+        "unitType": "infantry",
+        "player": "green"
+      },
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        true,
+        false,
+        true,
+        false
+      ]
+    },
+    {
+      "x": 6,
+      "y": 5,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 7,
+      "y": 5,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 8,
+      "y": 5,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 9,
+      "y": 5,
+      "terrain": "clear",
+      "unit": {
+        "unitType": "infantry",
+        "player": "green"
+      },
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 0,
+      "y": 6,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 1,
+      "y": 6,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 2,
+      "y": 6,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 3,
+      "y": 6,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 4,
+      "y": 6,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        true,
+        false,
+        false,
+        false,
+        true
+      ]
+    },
+    {
+      "x": 5,
+      "y": 6,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 6,
+      "y": 6,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 7,
+      "y": 6,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 8,
+      "y": 6,
+      "terrain": "clear",
+      "unit": {
+        "unitType": "infantry",
+        "player": "green"
+      },
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 9,
+      "y": 6,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 0,
+      "y": 7,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 1,
+      "y": 7,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 2,
+      "y": 7,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 3,
+      "y": 7,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        true,
+        false,
+        false,
+        false,
+        true
+      ]
+    },
+    {
+      "x": 4,
+      "y": 7,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        true,
+        false,
+        true,
+        false
+      ]
+    },
+    {
+      "x": 5,
+      "y": 7,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 6,
+      "y": 7,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 7,
+      "y": 7,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 8,
+      "y": 7,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 9,
+      "y": 7,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 0,
+      "y": 8,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 1,
+      "y": 8,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 2,
+      "y": 8,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 3,
+      "y": 8,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        true,
+        false
+      ]
+    },
+    {
+      "x": 4,
+      "y": 8,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 5,
+      "y": 8,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 6,
+      "y": 8,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 7,
+      "y": 8,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 8,
+      "y": 8,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 9,
+      "y": 8,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 0,
+      "y": 9,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 2,
+      "y": 9,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 4,
+      "y": 9,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 6,
+      "y": 9,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    },
+    {
+      "x": 8,
+      "y": 9,
+      "terrain": "clear",
+      "unit": null,
+      "owner": null,
+      "riverEdges": [],
+      "roads": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  ]
+}
