@@ -29,9 +29,36 @@
             <div id="player-selection">
                 <h3>Player</h3>
                 <select id="player-select">
-                    <option value="0">Grey</option>
-                    <option value="1">Green</option>
+                    <option value="grey">Grey</option>
+                    <option value="green">Green</option>
                 </select>
+            </div>
+            <!-- Starting Player -->
+            <div id="starting-player-selection">
+                <h3>Starting Player</h3>
+                <select id="starting-player-select">
+                    <option value="grey">Grey</option>
+                    <option value="green">Green</option>
+                </select>
+            </div>
+            <!-- Supply Settings -->
+            <div id="supply-settings">
+                <h3>Supply Settings</h3>
+                <div>
+                    <h4>Player 1 (Grey) Supply Edges</h4>
+                    <label><input type="checkbox" id="p1-supply-edge-n"> North</label>
+                    <label><input type="checkbox" id="p1-supply-edge-e"> East</label>
+                    <label><input type="checkbox" id="p1-supply-edge-s"> South</label>
+                    <label><input type="checkbox" id="p1-supply-edge-w"> West</label>
+                </div>
+                <div>
+                    <h4>Player 2 (Green) Supply Edges</h4>
+                    <label><input type="checkbox" id="p2-supply-edge-n"> North</label>
+                    <label><input type="checkbox" id="p2-supply-edge-e"> East</label>
+                    <label><input type="checkbox" id="p2-supply-edge-s"> South</label>
+                    <label><input type="checkbox" id="p2-supply-edge-w"> West</label>
+                </div>
+                <button id="set-supply-cities">Supply City</button>
             </div>
             <!-- Import/Export -->
             <div id="import-export">

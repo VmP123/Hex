@@ -21,6 +21,7 @@ export class HexView {
 
         const baseHex = this.createBaseHex(hexCenterX, hexCenterY, this.hexRadius);
         const innerHex = this.createInnerHex(hexCenterX, hexCenterY, this.hexRadius - 5);
+        const supplySourceHex = this.createSupplySourceHex(hexCenterX, hexCenterY, this.hexRadius - 5);
 
         const hexSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         const svgWidth = hexWidth + margin * 2;
@@ -29,6 +30,7 @@ export class HexView {
         hexSvg.setAttribute('height', svgHeight);
         hexSvg.appendChild(baseHex);
         hexSvg.appendChild(innerHex);
+        hexSvg.appendChild(supplySourceHex);
 
         return hexSvg;
     }
@@ -53,6 +55,16 @@ export class HexView {
         innerHex.setAttribute('stroke-dasharray', '12 5');
         innerHex.setAttribute('display', 'none');
         return innerHex;
+    }
+
+    createSupplySourceHex(x, y, radius) {
+        const supplySourceHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        supplySourceHex.setAttribute('class', 'hex supply-source-hex');
+        supplySourceHex.setAttribute('points', this.calculateHexPoints(x, y, radius));
+        supplySourceHex.setAttribute('fill', 'none');
+        supplySourceHex.setAttribute('stroke-width', 3);
+        supplySourceHex.setAttribute('display', 'none');
+        return supplySourceHex;
     }
 
     calculateHexPoints(x, y, radius) {
@@ -103,6 +115,17 @@ export class HexView {
     toggleInnerHex() {
         const innerHex = this.svg.querySelector('.innerHex');
         innerHex.setAttribute('display', this.hex.highlighted ? 'block' : 'none');
+    }
+
+    drawSupplySourceBorder(player) {
+        const supplySourceHex = this.svg.querySelector('.supply-source-hex');
+        supplySourceHex.setAttribute('stroke', ColorByPlayer[player]);
+        supplySourceHex.setAttribute('display', 'block');
+    }
+
+    removeSupplySourceBorder() {
+        const supplySourceHex = this.svg.querySelector('.supply-source-hex');
+        supplySourceHex.setAttribute('display', 'none');
     }
 
     setTerrain(terrainType) {

@@ -1,6 +1,47 @@
 {
   "width": 10,
   "height": 10,
+  "startingPlayer": "green",
+  "player1SupplyEdges": {
+    "n": false,
+    "e": false,
+    "s": true,
+    "w": false
+  },
+  "player2SupplyEdges": {
+    "n": true,
+    "e": false,
+    "s": false,
+    "w": false
+  },
+  "player1SupplyCities": [
+    {
+      "x": 7,
+      "y": 7
+    },
+    {
+      "x": 0,
+      "y": 8
+    },
+    {
+      "x": 2,
+      "y": 5
+    }
+  ],
+  "player2SupplyCities": [
+    {
+      "x": 5,
+      "y": 3
+    },
+    {
+      "x": 9,
+      "y": 2
+    },
+    {
+      "x": 6,
+      "y": 0
+    }
+  ],
   "hexList": [
     {
       "x": 0,
@@ -88,7 +129,9 @@
       "terrain": "clear",
       "unit": null,
       "owner": null,
-      "riverEdges": [],
+      "riverEdges": [
+        1
+      ],
       "roads": [
         false,
         false,
@@ -123,7 +166,9 @@
       "terrain": "clear",
       "unit": null,
       "owner": null,
-      "riverEdges": [],
+      "riverEdges": [
+        1
+      ],
       "roads": [
         false,
         false,
@@ -137,7 +182,10 @@
       "x": 8,
       "y": 0,
       "terrain": "clear",
-      "unit": null,
+      "unit": {
+        "unitType": "infantry",
+        "player": "green"
+      },
       "owner": null,
       "riverEdges": [],
       "roads": [
@@ -153,7 +201,10 @@
       "x": 9,
       "y": 0,
       "terrain": "clear",
-      "unit": null,
+      "unit": {
+        "unitType": "infantry",
+        "player": "green"
+      },
       "owner": null,
       "riverEdges": [],
       "roads": [
@@ -184,7 +235,7 @@
     {
       "x": 1,
       "y": 1,
-      "terrain": "water",
+      "terrain": "forest",
       "unit": null,
       "owner": null,
       "riverEdges": [],
@@ -217,10 +268,7 @@
       "x": 3,
       "y": 1,
       "terrain": "clear",
-      "unit": {
-        "unitType": "infantry",
-        "player": "green"
-      },
+      "unit": null,
       "owner": null,
       "riverEdges": [],
       "roads": [
@@ -238,7 +286,9 @@
       "terrain": "clear",
       "unit": null,
       "owner": null,
-      "riverEdges": [],
+      "riverEdges": [
+        5
+      ],
       "roads": [
         false,
         false,
@@ -254,7 +304,9 @@
       "terrain": "clear",
       "unit": null,
       "owner": null,
-      "riverEdges": [],
+      "riverEdges": [
+        5
+      ],
       "roads": [
         false,
         true,
@@ -270,7 +322,10 @@
       "terrain": "clear",
       "unit": null,
       "owner": null,
-      "riverEdges": [],
+      "riverEdges": [
+        1,
+        0
+      ],
       "roads": [
         false,
         true,
@@ -286,7 +341,10 @@
       "terrain": "clear",
       "unit": null,
       "owner": null,
-      "riverEdges": [],
+      "riverEdges": [
+        5,
+        0
+      ],
       "roads": [
         false,
         false,
@@ -331,7 +389,7 @@
     {
       "x": 0,
       "y": 2,
-      "terrain": "water",
+      "terrain": "forest",
       "unit": null,
       "owner": null,
       "riverEdges": [],
@@ -367,7 +425,10 @@
       "x": 2,
       "y": 2,
       "terrain": "clear",
-      "unit": null,
+      "unit": {
+        "unitType": "infantry",
+        "player": "green"
+      },
       "owner": null,
       "riverEdges": [
         0,
@@ -457,7 +518,9 @@
       "terrain": "clear",
       "unit": null,
       "owner": null,
-      "riverEdges": [],
+      "riverEdges": [
+        5
+      ],
       "roads": [
         true,
         false,
@@ -473,7 +536,9 @@
       "terrain": "clear",
       "unit": null,
       "owner": null,
-      "riverEdges": [],
+      "riverEdges": [
+        1
+      ],
       "roads": [
         false,
         false,
@@ -489,7 +554,9 @@
       "terrain": "city",
       "unit": null,
       "owner": "green",
-      "riverEdges": [],
+      "riverEdges": [
+        1
+      ],
       "roads": [
         false,
         false,
@@ -622,7 +689,7 @@
     {
       "x": 7,
       "y": 3,
-      "terrain": "clear",
+      "terrain": "forest",
       "unit": null,
       "owner": null,
       "riverEdges": [],
@@ -640,11 +707,13 @@
       "y": 3,
       "terrain": "clear",
       "unit": {
-        "unitType": "infantry",
+        "unitType": "tank",
         "player": "green"
       },
       "owner": null,
-      "riverEdges": [],
+      "riverEdges": [
+        5
+      ],
       "roads": [
         false,
         false,
@@ -657,7 +726,7 @@
     {
       "x": 9,
       "y": 3,
-      "terrain": "clear",
+      "terrain": "forest",
       "unit": null,
       "owner": null,
       "riverEdges": [],
@@ -674,14 +743,11 @@
       "x": 0,
       "y": 4,
       "terrain": "clear",
-      "unit": {
-        "unitType": "infantry",
-        "player": "grey"
-      },
+      "unit": null,
       "owner": null,
       "riverEdges": [],
       "roads": [
-        true,
+        false,
         false,
         false,
         false,
@@ -699,8 +765,8 @@
       "roads": [
         true,
         false,
-        false,
         true,
+        false,
         false,
         false
       ]
@@ -746,7 +812,10 @@
       "x": 4,
       "y": 4,
       "terrain": "clear",
-      "unit": null,
+      "unit": {
+        "unitType": "infantry",
+        "player": "green"
+      },
       "owner": null,
       "riverEdges": [
         1
@@ -784,7 +853,7 @@
     {
       "x": 6,
       "y": 4,
-      "terrain": "clear",
+      "terrain": "forest",
       "unit": null,
       "owner": null,
       "riverEdges": [],
@@ -818,7 +887,7 @@
     {
       "x": 8,
       "y": 4,
-      "terrain": "clear",
+      "terrain": "forest",
       "unit": null,
       "owner": null,
       "riverEdges": [],
@@ -853,7 +922,10 @@
       "x": 0,
       "y": 5,
       "terrain": "clear",
-      "unit": null,
+      "unit": {
+        "unitType": "infantry",
+        "player": "grey"
+      },
       "owner": null,
       "riverEdges": [],
       "roads": [
@@ -862,7 +934,7 @@
         false,
         false,
         false,
-        false
+        true
       ]
     },
     {
@@ -1053,10 +1125,7 @@
       "x": 1,
       "y": 6,
       "terrain": "clear",
-      "unit": {
-        "unitType": "infantry",
-        "player": "grey"
-      },
+      "unit": null,
       "owner": null,
       "riverEdges": [],
       "roads": [
@@ -1203,7 +1272,10 @@
       "x": 0,
       "y": 7,
       "terrain": "clear",
-      "unit": null,
+      "unit": {
+        "unitType": "infantry",
+        "player": "grey"
+      },
       "owner": null,
       "riverEdges": [],
       "roads": [
@@ -1238,7 +1310,10 @@
       "x": 2,
       "y": 7,
       "terrain": "clear",
-      "unit": null,
+      "unit": {
+        "unitType": "infantry",
+        "player": "grey"
+      },
       "owner": null,
       "riverEdges": [],
       "roads": [
@@ -1301,12 +1376,12 @@
     {
       "x": 6,
       "y": 7,
-      "terrain": "forest",
+      "terrain": "clear",
       "unit": null,
       "owner": null,
       "riverEdges": [],
       "roads": [
-        false,
+        true,
         false,
         true,
         false,
@@ -1317,15 +1392,15 @@
     {
       "x": 7,
       "y": 7,
-      "terrain": "clear",
+      "terrain": "city",
       "unit": null,
-      "owner": null,
+      "owner": "grey",
       "riverEdges": [],
       "roads": [
         false,
         false,
         false,
-        false,
+        true,
         false,
         false
       ]
@@ -1449,7 +1524,10 @@
       "x": 5,
       "y": 8,
       "terrain": "clear",
-      "unit": null,
+      "unit": {
+        "unitType": "infantry",
+        "player": "grey"
+      },
       "owner": null,
       "riverEdges": [],
       "roads": [
@@ -1481,7 +1559,10 @@
       "x": 7,
       "y": 8,
       "terrain": "clear",
-      "unit": null,
+      "unit": {
+        "unitType": "infantry",
+        "player": "grey"
+      },
       "owner": null,
       "riverEdges": [],
       "roads": [

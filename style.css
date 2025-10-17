@@ -68,7 +68,8 @@ html, body {
 }
 
 #terrain-palette button,
-#unit-palette button {
+#unit-palette button,
+#supply-settings button {
     display: block;
     width: 100%;
     margin-bottom: 5px;
@@ -79,7 +80,8 @@ html, body {
 }
 
 #terrain-palette button.selected,
-#unit-palette button.selected {
+#unit-palette button.selected,
+#supply-settings button.selected {
     background-color: #a2ba79;
     color: white;
     border-color: #a2ba79;

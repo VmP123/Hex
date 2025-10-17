@@ -93,6 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let riverMode = false;
   let roadMode = false;
   let firstHex = null;
+  let supplyCityMode = false;
   
   const terrainPalette = document.getElementById('terrain-palette');
   for (const terrain in TerrainType) {
@@ -103,6 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       selectedUnit = null;
       riverMode = false;
       roadMode = false;
+      supplyCityMode = false;
       if (firstHex) {
         hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
         firstHex = null;
@@ -121,6 +123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       selectedTerrain = null;
       riverMode = false;
       roadMode = false;
+      supplyCityMode = false;
       if (firstHex) {
         hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
         firstHex = null;
@@ -136,6 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectedTerrain = null;
     riverMode = false;
     roadMode = false;
+    supplyCityMode = false;
     if (firstHex) {
         hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
         firstHex = null;
@@ -151,6 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     roadMode = false;
     selectedTerrain = null;
     selectedUnit = null;
+    supplyCityMode = false;
     if (firstHex) {
         hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
         firstHex = null;
@@ -166,6 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     riverMode = false;
     selectedTerrain = null;
     selectedUnit = null;
+    supplyCityMode = false;
     if (!roadMode && firstHex) { // If turning off road mode and a hex was selected
         hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
         firstHex = null;
@@ -173,9 +179,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateSelectedPalette(e.target);
   });
   terrainPalette.appendChild(roadButton);
+
+  const setSupplyCitiesButton = document.getElementById('set-supply-cities');
+  setSupplyCitiesButton.addEventListener('click', (e) => {
+    supplyCityMode = !supplyCityMode;
+    roadMode = false;
+    riverMode = false;
+    selectedTerrain = null;
+    selectedUnit = null;
+    if (firstHex) {
+        hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
+        firstHex = null;
+    }
+    updateSelectedPalette(e.target);
+  });
   
   function updateSelectedPalette(selectedButton) {
-    document.querySelectorAll('#terrain-palette button, #unit-palette button').forEach(button => {
+    document.querySelectorAll('#terrain-palette button, #unit-palette button, #supply-settings button').forEach(button => {
       button.classList.remove('selected');
     });
     selectedButton.classList.add('selected');
@@ -197,7 +217,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     const clickXInHex = svgX - hexX;
     const clickYInHex = svgY - hexY;
 
-    if (riverMode) {
+    if (supplyCityMode) {
+      if (hex.terrainType === TerrainType.CITY) {
+        const player = document.getElementById('player-select').value === 'grey' ? PlayerType.GREY : PlayerType.GREEN;
+        const supplyCities = player === PlayerType.GREY ? hexGrid.scenarioMap.player1SupplyCities : hexGrid.scenarioMap.player2SupplyCities;
+        const cityCoords = { x: hex.x, y: hex.y };
+        const cityIndex = supplyCities.findIndex(c => c.x === cityCoords.x && c.y === cityCoords.y);
+
+        if (cityIndex > -1) {
+          supplyCities.splice(cityIndex, 1);
+          console.log(`Removed supply city for player ${player}:`, cityCoords);
+        } else {
+          supplyCities.push(cityCoords);
+          console.log(`Added supply city for player ${player}:`, cityCoords);
+        }
+        if (gameState.showSupply) {
+            hexGridView.refreshSupplyView();
+        }
+      }
+    }
+    else if (riverMode) {
       const edgeIndex = hexView.getClosestSide(clickXInHex, clickYInHex);
       hex.toggleRiver(edgeIndex);
       hexGridView.redrawAllRivers();
@@ -226,7 +265,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     else if (selectedTerrain) {
         hex.setTerrain(selectedTerrain);
         if (selectedTerrain === TerrainType.CITY || selectedTerrain === TerrainType.FLAG) {
-            const player = document.getElementById('player-select').value === '0' ? PlayerType.GREY : PlayerType.GREEN;
+            const player = document.getElementById('player-select').value === 'grey' ? PlayerType.GREY : PlayerType.GREEN;
             hex.owner = player;
         } else {
             hex.owner = null;
@@ -241,7 +280,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       if (selectedUnit !== 'remove') {
-          const player = document.getElementById('player-select').value === '0' ? PlayerType.GREY : PlayerType.GREEN;
+          const player = document.getElementById('player-select').value === 'grey' ? PlayerType.GREY : PlayerType.GREEN;
           const newUnit = new Unit(hex.x, hex.y, selectedUnit, player);
           hexGrid.addUnit(newUnit);
           hex.setUnit(newUnit);
@@ -261,6 +300,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     const mapData = {
       width: hexGrid.cols,
       height: hexGrid.rows,
+      startingPlayer: document.getElementById('starting-player-select').value,
+      player1SupplyEdges: {
+        n: document.getElementById('p1-supply-edge-n').checked,
+        e: document.getElementById('p1-supply-edge-e').checked,
+        s: document.getElementById('p1-supply-edge-s').checked,
+        w: document.getElementById('p1-supply-edge-w').checked,
+      },
+      player2SupplyEdges: {
+        n: document.getElementById('p2-supply-edge-n').checked,
+        e: document.getElementById('p2-supply-edge-e').checked,
+        s: document.getElementById('p2-supply-edge-s').checked,
+        w: document.getElementById('p2-supply-edge-w').checked,
+      },
+      player1SupplyCities: hexGrid.scenarioMap.player1SupplyCities,
+      player2SupplyCities: hexGrid.scenarioMap.player2SupplyCities,
       hexList: hexGrid.hexes.map(hex => ({
         x: hex.x,
         y: hex.y,
@@ -292,8 +346,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         newScenario.width = mapData.width;
         newScenario.height = mapData.height;
         newScenario.mapHexes = mapData.hexList;
+        newScenario.startingPlayer = mapData.startingPlayer;
+        newScenario.player1SupplyEdges = mapData.player1SupplyEdges;
+        newScenario.player2SupplyEdges = mapData.player2SupplyEdges;
+        newScenario.player1SupplyCities = mapData.player1SupplyCities || [];
+        newScenario.player2SupplyCities = mapData.player2SupplyCities || [];
+
         document.getElementById('rows').value = mapData.height;
         document.getElementById('cols').value = mapData.width;
+        document.getElementById('starting-player-select').value = mapData.startingPlayer || 'grey';
+        
+        if (mapData.player1SupplyEdges) {
+            document.getElementById('p1-supply-edge-n').checked = mapData.player1SupplyEdges.n;
+            document.getElementById('p1-supply-edge-e').checked = mapData.player1SupplyEdges.e;
+            document.getElementById('p1-supply-edge-s').checked = mapData.player1SupplyEdges.s;
+            document.getElementById('p1-supply-edge-w').checked = mapData.player1SupplyEdges.w;
+        }
+        if (mapData.player2SupplyEdges) {
+            document.getElementById('p2-supply-edge-n').checked = mapData.player2SupplyEdges.n;
+            document.getElementById('p2-supply-edge-e').checked = mapData.player2SupplyEdges.e;
+            document.getElementById('p2-supply-edge-s').checked = mapData.player2SupplyEdges.s;
+            document.getElementById('p2-supply-edge-w').checked = mapData.player2SupplyEdges.w;
+        }
+
         await drawMap(newScenario);
       };
       reader.readAsText(file);
@@ -321,6 +396,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.getElementById('toggle-supply-button').addEventListener('click', () => {
     gameState.showSupply = !gameState.showSupply;
+    
+    // Update scenario with current editor settings for visualization
+    const scenario = hexGrid.scenarioMap;
+    scenario.startingPlayer = document.getElementById('starting-player-select').value;
+    scenario.player1SupplyEdges = {
+        n: document.getElementById('p1-supply-edge-n').checked,
+        e: document.getElementById('p1-supply-edge-e').checked,
+        s: document.getElementById('p1-supply-edge-s').checked,
+        w: document.getElementById('p1-supply-edge-w').checked,
+    };
+    scenario.player2SupplyEdges = {
+        n: document.getElementById('p2-supply-edge-n').checked,
+        e: document.getElementById('p2-supply-edge-e').checked,
+        s: document.getElementById('p2-supply-edge-s').checked,
+        w: document.getElementById('p2-supply-edge-w').checked,
+    };
+    // Supply cities are already updated in the scenario object
+
     hexGridView.refreshSupplyView();
   });
 });

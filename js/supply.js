@@ -18,7 +18,7 @@ export class Supply {
         const visited = new Set();
 
         // 1. Find all supply sources
-        const sources = this._getSupplySources(player, scenario);
+        const sources = this.getSupplySources(player, scenario);
 
         // 2. Initialize queue and visited set with sources
         for (const sourceHex of sources) {
@@ -106,22 +106,41 @@ export class Supply {
      * @returns {Hex[]} An array of hexes that are supply sources.
      * @private
      */
-    _getSupplySources(player, scenario) {
+    getSupplySources(player, scenario) {
         const sources = [];
-        const { width, supplyCities } = scenario;
-    
-        // 1. Player's home edge
-        const homeEdgeX = (player === PlayerType.GREY) ? 0 : width - 1;
-        for (let y = 0; y < this.hexGrid.rows; y++) {
-            const edgeHex = this.hexGrid.getHex(homeEdgeX, y);
-            if (edgeHex && !this._isSupplyPathBlocked(edgeHex, player)) {
-                sources.push(edgeHex);
+        const { width, height, player1SupplyEdges, player2SupplyEdges, player1SupplyCities, player2SupplyCities } = scenario;
+        const supplyEdges = player === PlayerType.GREY ? player1SupplyEdges : player2SupplyEdges;
+        const supplyCities = player === PlayerType.GREY ? player1SupplyCities : player2SupplyCities;
+
+        if (supplyEdges) {
+            if (supplyEdges.n) { // North
+                for (let x = 0; x < width; x++) {
+                    const edgeHex = this.hexGrid.getHex(x, 0);
+                    if (edgeHex && !this._isSupplyPathBlocked(edgeHex, player)) sources.push(edgeHex);
+                }
+            }
+            if (supplyEdges.s) { // South
+                for (let x = 0; x < width; x++) {
+                    const edgeHex = this.hexGrid.getHex(x, height - (x % 2 === 0 ? 1 : 2));
+                    if (edgeHex && !this._isSupplyPathBlocked(edgeHex, player)) sources.push(edgeHex);
+                }
+            }
+            if (supplyEdges.w) { // West
+                for (let y = 0; y < height; y++) {
+                    const edgeHex = this.hexGrid.getHex(0, y);
+                    if (edgeHex && !this._isSupplyPathBlocked(edgeHex, player)) sources.push(edgeHex);
+                }
+            }
+            if (supplyEdges.e) { // East
+                for (let y = 0; y < height - (width % 2 === 0 ? 1 : 0); y++) {
+                    const edgeHex = this.hexGrid.getHex(width - 1, y);
+                    if (edgeHex && !this._isSupplyPathBlocked(edgeHex, player)) sources.push(edgeHex);
+                }
             }
         }
-    
-        // 2. Map-specific supply cities
-        if (supplyCities && supplyCities[player]) {
-            for (const cityCoord of supplyCities[player]) {
+
+        if (supplyCities) {
+            for (const cityCoord of supplyCities) {
                 const cityHex = this.hexGrid.getHex(cityCoord.x, cityCoord.y);
                 if (cityHex && cityHex.owner === player) {
                     sources.push(cityHex);

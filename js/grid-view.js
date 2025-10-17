@@ -86,11 +86,13 @@ export class HexGridView {
     }
 
     refreshSupplyView() {
-        if (!this.supply) return; // Editor doesn't have supply
+        if (!this.supply) return;
 
         const supplyLayer = this.svg.querySelector('#supplyLayer');
         if (!supplyLayer) return;
         supplyLayer.innerHTML = ''; // Clear previous overlays
+
+        this.hexViews.forEach(hexView => hexView.removeSupplySourceBorder());
 
         if (!this.gameState.showSupply) {
             return;
@@ -98,9 +100,19 @@ export class HexGridView {
 
         const suppliedHexesP1 = this.supply.getSuppliedHexes(PlayerType.GREY, this.hexGrid.scenarioMap);
         const suppliedHexesP2 = this.supply.getSuppliedHexes(PlayerType.GREEN, this.hexGrid.scenarioMap);
+        const sourcesP1 = this.supply.getSupplySources(PlayerType.GREY, this.hexGrid.scenarioMap);
+        const sourcesP2 = this.supply.getSupplySources(PlayerType.GREEN, this.hexGrid.scenarioMap);
 
         this.hexViews.forEach(hexView => {
             const hex = hexView.hex;
+
+            if (sourcesP1.includes(hex)) {
+                hexView.drawSupplySourceBorder(PlayerType.GREY);
+            }
+            if (sourcesP2.includes(hex)) {
+                hexView.drawSupplySourceBorder(PlayerType.GREEN);
+            }
+
             const unit = hex.unit;
             const inP1Supply = suppliedHexesP1.has(hex);
             const inP2Supply = suppliedHexesP2.has(hex);
@@ -371,7 +383,6 @@ export class HexGridView {
         let linecap = 'butt';
 
         if (hex.terrainType === TerrainType.CITY) {
-            console.log('city');
             linecap = 'butt';
             edgeMidpoints.forEach(p1 => {
                 const p2x = p1.x * 0.70 + hexCenter.x * 0.30;

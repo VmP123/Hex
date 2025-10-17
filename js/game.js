@@ -72,6 +72,7 @@ class Game {
             scenario = this.scenarioMap;
             this.gameState = new GameState();
             this.gameState.status = GameStatus.GAMEON;
+            this.gameState.activePlayer = this.scenarioMap.startingPlayer;
         }
 
         this.hexGrid = new HexGrid(scenario.height, scenario.width, scenario, this.gameState, false);
