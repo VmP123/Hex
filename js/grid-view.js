@@ -74,10 +74,6 @@ export class HexGridView {
     _createLayers() {
         const hexGrid = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         hexGrid.setAttribute('id', 'hexGrid');
-
-        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-        hexGrid.appendChild(defs);
-
         const hexLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         hexLayer.setAttribute('id', 'hexLayer');
         const riverLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
