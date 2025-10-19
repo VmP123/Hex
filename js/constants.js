@@ -18,6 +18,11 @@ const ColorByPlayer = {
 	[PlayerType.GREEN]: "#b5c599"
 }
 
+const DarkColorByPlayer = {
+	[PlayerType.GREY]: "#a6a6a6",
+	[PlayerType.GREEN]: "#8e9d7e"
+}
+
 const HealthStatus = {
 	FULL: "full",
 	REDUCED: "reduced",
@@ -220,6 +225,7 @@ export {
 	TerrainType, 
 	PlayerType, 
 	ColorByPlayer, 
+  DarkColorByPlayer,
 	HealthStatus, 
 	GameStatus, 
 	UnitType,

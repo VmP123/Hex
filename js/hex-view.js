@@ -1,4 +1,4 @@
-import { TerrainType, ColorByPlayer } from './constants.js';
+import { TerrainType, ColorByPlayer, DarkColorByPlayer } from './constants.js';
 import { SvgService } from './svg-service.js';
 import { getHexWidth, getHexHeight, getMargin } from './utils.js';
 
@@ -62,7 +62,8 @@ export class HexView {
         supplySourceHex.setAttribute('class', 'hex supply-source-hex');
         supplySourceHex.setAttribute('points', this.calculateHexPoints(x, y, radius));
         supplySourceHex.setAttribute('fill', 'none');
-        supplySourceHex.setAttribute('stroke-width', 3);
+        supplySourceHex.setAttribute('stroke-width', 5);
+        supplySourceHex.setAttribute('stroke-dasharray', '10, 5');
         supplySourceHex.setAttribute('display', 'none');
         return supplySourceHex;
     }
@@ -119,7 +120,7 @@ export class HexView {
 
     drawSupplySourceBorder(player) {
         const supplySourceHex = this.svg.querySelector('.supply-source-hex');
-        supplySourceHex.setAttribute('stroke', ColorByPlayer[player]);
+        supplySourceHex.setAttribute('stroke', DarkColorByPlayer[player]);
         supplySourceHex.setAttribute('display', 'block');
     }
 
