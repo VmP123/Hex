@@ -1,6 +1,19 @@
 {
   "width": 10,
   "height": 10,
+  "player1SupplyEdges": {
+    "n": false,
+    "e": false,
+    "s": false,
+    "w": false
+  },
+  "player2SupplyEdges": {
+    "n": false,
+    "e": false,
+    "s": false,
+    "w": false
+  },
+  "supplyCities": [],
   "hexList": [
     {
       "x": 0,

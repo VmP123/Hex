@@ -8,8 +8,7 @@ export class ScenarioMap {
         this.startingPlayer = PlayerType.GREY;
         this.player1SupplyEdges = {};
         this.player2SupplyEdges = {};
-        this.player1SupplyCities = [];
-        this.player2SupplyCities = [];
+        this.supplyCities = [];
     }
 
     createEmptyMap(rows, cols) {
@@ -54,8 +53,7 @@ export class ScenarioMap {
             this.startingPlayer = jsonData.startingPlayer || PlayerType.GREY;
             this.player1SupplyEdges = jsonData.player1SupplyEdges || {};
             this.player2SupplyEdges = jsonData.player2SupplyEdges || {};
-            this.player1SupplyCities = jsonData.player1SupplyCities || [];
-            this.player2SupplyCities = jsonData.player2SupplyCities || [];
+            this.supplyCities = jsonData.supplyCities || [];
 
             return this;
 

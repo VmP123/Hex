@@ -305,17 +305,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (supplyCityMode) {
       if (hex.terrainType === TerrainType.CITY) {
-        const player = selectedPlayer === 'grey' ? PlayerType.GREY : PlayerType.GREEN;
-        const supplyCities = player === PlayerType.GREY ? hexGrid.scenarioMap.player1SupplyCities : hexGrid.scenarioMap.player2SupplyCities;
+        const supplyCities = hexGrid.scenarioMap.supplyCities;
         const cityCoords = { x: hex.x, y: hex.y };
         const cityIndex = supplyCities.findIndex(c => c.x === cityCoords.x && c.y === cityCoords.y);
 
         if (cityIndex > -1) {
           supplyCities.splice(cityIndex, 1);
-          console.log(`Removed supply city for player ${player}:`, cityCoords);
+          console.log(`Removed supply city:`, cityCoords);
         } else {
           supplyCities.push(cityCoords);
-          console.log(`Added supply city for player ${player}:`, cityCoords);
+          console.log(`Added supply city:`, cityCoords);
         }
         if (gameState.showSupply) {
             hexGridView.refreshSupplyView();
@@ -392,8 +391,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       startingPlayer: startingPlayer,
       player1SupplyEdges: p1SupplyEdges,
       player2SupplyEdges: p2SupplyEdges,
-      player1SupplyCities: hexGrid.scenarioMap.player1SupplyCities,
-      player2SupplyCities: hexGrid.scenarioMap.player2SupplyCities,
+      supplyCities: hexGrid.scenarioMap.supplyCities,
       hexList: hexGrid.hexes.map(hex => ({
         x: hex.x,
         y: hex.y,
@@ -428,8 +426,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         newScenario.startingPlayer = mapData.startingPlayer;
         newScenario.player1SupplyEdges = mapData.player1SupplyEdges;
         newScenario.player2SupplyEdges = mapData.player2SupplyEdges;
-        newScenario.player1SupplyCities = mapData.player1SupplyCities || [];
-        newScenario.player2SupplyCities = mapData.player2SupplyCities || [];
+        newScenario.supplyCities = mapData.supplyCities || [];
 
         document.getElementById('rows').value = mapData.height;
         document.getElementById('cols').value = mapData.width;

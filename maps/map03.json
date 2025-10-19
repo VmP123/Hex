@@ -14,7 +14,7 @@
     "s": false,
     "w": false
   },
-  "player1SupplyCities": [
+  "supplyCities": [
     {
       "x": 7,
       "y": 7
@@ -26,9 +26,7 @@
     {
       "x": 2,
       "y": 5
-    }
-  ],
-  "player2SupplyCities": [
+    },
     {
       "x": 5,
       "y": 3

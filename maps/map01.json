@@ -14,8 +14,7 @@
     "s": false,
     "w": false
   },
-  "player1SupplyCities": [],
-  "player2SupplyCities": [],
+  "supplyCities": [],
   "hexList": [
     {
       "x": 0,

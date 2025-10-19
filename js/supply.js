@@ -108,9 +108,8 @@ export class Supply {
      */
     getSupplySources(player, scenario) {
         const sources = [];
-        const { width, height, player1SupplyEdges, player2SupplyEdges, player1SupplyCities, player2SupplyCities } = scenario;
+        const { width, height, player1SupplyEdges, player2SupplyEdges, supplyCities } = scenario;
         const supplyEdges = player === PlayerType.GREY ? player1SupplyEdges : player2SupplyEdges;
-        const supplyCities = player === PlayerType.GREY ? player1SupplyCities : player2SupplyCities;
 
         if (supplyEdges) {
             if (supplyEdges.n) { // North
