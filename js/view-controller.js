@@ -19,7 +19,7 @@ export class ViewController {
 
         this.isZoomedOut = false;
         this.lastZoomInViewBox = null;
-        this.margin = 100;
+        this.margin = 50;
 
         this.svg.addEventListener('mousedown', this.onMouseDown.bind(this));
         this.svg.addEventListener('mousemove', this.onMouseMove.bind(this));

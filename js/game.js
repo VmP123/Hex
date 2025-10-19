@@ -118,7 +118,7 @@ class Game {
         this.viewController.hexGridView = this.hexGridView;
         this.hexGridView.viewController = this.viewController;
 
-        document.getElementById('toggle-supply-button').addEventListener('click', () => {
+        document.getElementById('show-supply-button').addEventListener('click', () => {
             this.gameState.showSupply = !this.gameState.showSupply;
             this.hexGridView.refreshSupplyView();
         });

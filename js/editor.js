@@ -94,6 +94,86 @@ document.addEventListener('DOMContentLoaded', async () => {
   let roadMode = false;
   let firstHex = null;
   let supplyCityMode = false;
+  let selectedPlayer = 'grey';
+  let startingPlayer = 'grey';
+  let p1SupplyEdges = { n: false, e: false, s: false, w: false };
+  let p2SupplyEdges = { n: false, e: false, s: false, w: false };
+
+  function createPlayerButtons(containerId, stateUpdater) {
+    const container = document.getElementById(containerId);
+    const players = ['grey', 'green'];
+
+    players.forEach(player => {
+      const button = document.createElement('div');
+      button.classList.add('player-button', player);
+      if ((stateUpdater === 'player' && selectedPlayer === player) || (stateUpdater === 'startingPlayer' && startingPlayer === player)) {
+        button.classList.add('selected');
+      }
+
+      button.addEventListener('click', () => {
+        if (stateUpdater === 'player') {
+          selectedPlayer = player;
+        } else if (stateUpdater === 'startingPlayer') {
+          startingPlayer = player;
+        }
+
+        // Update selected class for this group
+        container.querySelectorAll('.player-button').forEach(btn => btn.classList.remove('selected'));
+        button.classList.add('selected');
+      });
+
+      container.appendChild(button);
+    });
+  }
+
+  createPlayerButtons('player-buttons', 'player');
+  createPlayerButtons('starting-player-buttons', 'startingPlayer');
+
+  function createSupplyEdgeButtons(containerId, supplyEdges, playerClass) {
+    const container = document.getElementById(containerId);
+    const directions = {
+      n: '4,12 8,4 12,12',
+      e: '4,4 12,8 4,12',
+      s: '4,4 8,12 12,4',
+      w: '12,4 4,8 12,12'
+    };
+
+    for (const dir in directions) {
+      const button = document.createElement('div');
+      button.classList.add('supply-edge-button', playerClass);
+      button.dataset.direction = dir;
+
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 16 16');
+      const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+      polyline.setAttribute('points', directions[dir]);
+      svg.appendChild(polyline);
+
+      button.appendChild(svg);
+
+      if (supplyEdges[dir]) {
+        button.classList.add('selected');
+      }
+
+      button.addEventListener('click', () => {
+        supplyEdges[dir] = !supplyEdges[dir];
+        button.classList.toggle('selected');
+
+        if (playerClass === 'grey') {
+          hexGrid.scenarioMap.player1SupplyEdges = supplyEdges;
+        } else {
+          hexGrid.scenarioMap.player2SupplyEdges = supplyEdges;
+        }
+
+        updateSupplyIfVisible();
+      });
+
+      container.appendChild(button);
+    }
+  }
+
+  createSupplyEdgeButtons('p1-supply-edges', p1SupplyEdges, 'grey');
+  createSupplyEdgeButtons('p2-supply-edges', p2SupplyEdges, 'green');
   
   const terrainPalette = document.getElementById('terrain-palette');
   for (const terrain in TerrainType) {
@@ -195,10 +275,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   
   function updateSelectedPalette(selectedButton) {
-    document.querySelectorAll('#terrain-palette button, #unit-palette button, #supply-settings button').forEach(button => {
+    document.querySelectorAll('#terrain-palette button, #unit-palette button, #supply-city-controls button').forEach(button => {
       button.classList.remove('selected');
     });
     selectedButton.classList.add('selected');
+  }
+
+  function updateSupplyIfVisible() {
+    if (gameState.showSupply) {
+      hexGridView.refreshSupplyView();
+    }
   }
   
   function onHexClick(hexView, event) {
@@ -219,7 +305,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (supplyCityMode) {
       if (hex.terrainType === TerrainType.CITY) {
-        const player = document.getElementById('player-select').value === 'grey' ? PlayerType.GREY : PlayerType.GREEN;
+        const player = selectedPlayer === 'grey' ? PlayerType.GREY : PlayerType.GREEN;
         const supplyCities = player === PlayerType.GREY ? hexGrid.scenarioMap.player1SupplyCities : hexGrid.scenarioMap.player2SupplyCities;
         const cityCoords = { x: hex.x, y: hex.y };
         const cityIndex = supplyCities.findIndex(c => c.x === cityCoords.x && c.y === cityCoords.y);
@@ -240,6 +326,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const edgeIndex = hexView.getClosestSide(clickXInHex, clickYInHex);
       hex.toggleRiver(edgeIndex);
       hexGridView.redrawAllRivers();
+      updateSupplyIfVisible();
     }
     else if (roadMode) {
       if (!firstHex) {
@@ -265,12 +352,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     else if (selectedTerrain) {
         hex.setTerrain(selectedTerrain);
         if (selectedTerrain === TerrainType.CITY || selectedTerrain === TerrainType.FLAG) {
-            const player = document.getElementById('player-select').value === 'grey' ? PlayerType.GREY : PlayerType.GREEN;
+            const player = selectedPlayer === 'grey' ? PlayerType.GREY : PlayerType.GREEN;
             hex.owner = player;
         } else {
             hex.owner = null;
         }
         hexView.setTerrain(selectedTerrain);
+        updateSupplyIfVisible();
     }
     else if (selectedUnit) {
       const existingUnit = hex.unit;
@@ -280,7 +368,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       if (selectedUnit !== 'remove') {
-          const player = document.getElementById('player-select').value === 'grey' ? PlayerType.GREY : PlayerType.GREEN;
+          const player = selectedPlayer === 'grey' ? PlayerType.GREY : PlayerType.GREEN;
           const newUnit = new Unit(hex.x, hex.y, selectedUnit, player);
           hexGrid.addUnit(newUnit);
           hex.setUnit(newUnit);
@@ -292,6 +380,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           newUnitView.refreshStatusText();
           hexGridView.addUnitView(newUnitView);
       }
+      updateSupplyIfVisible();
     }
   }
   
@@ -300,19 +389,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const mapData = {
       width: hexGrid.cols,
       height: hexGrid.rows,
-      startingPlayer: document.getElementById('starting-player-select').value,
-      player1SupplyEdges: {
-        n: document.getElementById('p1-supply-edge-n').checked,
-        e: document.getElementById('p1-supply-edge-e').checked,
-        s: document.getElementById('p1-supply-edge-s').checked,
-        w: document.getElementById('p1-supply-edge-w').checked,
-      },
-      player2SupplyEdges: {
-        n: document.getElementById('p2-supply-edge-n').checked,
-        e: document.getElementById('p2-supply-edge-e').checked,
-        s: document.getElementById('p2-supply-edge-s').checked,
-        w: document.getElementById('p2-supply-edge-w').checked,
-      },
+      startingPlayer: startingPlayer,
+      player1SupplyEdges: p1SupplyEdges,
+      player2SupplyEdges: p2SupplyEdges,
       player1SupplyCities: hexGrid.scenarioMap.player1SupplyCities,
       player2SupplyCities: hexGrid.scenarioMap.player2SupplyCities,
       hexList: hexGrid.hexes.map(hex => ({
@@ -354,19 +433,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         document.getElementById('rows').value = mapData.height;
         document.getElementById('cols').value = mapData.width;
-        document.getElementById('starting-player-select').value = mapData.startingPlayer || 'grey';
+        startingPlayer = mapData.startingPlayer || 'grey';
+        document.querySelectorAll('#starting-player-buttons .player-button').forEach(btn => {
+            btn.classList.remove('selected');
+            if (btn.classList.contains(startingPlayer)) {
+                btn.classList.add('selected');
+            }
+        });
         
         if (mapData.player1SupplyEdges) {
-            document.getElementById('p1-supply-edge-n').checked = mapData.player1SupplyEdges.n;
-            document.getElementById('p1-supply-edge-e').checked = mapData.player1SupplyEdges.e;
-            document.getElementById('p1-supply-edge-s').checked = mapData.player1SupplyEdges.s;
-            document.getElementById('p1-supply-edge-w').checked = mapData.player1SupplyEdges.w;
+            Object.assign(p1SupplyEdges, mapData.player1SupplyEdges);
+            document.querySelectorAll('#p1-supply-edges .supply-edge-button').forEach(btn => {
+                const dir = btn.dataset.direction;
+                if (p1SupplyEdges[dir]) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
         }
         if (mapData.player2SupplyEdges) {
-            document.getElementById('p2-supply-edge-n').checked = mapData.player2SupplyEdges.n;
-            document.getElementById('p2-supply-edge-e').checked = mapData.player2SupplyEdges.e;
-            document.getElementById('p2-supply-edge-s').checked = mapData.player2SupplyEdges.s;
-            document.getElementById('p2-supply-edge-w').checked = mapData.player2SupplyEdges.w;
+            Object.assign(p2SupplyEdges, mapData.player2SupplyEdges);
+            document.querySelectorAll('#p2-supply-edges .supply-edge-button').forEach(btn => {
+                const dir = btn.dataset.direction;
+                if (p2SupplyEdges[dir]) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
         }
 
         await drawMap(newScenario);
@@ -394,24 +489,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
 
-  document.getElementById('toggle-supply-button').addEventListener('click', () => {
+  document.getElementById('show-supply-button').addEventListener('click', (e) => {
     gameState.showSupply = !gameState.showSupply;
+    e.target.classList.toggle('selected');
     
     // Update scenario with current editor settings for visualization
     const scenario = hexGrid.scenarioMap;
-    scenario.startingPlayer = document.getElementById('starting-player-select').value;
-    scenario.player1SupplyEdges = {
-        n: document.getElementById('p1-supply-edge-n').checked,
-        e: document.getElementById('p1-supply-edge-e').checked,
-        s: document.getElementById('p1-supply-edge-s').checked,
-        w: document.getElementById('p1-supply-edge-w').checked,
-    };
-    scenario.player2SupplyEdges = {
-        n: document.getElementById('p2-supply-edge-n').checked,
-        e: document.getElementById('p2-supply-edge-e').checked,
-        s: document.getElementById('p2-supply-edge-s').checked,
-        w: document.getElementById('p2-supply-edge-w').checked,
-    };
+    scenario.startingPlayer = startingPlayer;
+    scenario.player1SupplyEdges = p1SupplyEdges;
+    scenario.player2SupplyEdges = p2SupplyEdges;
     // Supply cities are already updated in the scenario object
 
     hexGridView.refreshSupplyView();

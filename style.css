@@ -1,3 +1,8 @@
+:root {
+    --player-grey: #d8d8d8;
+    --player-green: #b5c599;
+}
+
 html, body {
     margin: 0;
     padding: 0;
@@ -67,37 +72,122 @@ html, body {
     overflow-y: auto;
 }
 
-#terrain-palette button,
-#unit-palette button,
-#supply-settings button {
+#editor-controls button,
+#import-export .custom-file-upload {
     display: block;
     width: 100%;
     margin-bottom: 5px;
-    padding: 5px;
+    padding: 8px;
     border: 1px solid #ccc;
     background-color: #f0f0f0;
     cursor: pointer;
+    text-align: center;
+    box-sizing: border-box;
 }
 
 #terrain-palette button.selected,
 #unit-palette button.selected,
+#supply-city-controls button.selected,
+#view-controls button.selected,
 #supply-settings button.selected {
     background-color: #a2ba79;
     color: white;
     border-color: #a2ba79;
 }
 
-#import-export button,
-#import-export .custom-file-upload {
-    display: block;
-    width: 100%;
-    margin-bottom: 5px;
-    padding: 5px;
-    border: 1px solid #ccc;
-    background-color: #f0f0f0;
+#map-size {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.player-selector {
+    display: flex;
+}
+
+.player-button {
+    width: 40px;
+    height: 40px;
+    border: 4px solid transparent;
     cursor: pointer;
-    text-align: center;
+    margin-right: 10px;
     box-sizing: border-box;
+}
+
+.player-button.grey {
+    background-color: var(--player-grey);
+}
+
+.player-button.green {
+    background-color: var(--player-green);
+}
+
+.player-button.selected {
+    border-color: #000;
+}
+
+.supply-edge-selector-row {
+  margin-block-end: 1em;
+}
+
+.supply-edge-selector {
+    display: flex;
+    gap: 10px;
+}
+
+.supply-edge-button {
+    width: 40px;
+    height: 40px;
+    border: 4px solid transparent;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    box-sizing: border-box;
+}
+
+.supply-edge-button.grey {
+    background-color: var(--player-grey);
+}
+
+.supply-edge-button.green {
+    background-color: var(--player-green);
+}
+
+.supply-edge-button svg polyline {
+    fill: none;
+    stroke: black;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.supply-edge-button.selected {
+    border-color: #000;
+}
+
+#map-size h3 {
+    flex-basis: 100%;
+}
+
+#map-size > div {
+    display: flex;
+    flex-direction: column;
+    flex-basis: calc(50% - 5px);
+}
+
+#map-size label {
+    margin-bottom: 5px;
+}
+
+#map-size input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#map-size button {
+    flex-basis: 100%;
 }
 
 

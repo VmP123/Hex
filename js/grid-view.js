@@ -55,7 +55,7 @@ export class HexGridView {
         const hexWidth = getHexWidth(this.hexRadius);
         const hexHeight = getHexHeight(this.hexRadius);
         const totalWidth = (this.hexGrid.cols * hexWidth * 0.75) + (hexWidth * 0.25) + 5;
-        const totalHeight = (this.hexGrid.rows * hexHeight) + (hexHeight * 0.5);
+        const totalHeight = (this.hexGrid.rows * hexHeight) + 5;
 
         this.redrawAllRivers();
         this.redrawAllRoads();

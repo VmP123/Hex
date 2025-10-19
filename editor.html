@@ -25,40 +25,29 @@
                 <h3>Units</h3>
                 <!-- Unit buttons will be added here -->
             </div>
+            <div id="supply-city-controls">
+                <h3>Supply City</h3>
+                <button id="set-supply-cities">Toggle Supply City</button>
+            </div>
             <!-- Player Selection -->
             <div id="player-selection">
                 <h3>Player</h3>
-                <select id="player-select">
-                    <option value="grey">Grey</option>
-                    <option value="green">Green</option>
-                </select>
+                <div id="player-buttons" class="player-selector"></div>
             </div>
             <!-- Starting Player -->
             <div id="starting-player-selection">
                 <h3>Starting Player</h3>
-                <select id="starting-player-select">
-                    <option value="grey">Grey</option>
-                    <option value="green">Green</option>
-                </select>
+                <div id="starting-player-buttons" class="player-selector"></div>
             </div>
             <!-- Supply Settings -->
             <div id="supply-settings">
-                <h3>Supply Settings</h3>
-                <div>
-                    <h4>Player 1 (Grey) Supply Edges</h4>
-                    <label><input type="checkbox" id="p1-supply-edge-n"> North</label>
-                    <label><input type="checkbox" id="p1-supply-edge-e"> East</label>
-                    <label><input type="checkbox" id="p1-supply-edge-s"> South</label>
-                    <label><input type="checkbox" id="p1-supply-edge-w"> West</label>
+                <h3>Supply Edges</h3>
+                <div class="supply-edge-selector-row">
+                    <div id="p1-supply-edges" class="supply-edge-selector"></div>
                 </div>
-                <div>
-                    <h4>Player 2 (Green) Supply Edges</h4>
-                    <label><input type="checkbox" id="p2-supply-edge-n"> North</label>
-                    <label><input type="checkbox" id="p2-supply-edge-e"> East</label>
-                    <label><input type="checkbox" id="p2-supply-edge-s"> South</label>
-                    <label><input type="checkbox" id="p2-supply-edge-w"> West</label>
+                <div class="supply-edge-selector-row">
+                    <div id="p2-supply-edges" class="supply-edge-selector"></div>
                 </div>
-                <button id="set-supply-cities">Supply City</button>
             </div>
             <!-- Import/Export -->
             <div id="import-export">
@@ -69,10 +58,14 @@
             </div>
             <div id="map-size">
                 <h3>Map Size</h3>
-                <label for="cols">Cols:</label>
-                <input type="number" id="cols" value="10" min="1">
-                <label for="rows">Rows:</label>
-                <input type="number" id="rows" value="10" min="1">
+                <div>
+                    <label for="cols">Cols:</label>
+                    <input type="number" id="cols" value="10" min="1">
+                </div>
+                <div>
+                    <label for="rows">Rows:</label>
+                    <input type="number" id="rows" value="10" min="1">
+                </div>
                 <button id="set-size">Set Size</button>
             </div>
             <div id="zoom-controls">
@@ -81,7 +74,7 @@
             </div>
             <div id="view-controls">
                 <h3>View</h3>
-                <button id="toggle-supply-button">Toggle Supply</button>
+                <button id="show-supply-button">Show Supply</button>
             </div>
         </div>
     </div>
