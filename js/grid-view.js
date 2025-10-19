@@ -16,6 +16,7 @@ export class HexGridView {
         this.isEditor = isEditor;
         this.svgService = svgService;
         this.supply = supply;
+        this.highlightedHexes = new Map();
 
         on('hexUpdated', (data) => this.handleHexUpdated(data.hex));
         on('phaseChanged', this.refreshSupplyView.bind(this));
@@ -24,11 +25,12 @@ export class HexGridView {
     }
 
     async drawHexGrid() {
-        const { hexGrid, hexLayer, riverLayer, roadLayer, supplyLayer, unitLayer } = this._createLayers();
+        const { hexGrid, hexLayer, riverLayer, roadLayer, highlightLayer, supplyLayer, unitLayer } = this._createLayers();
         this.svg = hexGrid;
 
         hexGrid.appendChild(hexLayer);
         hexGrid.appendChild(riverLayer);
+        hexGrid.appendChild(highlightLayer);
         hexGrid.appendChild(roadLayer);
         hexGrid.appendChild(supplyLayer);
         hexGrid.appendChild(unitLayer);
@@ -40,6 +42,10 @@ export class HexGridView {
             hexView.svg.setAttribute('y', position.y);
             this.hexViews.push(hexView);
             hexLayer.appendChild(hexView.svg);
+
+            const innerHex = this.createInnerHex(hex, this.hexRadius - 5);
+            this.highlightedHexes.set(hex, innerHex);
+            highlightLayer.appendChild(innerHex);
 
             if (hex.unit) {
                 const baseRect = this.svgService.svgElements[hex.unit.unitType + ".svg"].cloneNode(true);
@@ -76,13 +82,54 @@ export class HexGridView {
         hexLayer.setAttribute('id', 'hexLayer');
         const riverLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         riverLayer.setAttribute('id', 'riverLayer');
+        const highlightLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        highlightLayer.setAttribute('id', 'highlightLayer');
         const roadLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         roadLayer.setAttribute('id', 'roadLayer');
         const supplyLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         supplyLayer.setAttribute('id', 'supplyLayer');
         const unitLayer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         unitLayer.setAttribute('id', 'unitLayer');
-        return { hexGrid, hexLayer, riverLayer, roadLayer, supplyLayer, unitLayer };
+        return { hexGrid, hexLayer, riverLayer, roadLayer, highlightLayer, supplyLayer, unitLayer };
+    }
+
+    createInnerHex(hex, radius) {
+        const innerHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        innerHex.setAttribute('class', 'hex innerHex');
+        
+        const hexWidth = getHexWidth(this.hexRadius);
+        const hexHeight = getHexHeight(this.hexRadius);
+        const margin = getMargin(this.lineWidth);
+        const hexCenterX = (hexWidth * 0.5) + margin;
+        const hexCenterY = (hexHeight * 0.5) + margin;
+
+        innerHex.setAttribute('points', this._calculateHexPoints(hexCenterX, hexCenterY, radius));
+
+        innerHex.setAttribute('fill', 'none');
+        innerHex.setAttribute('stroke', 'black');
+        innerHex.setAttribute('stroke-width', this.lineWidth);
+        innerHex.setAttribute('stroke-dasharray', '12 5');
+        innerHex.setAttribute('display', 'none');
+
+        const position = this._calculateHexPosition(hex.x, hex.y);
+        const innerHexSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        const svgWidth = hexWidth + margin * 2;
+        const svgHeight = hexHeight + margin * 2;
+        innerHexSvg.setAttribute('width', svgWidth);
+        innerHexSvg.setAttribute('height', svgHeight);
+        innerHexSvg.setAttribute('x', position.x);
+        innerHexSvg.setAttribute('y', position.y);
+        innerHexSvg.appendChild(innerHex);
+
+        return innerHexSvg;
+    }
+
+    _calculateHexPoints(x, y, radius) {
+        const points = [];
+        for (let angle = 0; angle < Math.PI * 2; angle += Math.PI / 3) {
+            points.push((x + radius * Math.cos(angle)) + "," + (y + radius * Math.sin(angle)));
+        }
+        return points.join(" ");
     }
 
     refreshSupplyView() {
@@ -265,8 +312,8 @@ export class HexGridView {
 
     clearHighlightedHexes() {
         for(const highlightedHex of this.hexGrid.hexes.filter(hex => hex.highlighted)) {
-            highlightedHex.toggleInnerHex(false);
-            this.getViewForHex(highlightedHex).toggleInnerHex();
+            highlightedHex.highlighted = false;
+            this.toggleHexHighlight(highlightedHex, false);
         }
     }
 
@@ -290,8 +337,8 @@ export class HexGridView {
         for(const adjacentHex of adjacentEnemyHexes) {
             for(const hex of this.hexGrid.hexes) {
                 if (adjacentHex.x == hex.x && adjacentHex.y == hex.y) {
-                    hex.toggleInnerHex(true);
-                    this.getViewForHex(hex).toggleInnerHex();
+                    hex.highlighted = true;
+                    this.toggleHexHighlight(hex, true);
                 }
             }
         }
@@ -302,8 +349,8 @@ export class HexGridView {
         for(const adjacentHex of reachableHexes) {
             for(const hex of this.hexGrid.hexes) {
                 if (adjacentHex.x == hex.x && adjacentHex.y == hex.y) {
-                    hex.toggleInnerHex();
-                    this.getViewForHex(hex).toggleInnerHex();
+                    hex.highlighted = !hex.highlighted;
+                    this.toggleHexHighlight(hex, hex.highlighted);
                 }
             }
         }
@@ -336,6 +383,13 @@ export class HexGridView {
 
     getViewForHex(hex) {
         return this.hexViews.find(hv => hv.hex === hex);
+    }
+
+    toggleHexHighlight(hex, show) {
+        const innerHex = this.highlightedHexes.get(hex);
+        if (innerHex) {
+            innerHex.querySelector('.innerHex').setAttribute('display', show ? 'block' : 'none');
+        }
     }
 
     redrawAllRivers() {
@@ -463,8 +517,8 @@ export class HexGridView {
     startSpecialPhase(specialPhase) {
         if (specialPhase === SpecialPhaseType.ADVANCE) {
             this.clearHighlightedHexes();
-            this.gameState.vacatedHex.toggleInnerHex(true);
-            this.getViewForHex(this.gameState.vacatedHex).toggleInnerHex();
+            this.gameState.vacatedHex.highlighted = true;
+            this.toggleHexHighlight(this.gameState.vacatedHex, true);
             this.refreshUnitDimmers();
         }
     }

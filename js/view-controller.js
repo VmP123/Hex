@@ -178,9 +178,8 @@ export class ViewController {
 
             if (specialPhase === SpecialPhaseType.ADVANCE) {
                 if (this.gameState.vacatedHex) {
-                    const hexView = this.hexGridView.getViewForHex(this.gameState.vacatedHex);
-                    this.gameState.vacatedHex.toggleInnerHex(true);
-                    hexView.toggleInnerHex();
+                    this.gameState.vacatedHex.highlighted = true;
+                    this.hexGridView.toggleHexHighlight(this.gameState.vacatedHex, true);
                 }
                 return;
             }
@@ -232,11 +231,8 @@ export class ViewController {
         this.hexGridView.refreshUnitDimmers();
         if (specialPhase === SpecialPhaseType.ADVANCE) {
             if (this.gameState.vacatedHex) {
-                const hexView = this.hexGridView.getViewForHex(this.gameState.vacatedHex);
-                this.gameState.vacatedHex.toggleInnerHex(true);
-                if (hexView) {
-                    hexView.toggleInnerHex();
-                }
+                this.gameState.vacatedHex.highlighted = true;
+                this.hexGridView.toggleHexHighlight(this.gameState.vacatedHex, true);
             }
         }
     }

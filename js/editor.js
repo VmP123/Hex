@@ -186,7 +186,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       roadMode = false;
       supplyCityMode = false;
       if (firstHex) {
-        hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
+        hexGridView.toggleHexHighlight(firstHex, false);
         firstHex = null;
       }
       updateSelectedPalette(e.target);
@@ -205,7 +205,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       roadMode = false;
       supplyCityMode = false;
       if (firstHex) {
-        hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
+        hexGridView.toggleHexHighlight(firstHex, false);
         firstHex = null;
       }
       updateSelectedPalette(e.target);
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     roadMode = false;
     supplyCityMode = false;
     if (firstHex) {
-        hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
+        hexGridView.toggleHexHighlight(firstHex, false);
         firstHex = null;
     }
     updateSelectedPalette(e.target);
@@ -237,7 +237,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectedUnit = null;
     supplyCityMode = false;
     if (firstHex) {
-        hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
+        hexGridView.toggleHexHighlight(firstHex, false);
         firstHex = null;
     }
     updateSelectedPalette(e.target);
@@ -253,7 +253,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectedUnit = null;
     supplyCityMode = false;
     if (!roadMode && firstHex) { // If turning off road mode and a hex was selected
-        hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
+        hexGridView.toggleHexHighlight(firstHex, false);
         firstHex = null;
     }
     updateSelectedPalette(e.target);
@@ -268,7 +268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     selectedTerrain = null;
     selectedUnit = null;
     if (firstHex) {
-        hexGridView.getViewForHex(firstHex)?.toggleInnerHex(false);
+        hexGridView.toggleHexHighlight(firstHex, false);
         firstHex = null;
     }
     updateSelectedPalette(e.target);
@@ -330,13 +330,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     else if (roadMode) {
       if (!firstHex) {
         firstHex = hex;
-        hexView.toggleInnerHex(true); // Highlight first hex
+        hexGridView.toggleHexHighlight(hex, true); // Highlight first hex
       } else {
         const secondHex = hex;
-        const firstHexView = hexGridView.getViewForHex(firstHex);
-        if (firstHexView) {
-          firstHexView.toggleInnerHex(false); // Unhighlight first hex
-        }
+        hexGridView.toggleHexHighlight(firstHex, false); // Unhighlight first hex
 
         const neighborIndex = hexGrid.getNeighborIndex(firstHex, secondHex);
         if (neighborIndex !== -1) {

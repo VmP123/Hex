@@ -20,7 +20,6 @@ export class HexView {
         const hexCenterY = (hexHeight * 0.5) + margin;
 
         const baseHex = this.createBaseHex(hexCenterX, hexCenterY, this.hexRadius);
-        const innerHex = this.createInnerHex(hexCenterX, hexCenterY, this.hexRadius - 5);
         const supplySourceHex = this.createSupplySourceHex(hexCenterX, hexCenterY, this.hexRadius - 5);
 
         const hexSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -29,7 +28,6 @@ export class HexView {
         hexSvg.setAttribute('width', svgWidth);
         hexSvg.setAttribute('height', svgHeight);
         hexSvg.appendChild(baseHex);
-        hexSvg.appendChild(innerHex);
         hexSvg.appendChild(supplySourceHex);
 
         return hexSvg;
@@ -45,17 +43,7 @@ export class HexView {
         return baseHex;
     }
 
-    createInnerHex(x, y, radius) {
-        const innerHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-        innerHex.setAttribute('class', 'hex innerHex');
-        innerHex.setAttribute('points', this.calculateHexPoints(x, y, radius));
-        innerHex.setAttribute('fill', 'none');
-        innerHex.setAttribute('stroke', 'black');
-        innerHex.setAttribute('stroke-width', this.lineWidth);
-        innerHex.setAttribute('stroke-dasharray', '12 5');
-        innerHex.setAttribute('display', 'none');
-        return innerHex;
-    }
+
 
     createSupplySourceHex(x, y, radius) {
         const supplySourceHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
@@ -113,10 +101,7 @@ export class HexView {
         return closestSideIndex;
     }
 
-    toggleInnerHex() {
-        const innerHex = this.svg.querySelector('.innerHex');
-        innerHex.setAttribute('display', this.hex.highlighted ? 'block' : 'none');
-    }
+
 
     drawSupplySourceBorder(player) {
         const supplySourceHex = this.svg.querySelector('.supply-source-hex');
